@@ -28,12 +28,13 @@ class MainActivity : Activity() {
     private lateinit var bar: ProgressBar
     private var chooserCb: ValueCallback<Array<Uri>>? = null
     private var cameraUri: Uri? = null
+    private val DEFAULT_URL = "https://zahraaclinic.free.nf"
     private val reqFile = 41
     private val reqCam = 42
 
     private val prefs get() = getSharedPreferences("mc", Context.MODE_PRIVATE)
     private var serverUrl: String
-        get() = prefs.getString("url", "") ?: ""
+        get() = prefs.getString("url", DEFAULT_URL) ?: DEFAULT_URL
         set(v) { prefs.edit().putString("url", v).apply() }
 
     override fun onCreate(b: Bundle?) {

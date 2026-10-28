@@ -1241,7 +1241,7 @@ Acts.lnk = el => {
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = Acts[el.dataset.act]; if (f) { e.preventDefault(); f(el, e); } });
 
 window.addEventListener('DOMContentLoaded', async () => {
-  try { if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
+  try { if (window.AndroidBridge) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
   render(); startSync();
 });
 
