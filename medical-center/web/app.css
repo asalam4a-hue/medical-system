@@ -169,7 +169,7 @@ tfoot td{font-weight:bold;background:linear-gradient(135deg,var(--gold2),var(--o
 .perm-grid input{width:auto}
 
 @media(max-width:700px){html,body{font-size:16px}.main{padding:12px}.top .who span{display:none}.barrow{grid-template-columns:90px 1fr 64px}}
-@media print{@page{size:A4 landscape;margin:10mm}html,body{font-size:11px}table{font-size:10px}td,th{white-space:normal}.printhead{display:block!important;text-align:center;margin-bottom:8px;border-bottom:3px solid #000}.sgbox{display:none}.top,.tools,.bar,.actions,.noprint,.toast{display:none!important}.main{padding:0;animation:none}.panel{box-shadow:none;break-inside:avoid}.glow{animation:none;box-shadow:none;border:1px solid #999}.glow::before{display:none}.tbl-wrap{overflow:visible}th{position:static}}
+@media print{@page{size:A4 landscape;margin:10mm}.pagehead,#frm,form,.btn,.seg,input,select,textarea,.linkbtn,.cards,.tabs,.hint,.modal,.backdrop{display:none!important}.kpis{display:grid!important}html,body{font-size:11px}table{font-size:10px}td,th{white-space:normal}.printhead{display:block!important;text-align:center;margin-bottom:8px;border-bottom:3px solid #000}.sgbox{display:none}.top,.tools,.bar,.actions,.noprint,.toast{display:none!important}.main{padding:0;animation:none}.panel{box-shadow:none;break-inside:avoid}.glow{animation:none;box-shadow:none;border:1px solid #999}.glow::before{display:none}.tbl-wrap{overflow:visible}th{position:static}}
 @media screen{.printhead{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 

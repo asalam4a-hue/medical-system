@@ -177,7 +177,7 @@ tfoot td{font-weight:bold;background:linear-gradient(135deg,var(--gold2),var(--o
 .perm-grid input{width:auto}
 
 @media(max-width:700px){html,body{font-size:16px}.main{padding:12px}.top .who span{display:none}.barrow{grid-template-columns:90px 1fr 64px}}
-@media print{@page{size:A4 landscape;margin:10mm}html,body{font-size:11px}table{font-size:10px}td,th{white-space:normal}.printhead{display:block!important;text-align:center;margin-bottom:8px;border-bottom:3px solid #000}.sgbox{display:none}.top,.tools,.bar,.actions,.noprint,.toast{display:none!important}.main{padding:0;animation:none}.panel{box-shadow:none;break-inside:avoid}.glow{animation:none;box-shadow:none;border:1px solid #999}.glow::before{display:none}.tbl-wrap{overflow:visible}th{position:static}}
+@media print{@page{size:A4 landscape;margin:10mm}.pagehead,#frm,form,.btn,.seg,input,select,textarea,.linkbtn,.cards,.tabs,.hint,.modal,.backdrop{display:none!important}.kpis{display:grid!important}html,body{font-size:11px}table{font-size:10px}td,th{white-space:normal}.printhead{display:block!important;text-align:center;margin-bottom:8px;border-bottom:3px solid #000}.sgbox{display:none}.top,.tools,.bar,.actions,.noprint,.toast{display:none!important}.main{padding:0;animation:none}.panel{box-shadow:none;break-inside:avoid}.glow{animation:none;box-shadow:none;border:1px solid #999}.glow::before{display:none}.tbl-wrap{overflow:visible}th{position:static}}
 @media screen{.printhead{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -1177,14 +1177,14 @@ async function renderLogin(app) {
   <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">الدخول بعد موافقة المدير فقط</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
   <div class="fld"><label>اسم المستخدم</label><input name="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" required></div><div class="fld"><label>الرقم القومي</label><input name="nationalId" inputmode="numeric" maxlength="14"></div><div class="fld"><label>تاريخ الميلاد</label>${dateFld('birthDate', '')}</div><button class="glow c-pink btnbig" type="submit">إنشاء الحساب</button><button type="button" class="linkbtn" id="bk">رجوع لتسجيل الدخول</button></form>
-  ${canServer ? '<button class="linkbtn" id="srv">🔗 ربط بقاعدة بيانات جوجل شيت</button>' : ''}${window.AndroidBridge ? '<br><button class="linkbtn" onclick="AndroidBridge.changeServer()">⚙ تغيير عنوان الخادم</button>' : ''}</div></div>`;
+${window.AndroidBridge ? '<br><button class="linkbtn" onclick="AndroidBridge.changeServer()">⚙ تغيير عنوان الخادم</button>' : ''}</div></div>`;
   tick(); clockTimer = setInterval(tick, 1000);
   const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); $('#nu').classList.toggle('hidden', on && !hasUsers); };
   if (!hasUsers) showReg(true);
   $('#nu').onclick = () => showReg(true);
   $('#bk').onclick = () => showReg(false);
   if (!hasUsers) $('#bk').classList.add('hidden');
-  if (canServer) $('#srv').onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_server') || ''; } catch (e) { return ''; } })();
+  if (false) $('#srv').onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_server') || ''; } catch (e) { return ''; } })();
     const u = prompt('الصق رابط نشر Google Apps Script (ينتهي بـ /exec) لتعمل هذه النسخة على نفس بيانات الشيت.\nاتركه فارغاً للعودة للخادم المحلي.', cur);
     if (u === null) return; const t = u.trim(); if (t && !/^https:\/\/script\.google\.com\/.+\/exec/.test(t)) return toast('الرابط غير صحيح');
     API.setServer(t); toast(t ? 'تم الربط بجوجل شيت' : 'تمت العودة للخادم المحلي'); renderLogin(app); };
