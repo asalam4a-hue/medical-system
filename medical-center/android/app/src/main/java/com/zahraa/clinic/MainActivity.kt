@@ -67,7 +67,7 @@ class MainActivity : Activity() {
                 val dir = File(cacheDir, "exports").apply { mkdirs() }
                 val f = File(dir, name.replace(Regex("[^\\w.\\- \\u0600-\\u06FF]"), "_"))
                 f.writeBytes(Base64.decode(b64, Base64.DEFAULT))
-                val uri = FileProvider.getUriForFile(this, "com.zahraa.clinic.files", f)
+                val uri = FileProvider.getUriForFile(this@MainActivity, "com.zahraa.clinic.files", f)
                 startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = mime; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }, "حفظ / مشاركة الملف"))
             }
             @JavascriptInterface fun changeServer() = runOnUiThread { askUrl(false) }
@@ -114,7 +114,7 @@ class MainActivity : Activity() {
         if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             val dir = File(cacheDir, "photos").apply { mkdirs() }
             val f = File.createTempFile("cam", ".jpg", dir)
-            cameraUri = FileProvider.getUriForFile(this, "com.zahraa.clinic.files", f)
+            cameraUri = FileProvider.getUriForFile(this@MainActivity, "com.zahraa.clinic.files", f)
             extra.add(Intent(MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, cameraUri))
         } else requestPermissions(arrayOf(Manifest.permission.CAMERA), reqCam)
         val chooser = Intent.createChooser(gallery, "إرفاق صورة").putExtra(Intent.EXTRA_INITIAL_INTENTS, extra.toTypedArray())
