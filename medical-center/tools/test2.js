@@ -1,0 +1,16 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch();const p=await (await b.newContext({viewport:{width:1280,height:900}})).newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:8765/index.html');await p.waitForSelector('.login');
+await p.fill('#rf [name=username]','admin');await p.fill('#rf [name=password]','1234');await p.click('#rf button[type=submit]');await p.waitForSelector('.kpis');
+await p.click('[data-s=visits]');await p.waitForSelector('#frm');
+await p.fill('[name=patient]','س');await p.selectOption('[name=clinic]','باطنه وطوارئ');
+await p.click('[data-seg=category] button[data-v=company]');await p.fill('[name=company]','AXA');await p.dispatchEvent('[name=company]','change');
+console.log('company: value',await p.inputValue('[name=value]'),'(clinic price 60, AXA fee 160) co visible',await p.locator('[data-grp=co]').isVisible(),'ins visible',await p.locator('[data-grp=ins]').isVisible());
+await p.click('[data-seg=category] button[data-v=insurance]');await p.waitForTimeout(100);
+console.log('insurance: co visible',await p.locator('[data-grp=co]').isVisible(),'ins visible',await p.locator('[data-grp=ins]').isVisible(),'discount',await p.inputValue('[name=discount]'),'value',await p.inputValue('[name=value]'),'net',await p.inputValue('[name=_net]'));
+await p.fill('[name=discount]','10');await p.waitForTimeout(100);console.log('discount 10 -> net',await p.inputValue('[name=_net]'));
+await p.click('#frm button[type=submit]');await p.waitForTimeout(500);
+console.log('row:',(await p.$eval('#lst tbody tr',r=>r.innerText.replace(/\s+/g,' '))));
+await p.click('.brand');await p.click('[data-s=reports]');await p.click('[data-s=rep_doctors]');await p.waitForSelector('table');
+console.log('acct:',(await p.$$eval('#rb tbody tr',r=>r.map(x=>x.innerText.replace(/\s+/g,' ')))).join(' | '));
+console.log('errors',errs.length?errs:'none');await b.close()})();

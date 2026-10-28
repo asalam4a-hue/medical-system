@@ -1,0 +1,17 @@
+const { chromium } = require('playwright');
+(async()=>{const b=await chromium.launch();const ctx=await b.newContext({viewport:{width:1280,height:900},acceptDownloads:true});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
+await p.goto('http://localhost:8765/index.html');await p.waitForSelector('.login');
+await p.fill('#rf [name=username]','admin');await p.fill('#rf [name=password]','1234');await p.click('#rf button[type=submit]');await p.waitForSelector('.kpis');
+await p.click('[data-s=visits]');await p.waitForSelector('#frm');
+await p.fill('[name=patient]','سعيد');await p.fill('[name=phone]','01099998888');await p.selectOption('[name=clinic]','باطنه وطوارئ');
+await p.click('[data-seg=category] button[data-v=company]');await p.fill('[name=company]','AXA');await p.dispatchEvent('[name=company]','change');await p.fill('[name=patientPct]','20');await p.fill('[name=formNo]','F1');
+await p.click('#frm button[type=submit]');await p.waitForTimeout(500);
+let [d]=await Promise.all([p.waitForEvent('download'),p.click('[data-act=xlsx]')]);await d.saveAs('/tmp/visits.xlsx');console.log('visits file',d.suggestedFilename());
+await p.click('.brand');await p.click('[data-s=reports]');await p.click('[data-s=rep_companies]');await p.waitForSelector('table');
+console.log('summary:',(await p.$$eval('#rb tbody tr',r=>r.map(x=>x.innerText.replace(/\s+/g,' ')))).join('|'));
+[d]=await Promise.all([p.waitForEvent('download'),p.click('[data-act=xlsx]')]);await d.saveAs('/tmp/comp.xlsx');
+await p.click('#rb .lnk[data-t=company]');await p.waitForSelector('table');
+console.log('statement:',(await p.$$eval('#rb tbody tr',r=>r.map(x=>x.innerText.replace(/\s+/g,' ')))).join('|'));
+await p.evaluate(()=>{window.print=()=>{};Acts.pdf()});console.log('printhead present',await p.locator('.printhead').count());
+await p.emulateMedia({media:'print'});await p.pdf({path:'/tmp/comp.pdf',format:'A4',landscape:true});
+console.log('errors',errs.length?errs:'none');await b.close()})();

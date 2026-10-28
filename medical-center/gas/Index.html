@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>برنامج إدارة المركز الطبي</title>
+<style>
+/* برنامج إدارة المركز الطبي — واجهة إنفوجرافيك سينمائية على خلفية بيضاء، الخط Times New Roman أسود */
+:root{
+  --ink:#000;
+  --line:#e7e9ef;
+  --soft:#f6f7fb;
+  --teal:#14c8b4;--teal2:#5ff5d6;
+  --orange:#ff8a1f;--orange2:#ffc46b;
+  --pink:#ff3d9a;--pink2:#ff9ac9;
+  --violet:#8a5cff;--violet2:#c4a8ff;
+  --blue:#2f9bff;--blue2:#8fd0ff;
+  --gold:#ffc400;--gold2:#ffe27a;
+  --red:#ff4d4d;--red2:#ff9a9a;
+  --lime:#8fd91a;--lime2:#d4f56b;
+  --cyan:#12c6e8;--cyan2:#7ff0ff;
+}
+*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000}
+html,body{margin:0;background:#fff;direction:rtl;font-size:17px;-webkit-text-size-adjust:100%}
+body{min-height:100vh;overflow-x:hidden}
+button,input,select,textarea{font:inherit;color:#000}
+a{color:#000}
+.hid{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.hidden{display:none!important}
+
+/* ---------- ألوان الكروت ---------- */
+.c-teal{--a:var(--teal2);--b:var(--teal);--g:rgba(20,200,180,.55)}
+.c-orange{--a:var(--orange2);--b:var(--orange);--g:rgba(255,138,31,.55)}
+.c-pink{--a:var(--pink2);--b:var(--pink);--g:rgba(255,61,154,.5)}
+.c-violet{--a:var(--violet2);--b:var(--violet);--g:rgba(138,92,255,.5)}
+.c-blue{--a:var(--blue2);--b:var(--blue);--g:rgba(47,155,255,.5)}
+.c-gold{--a:var(--gold2);--b:var(--gold);--g:rgba(255,196,0,.55)}
+.c-red{--a:var(--red2);--b:var(--red);--g:rgba(255,77,77,.5)}
+.c-lime{--a:var(--lime2);--b:var(--lime);--g:rgba(143,217,26,.55)}
+.c-cyan{--a:var(--cyan2);--b:var(--cyan);--g:rgba(18,198,232,.55)}
+
+/* ---------- الكرت المضيء ---------- */
+.glow{position:relative;overflow:hidden;border-radius:22px;cursor:pointer;border:0;
+  background:linear-gradient(135deg,var(--a),var(--b));
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7),0 12px 28px -8px var(--g),0 0 26px -4px var(--g);
+  animation:pulse 3.2s ease-in-out infinite alternate;
+  transition:transform .25s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s;
+  -webkit-tap-highlight-color:transparent;text-align:center}
+.glow::before{content:"";position:absolute;inset:-60% -30%;background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.55) 50%,transparent 60%);transform:translateX(-120%);animation:sheen 4.5s ease-in-out infinite}
+.glow::after{content:"";position:absolute;width:140%;aspect-ratio:1;border-radius:50%;left:50%;top:50%;translate:-50% -50%;scale:0;background:rgba(255,255,255,.65);opacity:0;pointer-events:none}
+.glow:hover{transform:translateY(-6px) scale(1.03);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.8),0 18px 36px -8px var(--g),0 0 40px 0 var(--g)}
+.glow:active,.glow.pop{transform:scale(.93)}
+.glow.pop::after{animation:ripple .45s ease-out}
+@keyframes pulse{from{filter:saturate(1)}to{filter:saturate(1.25) brightness(1.04)}}
+@keyframes sheen{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+@keyframes ripple{from{scale:0;opacity:.9}to{scale:1;opacity:0}}
+@keyframes zoomIn{from{opacity:0;transform:scale(.94) translateY(14px)}to{opacity:1;transform:none}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes spin{to{rotate:360deg}}
+
+/* ---------- الهيكل ---------- */
+#app{min-height:100vh}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 18px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--blue),var(--violet),var(--pink),var(--orange),var(--gold)) 1}
+.top .brand{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:bold;font-size:1.15rem}
+.top .brand svg{width:42px;height:42px}
+.top .grow{flex:1}
+.top .who{font-size:.95rem;display:flex;align-items:center;gap:8px}
+.top .who b{padding:2px 10px;border-radius:99px;background:linear-gradient(135deg,var(--gold2),var(--gold))}
+.main{padding:18px;max-width:1500px;margin:0 auto;animation:zoomIn .35s ease-out}
+h1,h2,h3{margin:.2em 0}
+.pagehead{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px}
+.pagehead h1{font-size:1.6rem;display:flex;align-items:center;gap:10px}
+.pagehead .ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 8px 18px -6px var(--g)}
+
+/* ---------- أزرار ---------- */
+.btn{border:0;border-radius:12px;padding:9px 18px;cursor:pointer;font-weight:bold;background:linear-gradient(135deg,var(--a,#e8ecf5),var(--b,#cfd6e6));box-shadow:0 6px 14px -6px var(--g,rgba(0,0,0,.3));transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.btn:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.95)}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn.sm{padding:5px 11px;font-size:.88rem;border-radius:9px}
+.btn.ghost{background:#fff;box-shadow:inset 0 0 0 2px var(--b,#cfd6e6)}
+
+/* ---------- نماذج ---------- */
+.panel{background:#fff;border-radius:20px;padding:16px;margin-bottom:16px;border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(40,40,80,.45)}
+.panel>h3{margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.panel.accent{border-top:5px solid var(--b)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.fld{display:flex;flex-direction:column;gap:4px;position:relative}
+.fld.full{grid-column:1/-1}
+.fld label{font-weight:bold;font-size:.95rem}
+.fld label i{color:var(--red);font-style:normal}
+.fld input,.fld select,.fld textarea,.bar input,.bar select{border:2px solid #dfe3ee;border-radius:12px;padding:9px 12px;background:#fff;width:100%;outline:0;transition:border-color .2s,box-shadow .2s}
+.fld input:focus,.fld select:focus,.fld textarea:focus,.bar input:focus,.bar select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(47,155,255,.18)}
+.fld input[readonly]{background:var(--soft);font-weight:bold}
+.dt{display:flex;gap:6px}.dt button{border:0;border-radius:12px;padding:0 12px;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--blue));font-size:1.1rem}
+.seg{display:flex;flex-wrap:wrap;gap:8px}
+.seg button{border:2px solid #dfe3ee;background:#fff;border-radius:12px;padding:8px 16px;cursor:pointer;font-weight:bold;transition:all .2s}
+.seg button.on{border-color:transparent;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 8px 18px -8px var(--g);transform:scale(1.05)}
+.imgfld{display:flex;align-items:center;gap:10px;border:2px dashed #cfd6e6;border-radius:12px;padding:8px}
+.imgfld .th{width:64px;height:64px;border-radius:10px;background:var(--soft) center/cover;display:grid;place-items:center;overflow:hidden;cursor:zoom-in;font-size:1.6rem}
+.imgfld .th img{width:100%;height:100%;object-fit:cover}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.sub{margin-top:12px;padding:12px;border-radius:16px;background:linear-gradient(135deg,rgba(255,196,0,.14),rgba(255,138,31,.12));border:2px solid rgba(255,138,31,.4);animation:zoomIn .3s}
+.sub h4{margin:0 0 8px}
+.ro-big{font-size:1.25rem;font-weight:bold}
+
+/* ---------- الاقتراحات ---------- */
+.sgbox{position:absolute;z-index:80;background:#fff;border-radius:12px;border:2px solid var(--blue);box-shadow:0 14px 30px -10px rgba(0,0,0,.35);max-height:240px;overflow:auto;min-width:200px}
+.sgbox div{padding:8px 12px;cursor:pointer}
+.sgbox div:hover,.sgbox div.on{background:linear-gradient(90deg,var(--blue2),var(--cyan2))}
+
+/* ---------- الجداول ---------- */
+.tools,.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.bar .seg button{padding:6px 14px}
+.bar input[type=text],.bar select{width:auto;min-width:150px}
+.tbl-wrap{overflow:auto;border-radius:16px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th{position:sticky;top:0;background:linear-gradient(135deg,var(--teal2),var(--blue2));padding:9px 10px;white-space:nowrap;text-align:right}
+td{padding:7px 10px;border-top:1px solid var(--line);white-space:nowrap}
+tbody tr:nth-child(even){background:#fafbff}
+tbody tr:hover{background:#fff7e0}
+tfoot td{font-weight:bold;background:linear-gradient(135deg,var(--gold2),var(--orange2));border-top:2px solid var(--orange)}
+.lnk{cursor:pointer;font-weight:bold;border-bottom:2px dotted var(--violet);padding-bottom:1px}
+.lnk:hover{background:var(--violet2)}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.85rem;font-weight:bold;background:linear-gradient(135deg,var(--a,#eee),var(--b,#ddd))}
+.empty{padding:30px;text-align:center;opacity:.7}
+.mini-img{width:34px;height:34px;border-radius:8px;object-fit:cover;cursor:zoom-in;vertical-align:middle}
+
+/* ---------- لوحة البداية ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+.kpi{padding:16px 10px;cursor:pointer}
+.kpi small{display:block;font-weight:bold}
+.kpi strong{display:block;font-size:1.9rem;margin-top:4px}
+.sect{display:flex;align-items:center;gap:10px;margin:20px 0 10px}
+.sect h2{font-size:1.3rem}
+.sect::after{content:"";flex:1;height:4px;border-radius:4px;background:linear-gradient(90deg,var(--teal),var(--violet),var(--pink),transparent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+.tile{padding:20px 10px;min-height:128px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.tile .ic{font-size:2.3rem;animation:floaty 3.4s ease-in-out infinite}
+.tile b{font-size:1.12rem}
+.tile .n{font-size:1.5rem;font-weight:bold}
+.tile.clinic{align-items:stretch;text-align:right;padding:14px 16px;min-height:118px}
+.tile.clinic .row{display:flex;justify-content:space-between;align-items:baseline}
+.tile.clinic .meter{height:8px;border-radius:8px;background:rgba(255,255,255,.55);overflow:hidden}
+.tile.clinic .meter i{display:block;height:100%;background:#000;opacity:.75;border-radius:8px;transition:width .8s}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:8px;font-size:.9rem}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-inline-end:5px;vertical-align:middle}
+.barrow{display:grid;grid-template-columns:130px 1fr 80px;gap:8px;align-items:center;margin:6px 0}
+.barrow .tr{height:16px;border-radius:10px;background:var(--soft);overflow:hidden}
+.barrow .tr i{display:block;height:100%;border-radius:10px;background:linear-gradient(90deg,var(--a),var(--b));box-shadow:0 0 12px var(--g);transition:width .8s}
+
+/* ---------- تسجيل الدخول ---------- */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px;
+  background:radial-gradient(circle at 15% 10%,rgba(20,200,180,.16),transparent 40%),radial-gradient(circle at 90% 20%,rgba(255,61,154,.14),transparent 40%),radial-gradient(circle at 50% 100%,rgba(255,196,0,.18),transparent 45%),#fff}
+.login .box{width:min(430px,100%);text-align:center;animation:zoomIn .5s}
+.login .logo svg{width:110px;height:110px;animation:floaty 4s ease-in-out infinite;filter:drop-shadow(0 10px 14px rgba(255,61,154,.35))}
+.login h1{font-size:1.7rem;margin:6px 0 12px}
+.clockbox{display:flex;align-items:center;justify-content:center;gap:18px;margin:8px 0 16px;flex-wrap:wrap}
+.clockbox svg{width:150px;height:150px;filter:drop-shadow(0 8px 14px rgba(47,155,255,.35))}
+.digital{font-size:2.2rem;font-weight:bold;letter-spacing:2px;direction:ltr}
+.dateline{font-size:1.1rem;font-weight:bold}
+.login form{display:grid;gap:10px;text-align:right}
+.login .glow.btnbig{padding:12px;font-size:1.1rem;font-weight:bold;border-radius:16px}
+.linkbtn{background:none;border:0;cursor:pointer;font-weight:bold;text-decoration:underline;margin-top:10px}
+
+/* ---------- نوافذ ---------- */
+.modal{position:fixed;inset:0;z-index:100;background:rgba(20,20,40,.45);display:grid;place-items:center;padding:16px;animation:zoomIn .2s}
+.modal .m{max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:20px;max-width:min(560px,100%);box-shadow:0 30px 60px -20px rgba(0,0,0,.5);border-top:6px solid var(--violet)}
+.modal .m img{max-width:100%;max-height:80vh;border-radius:12px;display:block}
+.toast{position:fixed;bottom:20px;left:50%;translate:-50% 0;z-index:200;padding:12px 22px;border-radius:14px;font-weight:bold;background:linear-gradient(135deg,var(--lime2),var(--lime));box-shadow:0 14px 30px -10px rgba(0,0,0,.4);animation:zoomIn .25s}
+.toast.err{background:linear-gradient(135deg,var(--red2),var(--red))}
+.spinner{width:42px;height:42px;border-radius:50%;border:5px solid var(--violet2);border-top-color:var(--pink);animation:spin .8s linear infinite;margin:40px auto}
+.perm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+.perm-grid label{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:10px;background:var(--soft);cursor:pointer}
+.perm-grid input{width:auto}
+
+@media(max-width:700px){html,body{font-size:16px}.main{padding:12px}.top .who span{display:none}.barrow{grid-template-columns:90px 1fr 64px}}
+@media print{@page{size:A4 landscape;margin:10mm}html,body{font-size:11px}table{font-size:10px}td,th{white-space:normal}.printhead{display:block!important;text-align:center;margin-bottom:8px;border-bottom:3px solid #000}.sgbox{display:none}.top,.tools,.bar,.actions,.noprint,.toast{display:none!important}.main{padding:0;animation:none}.panel{box-shadow:none;break-inside:avoid}.glow{animation:none;box-shadow:none;border:1px solid #999}.glow::before{display:none}.tbl-wrap{overflow:visible}th{position:static}}
+@media screen{.printhead{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.newuser{position:fixed;top:14px;inset-inline-start:14px;width:42px;height:42px;border-radius:50%;border:2px solid #ff3d9a;background:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 0 12px rgba(255,61,154,.5);z-index:5}
+.newuser sup{font-size:.8rem;color:#ff3d9a;font-weight:bold}
+.hidden{display:none!important}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>window.API_MODE='gas';</script>
+<script>
+/* طبقة الاتصال: php | gas | local (تجريبي داخل المتصفح)
+   نفس الأوامر تعمل في الثلاثة: status, register, login, me, logout, list, save, delete, upload, file */
+(function(){
+'use strict';
+const MODE = window.API_MODE || 'php';
+let token = null;
+try { token = sessionStorage.getItem('mc_token'); } catch(e){}
+
+async function call(action, payload){
+  const body = Object.assign({action, token}, payload||{});
+  let res;
+  if (MODE === 'gas') {
+    const txt = await new Promise((ok, fail) => {
+      google.script.run.withSuccessHandler(ok).withFailureHandler(e => fail(new Error((e && e.message) || String(e)))).handle(JSON.stringify(body));
+    });
+    res = JSON.parse(txt);
+  } else if (MODE === 'local') {
+    res = await Local.handle(JSON.parse(JSON.stringify(body)));
+  } else {
+    const url = server();
+    const gasRemote = /^https:\/\/script\.google(usercontent)?\.com\//.test(url);
+    const r = await fetch(url, {method:'POST', redirect:'follow', headers:{'Content-Type': gasRemote ? 'text/plain;charset=utf-8' : 'application/json'}, body: JSON.stringify(body)});
+    const t = await r.text();
+    try { res = JSON.parse(t); } catch(e){ throw new Error('استجابة غير صالحة من الخادم'); }
+  }
+  if (res.error) { const e = new Error(res.error); e.code = res.code; throw e; }
+  return res;
+}
+function server(){ let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || window.API_URL || 'api.php'; }
+function setServer(u){ try { u ? localStorage.setItem('mc_server', u) : localStorage.removeItem('mc_server'); } catch(e){} setToken(null); }
+function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t) : sessionStorage.removeItem('mc_token'); } catch(e){} }
+window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
+
+/* ====================== خادم تجريبي داخل المتصفح ====================== */
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses'];
+const LOOKUP = ['doctors','services','patients','companies'];
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues']};
+const FIELDS = {
+  users:'username,nationalId,birthDate,perms,isAdmin,active',
+  staff:'code,name,nationalId,idPhoto,photo',
+  doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
+  services:'type,name,price,tax',
+  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes',
+  patients:'name,phone',
+  companies:'name,fee,contact',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
+  expenses:'date,category,amount,notes,doctor'
+};
+const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial'.split(','));
+const DATES = new Set(['date','hireDate','birthDate']);
+const AUTO = {staff:'code', doctors:'code', visits:'serial'};
+
+const mem = {};
+const store = {
+  get(k){ try { const v = localStorage.getItem(k); if (v) return JSON.parse(v); } catch(e){ if (mem[k]) return JSON.parse(mem[k]); } return null; },
+  set(k, v){ const s = JSON.stringify(v); try { localStorage.setItem(k, s); } catch(e){ mem[k] = s; } }
+};
+const rid = () => Array.from(crypto.getRandomValues(new Uint8Array(9)), b => b.toString(16).padStart(2,'0')).join('');
+async function sha(s){
+  if (crypto.subtle) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return Array.from(new Uint8Array(b), x => x.toString(16).padStart(2,'0')).join(''); }
+  let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return String(h);
+}
+const validDate = s => { if (!/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return false; const [y,m,d] = s.split('/').map(Number); const t = new Date(y, m-1, d); return t.getFullYear()===y && t.getMonth()===m-1 && t.getDate()===d; };
+const has = (u, p) => u.isAdmin || (u.perms || []).includes(p);
+
+const Local = {
+  db(){ return store.get('mc_db') || {rec:{}, files:{}, tokens:{}, fails:{}}; },
+  save(db){ store.set('mc_db', db); },
+  async handle(b){
+    const db = this.db();
+    const fail = (error, code) => ({error, code});
+    const A = b.action;
+    if (A === 'status') return {hasUsers: (db.rec.users || []).length > 0};
+    if (A === 'register') {
+      const users = db.rec.users || (db.rec.users = []);
+      const u = String(b.username || '').trim(), p = String(b.password || '');
+      if (u.length < 3 || p.length < 4) return fail('اسم المستخدم 3 أحرف على الأقل وكلمة السر 4 أحرف على الأقل');
+      if (users.some(x => x.username.toLowerCase() === u.toLowerCase())) return fail('اسم المستخدم موجود بالفعل');
+      const first = users.length === 0, salt = rid();
+      const rec = {id: rid(), username: u, salt, hash: await sha(salt + p), nationalId: String(b.nationalId || '').slice(0, 20), birthDate: validDate(b.birthDate) ? b.birthDate : '', perms: first ? ['*'] : [], isAdmin: first, active: first, createdAt: new Date().toISOString()};
+      users.push(rec);
+      if (first && window.SEED) this.seed(db);
+      this.save(db);
+      return {ok: true, pending: !first};
+    }
+    if (A === 'login') {
+      const users = db.rec.users || [], u = String(b.username || '').trim().toLowerCase();
+      const f = db.fails[u] || {n: 0, t: 0};
+      if (f.n >= 5 && Date.now() - f.t < 600000) return fail('محاولات كثيرة، حاول بعد 10 دقائق');
+      const rec = users.find(x => x.username.toLowerCase() === u);
+      if (!rec || rec.hash !== await sha(rec.salt + String(b.password || ''))) { db.fails[u] = {n: f.n + 1, t: Date.now()}; this.save(db); return fail('اسم المستخدم أو كلمة السر غير صحيحة'); }
+      if (!rec.active) return fail('حسابك بانتظار موافقة المدير', 'pending');
+      delete db.fails[u];
+      const t = rid() + rid(); db.tokens[t] = {id: rec.id, exp: Date.now() + 12 * 3600e3}; this.save(db);
+      return {token: t, user: this.pub(rec)};
+    }
+    const tk = db.tokens[b.token];
+    const me = tk && tk.exp > Date.now() && (db.rec.users || []).find(x => x.id === tk.id && x.active);
+    if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
+    if (A === 'me') return {user: this.pub(me)};
+    if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
+    const e = b.entity;
+    if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
+    if (A === 'list') {
+      const readable = me.isAdmin || (e !== 'users' && (e === 'staff' ? has(me, 'staff') : (LOOKUP.includes(e) || has(me, e) || has(me, 'dashboard') || has(me, 'dues') || me.perms.some(p => p.startsWith('rep_')))));
+      if (!readable) return fail('غير مصرح', 'forbidden');
+      let items = (db.rec[e] || []).slice();
+      if (b.from) items = items.filter(r => !r.date || r.date >= b.from);
+      if (b.to) items = items.filter(r => !r.date || r.date <= b.to);
+      return {items: items.map(r => e === 'users' ? this.pub(r) : r)};
+    }
+    if (A === 'save' || A === 'delete') {
+      const ok = me.isAdmin || (e !== 'users' && (WRITE[e] || []).some(p => has(me, p)));
+      if (!ok) return fail('غير مصرح', 'forbidden');
+      const list = db.rec[e] || (db.rec[e] = []);
+      if (A === 'delete') {
+        const r = list.find(x => x.id === b.id); if (!r) return fail('غير موجود');
+        if (e === 'users' && (r.id === me.id || (r.isAdmin && list.filter(x => x.isAdmin && x.active).length < 2))) return fail('لا يمكن حذف هذا المستخدم');
+        db.rec[e] = list.filter(x => x.id !== b.id); this.save(db); return {ok: true};
+      }
+      const src = b.record || {}, out = {};
+      for (const k of FIELDS[e].split(',')) {
+        if (!(k in src)) continue; let v = src[k];
+        if (k === 'perms') v = Array.isArray(v) ? v.map(String).slice(0, 60) : [];
+        else if (k === 'isAdmin' || k === 'active') v = !!v;
+        else if (NUMS.has(k)) v = Number(v) || 0;
+        else { v = String(v == null ? '' : v).trim().slice(0, 500); if (DATES.has(k) && v && !validDate(v)) return fail('صيغة التاريخ يجب أن تكون yyyy/mm/dd'); }
+        out[k] = v;
+      }
+      let rec = src.id && list.find(x => x.id === src.id);
+      if (e === 'users') {
+        const nm = String(out.username || '').trim();
+        if (nm.length < 3) return fail('اسم المستخدم قصير');
+        if (list.some(x => x.id !== src.id && x.username.toLowerCase() === nm.toLowerCase())) return fail('اسم المستخدم موجود بالفعل');
+        if (!rec && String(src.password || '').length < 4) return fail('كلمة السر 4 أحرف على الأقل');
+        if (rec && (rec.isAdmin && (!out.isAdmin || !out.active)) && list.filter(x => x.isAdmin && x.active).length < 2) return fail('يجب بقاء مدير واحد على الأقل');
+        if (src.password) { out.salt = rid(); out.hash = await sha(out.salt + src.password); }
+      } else {
+        if (!String(out.name || out.date || out.category || out.type || '').trim()) return fail('بيانات ناقصة');
+        if (e !== 'users' && AUTO[e] && !rec) out[AUTO[e]] = list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0) + 1;
+        if (rec && AUTO[e]) out[AUTO[e]] = rec[AUTO[e]];
+      }
+      if (rec) Object.assign(rec, out, {updatedAt: new Date().toISOString()});
+      else { rec = Object.assign({id: rid(), createdAt: new Date().toISOString()}, out); if (e === 'visits' || e === 'expenses') rec.registeredBy = me.username; list.push(rec); }
+      this.save(db);
+      return {record: e === 'users' ? this.pub(rec) : rec};
+    }
+    if (A === 'upload') {
+      if (!['image/jpeg','image/png','image/webp'].includes(b.mime)) return fail('يسمح بالصور فقط');
+      if (String(b.data || '').length > 5.5e6) return fail('الصورة كبيرة جداً');
+      const id = rid(); db.files[id] = 'data:' + b.mime + ';base64,' + b.data; this.save(db); return {file: id};
+    }
+    if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
+    return fail('أمر غير معروف');
+  },
+  pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
+  seed(db){
+    const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };
+    mk('services', S.services); mk('doctors', S.doctors); mk('companies', S.companies); mk('staff', S.staff);
+  }
+};
+})();
+
+</script>
+<script>
+/* ============ النواة: أدوات، حالة، واجهة عامة، دخول، شاشة رئيسية ============ */
+'use strict';
+const CENTER = 'عيادات الزهراء الطبية';
+const $ = (s, e = document) => e.querySelector(s);
+const $$ = (s, e = document) => Array.from(e.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtN = n => new Intl.NumberFormat('en-US', {maximumFractionDigits: 2}).format(+n || 0);
+const pad = n => String(n).padStart(2, '0');
+const toStr = d => `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`;
+const today = () => toStr(new Date());
+const DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+const validDate = s => { if (!/^\d{4}\/\d{2}\/\d{2}$/.test(s || '')) return false; const [y,m,d] = s.split('/').map(Number); const t = new Date(y, m-1, d); return t.getFullYear()===y && t.getMonth()===m-1 && t.getDate()===d; };
+const dayName = s => { if (!validDate(s)) return ''; const [y,m,d] = s.split('/').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
+const CAT = {cash:'نقدي', company:'شركة', committee:'لجنة', insurance:'تأمين'};
+const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange'};
+const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
+const SVTYPE = {clinic:'عيادة', radiology:'أشعة', lab:'تحاليل'};
+const EXTRA_CLINICS = ['الأشعة','التحاليل'];
+const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
+
+const SCREENS = [
+  {k:'visits', t:'الزيارات', i:'🩺', c:'teal'},
+  {k:'patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
+  {k:'doctors', t:'الأطباء', i:'👨‍⚕️', c:'violet'},
+  {k:'dues', t:'مستحقات الأطباء', i:'💵', c:'lime'},
+  {k:'services', t:'الخدمات', i:'💉', c:'orange'},
+  {k:'operations', t:'العمليات', i:'🏥', c:'red'},
+  {k:'companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
+  {k:'staff', t:'العاملين', i:'👥', c:'lime'},
+  {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
+];
+const REPS = [
+  {k:'rep_totals', t:'الإجماليات بالتفصيل', i:'🧮', c:'gold'},
+  {k:'rep_daily', t:'ملخص اليوم والإيرادات', i:'📈', c:'teal'},
+  {k:'rep_doctors', t:'حسابات الأطباء', i:'👨‍⚕️', c:'violet'},
+  {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
+  {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
+  {k:'rep_patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
+  {k:'rep_services', t:'الخدمات والزيارات', i:'💉', c:'pink'},
+  {k:'rep_operations', t:'العمليات', i:'🏥', c:'red'},
+  {k:'rep_expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'rep_staff', t:'نشاط مسئولي التسجيل', i:'👥', c:'lime'}
+];
+const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
+const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
+
+const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const Acts = {};
+let clockTimer = null;
+
+/* ---------- صلاحيات ---------- */
+const can = p => S.user && (S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
+const anyRep = () => REPS.some(r => can(r.k));
+
+/* ---------- واجهة عامة ---------- */
+function toast(msg, err) {
+  const t = document.createElement('div'); t.className = 'toast' + (err ? ' err' : ''); t.textContent = msg; document.body.appendChild(t);
+  setTimeout(() => t.remove(), err ? 4500 : 2200);
+}
+function modal(html, onClose) {
+  const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = `<div class="m">${html}</div>`;
+  m.addEventListener('click', e => { if (e.target === m) { m.remove(); onClose && onClose(); } });
+  document.body.appendChild(m); return m;
+}
+function confirmBox(msg) {
+  return new Promise(ok => {
+    const m = modal(`<p style="font-size:1.15rem;font-weight:bold">${esc(msg)}</p><div class="actions"><button class="btn c-red" id="cy">نعم، متأكد</button><button class="btn ghost" id="cn">إلغاء</button></div>`, () => ok(false));
+    $('#cy', m).onclick = () => { m.remove(); ok(true); }; $('#cn', m).onclick = () => { m.remove(); ok(false); };
+  });
+}
+const spin = () => '<div class="spinner"></div>';
+async function guard(btn, fn) {
+  if (btn) btn.disabled = true;
+  try { return await fn(); }
+  catch (e) { if (e.code === 'auth') { logoutLocal(); } toast(e.message || 'حدث خطأ', true); }
+  finally { if (btn) btn.disabled = false; }
+}
+
+/* ---------- الصور ---------- */
+const imgCache = new Map();
+async function fileURL(id) {
+  if (!id) return '';
+  if (imgCache.has(id)) return imgCache.get(id);
+  const r = await API.call('file', {id}); imgCache.set(id, r.dataUrl); return r.dataUrl;
+}
+async function hydrateImgs(root = document) {
+  for (const el of $$('[data-fid]', root)) {
+    const id = el.dataset.fid; if (!id || el.dataset.done === id) continue; el.dataset.done = id;
+    try { const u = await fileURL(id); if (el.tagName === 'IMG') el.src = u; else { el.innerHTML = `<img src="${u}" alt="">`; } } catch (e) { el.textContent = '⚠️'; }
+  }
+}
+async function compressImage(file) {
+  const url = URL.createObjectURL(file);
+  const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('تعذر قراءة الصورة')); i.src = url; });
+  const k = Math.min(1, 1280 / Math.max(img.width, img.height)), w = Math.round(img.width * k), h = Math.round(img.height * k);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; c.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+  return c.toDataURL('image/jpeg', 0.8).split(',')[1];
+}
+Acts.lightbox = el => { const id = el.dataset.fid; if (!id) return; fileURL(id).then(u => modal(`<img src="${u}" alt="">`)); };
+Acts.pickimg = el => $('input[type=file]', el.closest('.imgfld')).click();
+
+document.addEventListener('change', async e => {
+  const f = e.target; if (f.type !== 'file' || !f.files[0]) return;
+  const box = f.closest('.imgfld'); if (!box) return;
+  await guard(null, async () => {
+    toast('جاري رفع الصورة…');
+    const data = await compressImage(f.files[0]);
+    const r = await API.call('upload', {mime: 'image/jpeg', data});
+    imgCache.set(r.file, 'data:image/jpeg;base64,' + data);
+    $('input[type=hidden]', box).value = r.file; const th = $('.th', box); th.dataset.fid = r.file; th.dataset.done = ''; hydrateImgs(box);
+    toast('تم إرفاق الصورة');
+  });
+  f.value = '';
+});
+
+/* ---------- حقول النماذج ---------- */
+function dateFld(name, val, extra = '') {
+  return `<div class="dt"><input type="text" name="${name}" value="${esc(val || '')}" inputmode="numeric" placeholder="yyyy/mm/dd" maxlength="10" data-dt ${extra}><button type="button" data-act="pickdate" title="اختيار من التقويم">📅</button><input type="date" class="hid" tabindex="-1"></div>`;
+}
+Acts.pickdate = el => { const d = $('input[type=date]', el.parentNode); const t = $('[data-dt]', el.parentNode).value; if (validDate(t)) d.value = t.replace(/\//g, '-'); try { d.showPicker ? d.showPicker() : d.click(); } catch (e) { d.click(); } };
+document.addEventListener('change', e => {
+  const d = e.target; if (d.type !== 'date' || !d.value) return;
+  const t = $('[data-dt]', d.parentNode); if (!t) return; t.value = d.value.replace(/-/g, '/'); t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true}));
+});
+document.addEventListener('input', e => {
+  const t = e.target; if (!t.matches || !t.matches('[data-dt]')) return;
+  let d = t.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 4); if (d.length > 4) o += '/' + d.slice(4, 6); if (d.length > 6) o += '/' + d.slice(6, 8);
+  if (t.value !== o) t.value = o;
+});
+
+function fieldHTML(f, v) {
+  const val = v == null ? '' : v, req = f.req ? '<i>*</i>' : '', nm = `name="${f.k}"`;
+  let inner;
+  switch (f.t) {
+    case 'date': inner = dateFld(f.k, val); break;
+    case 'num': inner = `<input type="number" step="any" ${nm} value="${esc(val)}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>`; break;
+    case 'sel': inner = `<select ${nm}>${(typeof f.opts === 'function' ? f.opts() : f.opts).map(o => { const ov = o.v != null ? o.v : o, ol = o.l != null ? o.l : o; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? 'selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`; break;
+    case 'area': inner = `<textarea ${nm} rows="2">${esc(val)}</textarea>`; break;
+    case 'ro': inner = `<input type="text" ${nm} value="${esc(val)}" readonly tabindex="-1">`; break;
+    case 'img': inner = `<div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(val)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 إرفاق صورة</button><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
+    case 'seg': inner = `<div class="seg" data-seg="${f.k}">${f.opts.map(o => `<button type="button" data-act="seg" data-v="${esc(o.v)}" class="c-${o.c || 'blue'} ${o.v === val ? 'on' : ''}">${esc(o.l)}</button>`).join('')}<input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
+    case 'chk': inner = `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${nm} ${val ? 'checked' : ''}> ${esc(f.l2 || 'نعم')}</label>`; break;
+    default: inner = `<input type="${f.pw ? 'password' : 'text'}" ${nm} value="${esc(val)}" ${f.sg ? `data-sg="${f.sg}" autocomplete="off"` : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''} ${f.num ? 'inputmode="numeric"' : ''}>`;
+  }
+  return `<div class="fld ${f.w === 'full' || f.t === 'area' ? 'full' : ''}" data-f="${f.k}"><label>${esc(f.l)} ${req}</label>${inner}</div>`;
+}
+Acts.seg = el => {
+  const box = el.closest('[data-seg]'); $$('button', box).forEach(b => b.classList.toggle('on', b === el));
+  const h = $('input', box); h.value = el.dataset.v; h.dispatchEvent(new Event('change', {bubbles: true}));
+};
+function readForm(root) {
+  const o = {};
+  $$('[name]', root).forEach(el => { o[el.name] = el.type === 'checkbox' ? el.checked : (el.value || '').trim(); });
+  return o;
+}
+function setForm(root, vals) {
+  for (const [k, v] of Object.entries(vals)) { const el = $(`[name="${k}"]`, root); if (!el) continue; if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; if (el.type === 'hidden' && el.closest('[data-seg]')) $$('button', el.closest('[data-seg]')).forEach(b => b.classList.toggle('on', b.dataset.v === v)); if (el.type === 'hidden' && el.closest('.imgfld')) { const th = $('.th', el.closest('.imgfld')); th.dataset.fid = v || ''; th.dataset.done = ''; th.innerHTML = '🖼️'; } }
+  hydrateImgs(root);
+}
+
+/* ---------- التنبؤ بالكتابة ---------- */
+let sgBox = null, sgIdx = -1, sgInput = null;
+function uniq(arr) { const m = new Map(); arr.forEach(x => { x = String(x == null ? '' : x).trim(); if (x) m.set(x, (m.get(x) || 0) + 1); }); return [...m.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]); }
+const SG = {
+  patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
+  doctors: () => uniq(S.data.doctors.map(d => d.name)),
+  clinics: () => clinicNames(),
+  companies: () => uniq(S.data.companies.map(c => c.name)),
+  services: () => uniq(S.data.services.map(s => s.name)),
+  expcats: () => uniq([...S.data.expenses.map(x => x.category), ...SEED_EXP]),
+  bayan: () => { const cl = ($('[name=clinic]') || {}).value; const t = cl === 'الأشعة' ? 'radiology' : cl === 'التحاليل' ? 'lab' : null; return uniq([...S.data.services.filter(s => t ? s.type === t : s.type !== 'clinic').map(s => s.name), ...S.data.visits.map(v => v.service)]); }
+};
+function sgList(key) { if (SG[key]) return SG[key](); const [e, f] = key.split('.'); return uniq((S.data[e] || []).map(r => r[f])); }
+function sgClose() { if (sgBox) { sgBox.remove(); sgBox = null; sgIdx = -1; } }
+function sgOpen(inp) {
+  const q = inp.value.trim().toLowerCase(); sgInput = inp;
+  let list = sgList(inp.dataset.sg);
+  if (q) list = [...list.filter(x => x.toLowerCase().startsWith(q)), ...list.filter(x => !x.toLowerCase().startsWith(q) && x.toLowerCase().includes(q))];
+  list = list.filter(x => x.toLowerCase() !== q).slice(0, 8);
+  sgClose(); if (!list.length) return;
+  sgBox = document.createElement('div'); sgBox.className = 'sgbox';
+  const r = inp.getBoundingClientRect(); sgBox.style.cssText = `top:${r.bottom + scrollY + 2}px;left:${r.left + scrollX}px;width:${r.width}px`;
+  sgBox.innerHTML = list.map(x => `<div>${esc(x)}</div>`).join(''); document.body.appendChild(sgBox);
+  sgBox.addEventListener('mousedown', e => { const d = e.target.closest('div'); if (!d) return; e.preventDefault(); sgPick(d.textContent); });
+}
+function sgPick(v) { sgInput.value = v; sgClose(); sgInput.dispatchEvent(new Event('input', {bubbles: true})); sgInput.dispatchEvent(new Event('change', {bubbles: true})); }
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-sg]')) sgOpen(e.target); });
+document.addEventListener('focusin', e => { if (e.target.matches && e.target.matches('[data-sg]')) sgOpen(e.target); });
+document.addEventListener('focusout', () => setTimeout(sgClose, 120));
+document.addEventListener('keydown', e => {
+  if (!sgBox || !e.target.matches('[data-sg]')) return;
+  const items = $$('div', sgBox);
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sgIdx = (sgIdx + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length; items.forEach((d, i) => d.classList.toggle('on', i === sgIdx)); }
+  else if (e.key === 'Enter' && sgIdx >= 0) { e.preventDefault(); sgPick(items[sgIdx].textContent); }
+  else if (e.key === 'Escape') sgClose();
+});
+
+/* ---------- مخططات إنفوجرافيك ---------- */
+function donut(items, size = 190) {
+  const tot = items.reduce((s, i) => s + i.v, 0), R = 70, C = 2 * Math.PI * R; let off = 0;
+  const segs = tot ? items.filter(i => i.v > 0).map(i => { const len = i.v / tot * C; const s = `<circle r="${R}" cx="100" cy="100" fill="none" stroke="${COLHEX[i.c] || i.c}" stroke-width="30" stroke-dasharray="${len} ${C - len}" stroke-dashoffset="${-off}" transform="rotate(-90 100 100)"><title>${esc(i.l)}: ${fmtN(i.v)}</title></circle>`; off += len; return s; }).join('') : '';
+  return `<div style="text-align:center"><svg viewBox="0 0 200 200" width="${size}" height="${size}"><circle r="${R}" cx="100" cy="100" fill="none" stroke="#eef0f6" stroke-width="30"/>${segs}<text x="100" y="96" text-anchor="middle" font-size="13" font-family="Times New Roman">الإجمالي</text><text x="100" y="120" text-anchor="middle" font-size="22" font-weight="bold" font-family="Times New Roman">${fmtN(tot)}</text></svg><div class="legend">${items.map(i => `<span><i style="background:${COLHEX[i.c] || i.c}"></i>${esc(i.l)}: ${fmtN(i.v)}</span>`).join('')}</div></div>`;
+}
+function bars(items, click) {
+  const mx = Math.max(1, ...items.map(i => i.v));
+  return items.length ? items.map((i, n) => `<div class="barrow c-${i.c || ALL_COLORS[n % 9]}"><span ${click ? `class="lnk" data-act="${click}" data-v="${esc(i.l)}"` : ''}>${esc(i.l)}</span><div class="tr"><i style="width:${Math.max(2, i.v / mx * 100)}%"></i></div><b>${fmtN(i.v)}</b></div>`).join('') : '<div class="empty">لا توجد بيانات</div>';
+}
+
+/* ---------- الحسابات (مطابقة لمعادلات ملف الإكسيل) ---------- */
+const clinicNames = () => S.data.services.filter(s => s.type === 'clinic').map(s => s.name);
+const clinicOf = n => S.data.services.find(s => s.type === 'clinic' && s.name === n);
+const visitsIn = (f, t) => S.data.visits.filter(v => v.date >= f && v.date <= t);
+function findDoctor(v) {
+  const D = S.data.doctors;
+  return D.find(d => d.id === v.doctorId) || D.find(d => d.name === v.doctor && d.clinic === v.clinic) || D.find(d => d.name === v.doctor);
+}
+function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
+function accounts(from, to) {
+  const map = new Map();
+  for (const v of visitsIn(from, to)) {
+    const d = findDoctor(v), key = d ? d.id : '?|' + (v.doctor || '') + '|' + (v.clinic || '');
+    let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (v.doctor || '—'), d ? d.clinic : v.clinic); map.set(key, r); }
+    const val = +v.value || 0, tx = +v.tax || 0; r.visits++;
+    if (v.visitType === 'كشف') r.kosf += val; if (v.visitType === 'متنوع') r.mixed += val; if (v.visitType === 'استشارة') r.consult++;
+    if (v.category === 'committee') r.committee += val; if (v.category === 'company') r.company += val; if (v.category === 'insurance') r.insurance += val;
+    r.total += val; r.tax += tx;
+    const dm = r.dayMap.get(v.date) || {rev: 0, tax: 0}; dm.rev += val; dm.tax += tx; r.dayMap.set(v.date, dm);
+  }
+  for (const r of map.values()) {
+    const pct = r.doc ? +r.doc.percent || 0 : 0, fx = r.doc ? +r.doc.fixed || 0 : 0;
+    for (const dm of r.dayMap.values()) { const due = (dm.rev - dm.tax) * pct / 100; r.due += due; r.fixed += fx; r.right += Math.max(fx, due); }
+    r.cash = r.kosf + r.mixed - r.committee - r.company - r.insurance;
+  }
+  for (const o of S.data.operations.filter(o => o.date >= from && o.date <= to)) {
+    const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor);
+    const key = d ? d.id : '?|' + (o.doctor || '') + '|' + (o.clinic || '');
+    let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (o.doctor || '—'), d ? d.clinic : o.clinic); r.cash = 0; map.set(key, r); }
+    r.ops += (+o.value || 0) * (+(o.doctorPercent != null && o.doctorPercent !== '' ? o.doctorPercent : (d ? d.opPercent : 0)) || 0) / 100;
+  }
+  return [...map.values()].sort((a, b) => (a.clinic || '').localeCompare(b.clinic || '', 'ar') || a.name.localeCompare(b.name, 'ar'));
+}
+function lastDue(doc) {
+  const vs = S.data.visits.filter(v => { const d = findDoctor(v); return d && d.id === doc.id; });
+  if (!vs.length) return null;
+  const last = vs.reduce((m, v) => v.date > m ? v.date : m, ''); const a = accounts(last, last).find(r => r.doc && r.doc.id === doc.id);
+  return a ? {date: last, amount: a.right} : null;
+}
+function lastVisitOf(patient, phone, beforeId, beforeDate) {
+  const vs = S.data.visits.filter(v => v.id !== beforeId && (!beforeDate || v.date <= beforeDate) && ((patient && v.patient === patient) || (phone && v.phone === phone)));
+  return vs.sort((a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))))[0] || null;
+}
+/* الشركات: قيمة الكشف بالشركة (من شاشة شركات التأمين) هي أساس نسبة تحمل المريض */
+const coFee = n => +((S.data.companies.find(c => c.name === n) || {}).fee) || 0;
+const coVal = v => (v.visitType === 'كشف' && coFee(v.company) > 0) ? coFee(v.company) : (+v.value || 0);
+const coShare = v => coVal(v) * (+v.patientPct || 0) / 100;
+const coDue = v => coVal(v) - coShare(v);
+/* إيراد اليوم = كل الزيارات؛ الصافي يُخصم منه الشركات واللجنة وقيمة نسبة خصم التأمين فقط */
+const expOther = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && !x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
+const docPaid = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
+const isCash = v => (v.category || 'cash') === 'cash';
+const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
+const patientShare = v => v.category === 'company' ? coShare(v) : 0;
+const discountAmt = v => v.category === 'insurance' ? (+v.value || 0) * (+v.discount || 0) / 100 : 0;
+
+/* ---------- شريط التاريخ المشترك ---------- */
+const getRange = () => { const r = S.rng; if (r.mode === 'all') return {from: '0000/00/00', to: '9999/99/99'}; return r.mode === 'today' ? {from: today(), to: today()} : r.mode === 'day' ? {from: r.a, to: r.a} : {from: r.a <= r.b ? r.a : r.b, to: r.a <= r.b ? r.b : r.a}; };
+const rangeLabel = () => { if (S.rng.mode === 'all') return 'كل الفترات'; const {from, to} = getRange(); return from === to ? `${dayName(from)} ${from}` : `من ${from} إلى ${to}`; };
+function rangeBar() {
+  const r = S.rng;
+  return `<div class="bar noprint" data-rangebar><div class="seg">${[['today','اليوم'],['day','تاريخ محدد'],['range','من – إلى'],['all','الكل']].map(([k, l]) => `<button class="c-teal ${r.mode === k ? 'on' : ''}" data-act="rmode" data-v="${k}">${l}</button>`).join('')}</div>${r.mode === 'day' || r.mode === 'range' ? `<span>${r.mode === 'range' ? 'من' : 'التاريخ'}</span>${dateFld('rA', r.a)}` : ''}${r.mode === 'range' ? `<span>إلى</span>${dateFld('rB', r.b)}` : ''}<b>${esc(rangeLabel())}</b></div>`;
+}
+Acts.rmode = el => { S.rng.mode = el.dataset.v; if (S.rng.mode !== 'today' && !validDate(S.rng.a)) S.rng.a = today(); if (!validDate(S.rng.b)) S.rng.b = today(); refreshView(); };
+document.addEventListener('change', e => {
+  const n = e.target.name; if ((n !== 'rA' && n !== 'rB') || !e.target.matches('[data-dt]')) return;
+  if (!validDate(e.target.value)) return; S.rng[n === 'rA' ? 'a' : 'b'] = e.target.value; refreshView(true);
+});
+function refreshView(keepFocus) { if (S.view && S.view.refresh) S.view.refresh(); else render(); }
+
+/* ---------- التنقل ---------- */
+function nav(screen, arg) { S.stack.push({screen: S.screen, arg: S.arg}); S.screen = screen; S.arg = arg; render(); scrollTo(0, 0); }
+function back() { const p = S.stack.pop(); if (!p) return home(); S.screen = p.screen; S.arg = p.arg; render(); }
+function home() { S.stack = []; S.screen = 'home'; S.arg = null; render(); }
+Acts.home = () => home(); Acts.back = () => back();
+Acts.logout = async () => { try { await API.call('logout'); } catch (e) {} logoutLocal(); };
+function logoutLocal() { API.setToken(null); S.user = null; S.stack = []; S.screen = 'home'; render(); }
+Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, el.dataset.arg); }, 260); };
+
+let syncSig = '';
+function startSync() {
+  if (window.__sync) return; window.__sync = setInterval(async () => {
+    if (!S.user || document.hidden || document.querySelector('.modal')) return;
+    const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
+    try {
+      const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
+    } catch (e) { if (e.code === 'auth') logoutLocal(); }
+  }, 15000);
+}
+async function loadAll(ents) {
+  await Promise.all((ents || Object.keys(S.data)).map(async e => {
+    try { S.data[e] = (await API.call('list', {entity: e})).items; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
+  }));
+}
+
+const LOGO = `<svg viewBox="0 0 120 120" aria-label="شعار المركز"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ac9"/><stop offset="1" stop-color="#ff3d9a"/></linearGradient><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ff5d6"/><stop offset="1" stop-color="#2f9bff"/></linearGradient><linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient></defs><g transform="translate(60 60)"><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(0)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(72)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg2)" transform="rotate(144)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(216)" opacity=".85"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(288)" opacity=".85"/><circle r="17" fill="#fff"/><path d="M-4-11h8v7h7v8h-7v7h-8v-7h-7v-8h7z" fill="#ff3d9a"/></g></svg>`;
+
+/* ---------- الهيكل العام ---------- */
+function render() {
+  clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
+  const app = $('#app');
+  if (!S.user) return renderLogin(app);
+  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${LOGO}<span>${CENTER}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
+  if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
+  else $('#main').innerHTML = '<div class="panel">الشاشة غير موجودة</div>';
+}
+const pageHead = (t, i, c) => `<div class="pagehead c-${c}"><h1><span class="ico">${i}</span>${esc(t)}</h1></div>`;
+
+/* ---------- شاشة الدخول ---------- */
+function clockSVG() {
+  let ticks = ''; for (let i = 0; i < 60; i++) { const a = i * 6 * Math.PI / 180, big = i % 5 === 0, r1 = big ? 80 : 86; ticks += `<line x1="${100 + Math.sin(a) * r1}" y1="${100 - Math.cos(a) * r1}" x2="${100 + Math.sin(a) * 92}" y2="${100 - Math.cos(a) * 92}" stroke="${big ? '#000' : '#888'}" stroke-width="${big ? 3 : 1.2}"/>`; }
+  let nums = ''; for (let i = 1; i <= 12; i++) { const a = i * 30 * Math.PI / 180; nums += `<text x="${100 + Math.sin(a) * 68}" y="${100 - Math.cos(a) * 68 + 6}" text-anchor="middle" font-size="16" font-weight="bold" font-family="Times New Roman">${i}</text>`; }
+  return `<svg viewBox="0 0 200 200"><defs><linearGradient id="cr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ff5d6"/><stop offset=".5" stop-color="#8a5cff"/><stop offset="1" stop-color="#ff3d9a"/></linearGradient></defs><circle cx="100" cy="100" r="97" fill="#fff" stroke="url(#cr)" stroke-width="6"/>${ticks}${nums}<line id="hh" x1="100" y1="100" x2="100" y2="55" stroke="#000" stroke-width="6" stroke-linecap="round"/><line id="mh" x1="100" y1="100" x2="100" y2="38" stroke="#000" stroke-width="4" stroke-linecap="round"/><line id="sh" x1="100" y1="112" x2="100" y2="28" stroke="#ff3d9a" stroke-width="2" stroke-linecap="round"/><circle cx="100" cy="100" r="6" fill="#ff8a1f"/></svg>`;
+}
+function tick() {
+  const n = new Date(), s = n.getSeconds(), m = n.getMinutes() + s / 60, h = n.getHours() % 12 + m / 60;
+  const set = (id, a) => { const e = $('#' + id); if (e) e.setAttribute('transform', `rotate(${a} 100 100)`); };
+  set('sh', s * 6); set('mh', m * 6); set('hh', h * 30);
+  const dg = $('#dg'); if (dg) dg.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(s)}`;
+  const dl = $('#dl'); if (dl) dl.textContent = `${DAYS[n.getDay()]}  ${toStr(n)}`;
+}
+async function renderLogin(app) {
+  let hasUsers = true; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) {}
+  const canServer = API.mode === 'php';
+  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><div class="logo">${LOGO}</div><h1>${CENTER}</h1>
+  <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
+  <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">الدخول بعد موافقة المدير فقط</p></form>
+  <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
+  <div class="fld"><label>اسم المستخدم</label><input name="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" required></div><div class="fld"><label>الرقم القومي</label><input name="nationalId" inputmode="numeric" maxlength="14"></div><div class="fld"><label>تاريخ الميلاد</label>${dateFld('birthDate', '')}</div><button class="glow c-pink btnbig" type="submit">إنشاء الحساب</button><button type="button" class="linkbtn" id="bk">رجوع لتسجيل الدخول</button></form>
+  ${canServer ? '<button class="linkbtn" id="srv">🔗 ربط بقاعدة بيانات جوجل شيت</button>' : ''}${window.AndroidBridge ? '<br><button class="linkbtn" onclick="AndroidBridge.changeServer()">⚙ تغيير عنوان الخادم</button>' : ''}</div></div>`;
+  tick(); clockTimer = setInterval(tick, 1000);
+  const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); $('#nu').classList.toggle('hidden', on && !hasUsers); };
+  if (!hasUsers) showReg(true);
+  $('#nu').onclick = () => showReg(true);
+  $('#bk').onclick = () => showReg(false);
+  if (!hasUsers) $('#bk').classList.add('hidden');
+  if (canServer) $('#srv').onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_server') || ''; } catch (e) { return ''; } })();
+    const u = prompt('الصق رابط نشر Google Apps Script (ينتهي بـ /exec) لتعمل هذه النسخة على نفس بيانات الشيت.\nاتركه فارغاً للعودة للخادم المحلي.', cur);
+    if (u === null) return; const t = u.trim(); if (t && !/^https:\/\/script\.google\.com\/.+\/exec/.test(t)) return toast('الرابط غير صحيح');
+    API.setServer(t); toast(t ? 'تم الربط بجوجل شيت' : 'تمت العودة للخادم المحلي'); renderLogin(app); };
+  $('#lf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => { const v = readForm(e.target); const r = await API.call('login', v); API.setToken(r.token); S.user = r.user; await loadAll(); render(); }); };
+  $('#rf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => {
+    const v = readForm(e.target); if (v.birthDate && !validDate(v.birthDate)) throw new Error('تاريخ الميلاد يجب أن يكون yyyy/mm/dd');
+    const r = await API.call('register', v); toast(r.pending ? 'تم إنشاء الحساب، بانتظار موافقة المدير' : 'تم إنشاء حساب المدير، سجل الدخول');
+    if (r.pending) { renderLogin(app); return; }
+    const l = await API.call('login', {username: v.username, password: v.password}); API.setToken(l.token); S.user = l.user; await loadAll(); render();
+  }); };
+}
+
+/* ---------- الشاشة الرئيسية ---------- */
+function renderHome() {
+  const main = $('#main');
+  const draw = () => {
+    const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
+    const st = statementRows(from, to), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0), dues = st.due, exp = st.expO;
+    const clin = clinicNames().map(n => { const c = vs.filter(v => v.clinic === n); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}; });
+    ['الأشعة','التحاليل'].forEach(n => { const c = vs.filter(v => v.clinic === n); if (c.length) clin.push({n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}); });
+    clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
+    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊']];
+    const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
+    const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
+    if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
+    main.innerHTML = `<div class="pagehead"><h1>🏠 الشاشة الرئيسية — ${esc(rangeLabel())}</h1></div>${rangeBar()}<div class="bar noprint">${window.exportButtons}</div>
+    <div class="kpis">${kp.map(k => `<div class="glow kpi c-${k[2]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[3]} ${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>
+    ${tiles.length ? '' : '<div class="panel">حسابك مفعّل لكن لم يُمنح أي صلاحيات بعد. اطلب من المدير فتح الشاشات المطلوبة.</div>'}
+    <div class="sect"><h2>الشاشات</h2></div><div class="cards">${tiles.map(t => `<button class="glow tile c-${t.c}" data-act="go" data-s="${t.k}"><span class="ic">${t.i}</span><b>${t.t}</b>${t.n != null ? `<span class="n">${t.n}</span>` : ''}</button>`).join('')}</div>
+    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد عيادات — أضفها من شاشة الخدمات</div>'}</div>
+    <div class="sect"><h2>الإنفوجرافيك</h2></div><div class="charts"><div class="panel"><h3>الإيراد حسب نوع الزيارة</h3>${donut(catData)}</div><div class="panel"><h3>الإيراد حسب العيادة</h3>${bars(clin.filter(c => c.rev > 0).slice(0, 8).map(c => ({l: c.n, v: c.rev})), 'clinicrep')}</div></div>`;
+  };
+  S.view = {refresh: draw, exportData: () => {
+    const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
+    const st = statementRows(from, to);
+    const cl = [...clinicNames(), ...EXTRA_CLINICS].map(n => { const c = vs.filter(v => v.clinic === n); return [n, c.length, c.reduce((s, v) => s + (+v.value || 0), 0)]; }).filter(r => r[1] || clinicOf(r[0]));
+    return [{name: 'المؤشرات', rows: [['البند', 'القيمة'], ['عدد الزيارات', vs.length], ...st.rows, ...st.memo]}, {name: 'العيادات', rows: [['العيادة', 'الزيارات', 'الإيراد'], ...cl]}];
+  }}; draw();
+}
+
+/* ---------- ربط الأسماء بالتقارير (الضغط على أي اسم) ---------- */
+const L = {
+  doctor: n => n ? `<span class="lnk" data-act="lnk" data-t="doctor" data-v="${esc(n)}">${esc(n)}</span>` : '',
+  patient: n => n ? `<span class="lnk" data-act="lnk" data-t="patient" data-v="${esc(n)}">${esc(n)}</span>` : '',
+  clinic: n => n ? `<span class="lnk" data-act="lnk" data-t="clinic" data-v="${esc(n)}">${esc(n)}</span>` : '',
+  company: n => n ? `<span class="lnk" data-act="lnk" data-t="company" data-v="${esc(n)}">${esc(n)}</span>` : ''
+};
+Acts.lnk = el => {
+  const m = {doctor: 'rep_doctors', patient: 'rep_patients', clinic: 'rep_clinics', company: 'rep_companies'}[el.dataset.t];
+  if (!can(m)) return toast('لا تملك صلاحية هذا التقرير', true);
+  nav(m, el.dataset.v);
+};
+
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = Acts[el.dataset.act]; if (f) { e.preventDefault(); f(el, e); } });
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try { if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
+  render(); startSync();
+});
+
+</script>
+<script>
+/* ============ شاشات الإدخال: محرك عام + الزيارات + المستخدمين ============ */
+'use strict';
+window.SCREEN_RENDER = window.SCREEN_RENDER || {};
+const stripTags = h => String(h).replace(/<[^>]+>/g, ' ');
+
+function crud(cfg) {
+  return async function () {
+    if (!can(cfg.k)) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
+    const main = $('#main'); let editing = null, q = '';
+    const fields = cfg.fields, plain = fields.filter(f => !f.grp), grps = cfg.groups || {};
+    const defaults = () => Object.assign({}, cfg.defaults ? cfg.defaults() : {});
+    const frmHTML = () => `<form id="frm" class="panel accent c-${cfg.c}" autocomplete="off"><h3 id="ftitle">➕ ${esc(cfg.add || 'إضافة جديد')}</h3><div class="grid">${plain.map(f => f.t === 'html' ? f.html() : fieldHTML(f, '')).join('')}</div>${Object.keys(grps).map(g => `<div class="sub hidden" data-grp="${g}"><h4>${esc(grps[g].title)}</h4><div class="grid">${fields.filter(f => f.grp === g).map(f => fieldHTML(f, '')).join('')}</div></div>`).join('')}<div class="actions"><button type="submit" class="btn c-${cfg.c}">💾 حفظ</button><button type="button" class="btn ghost c-${cfg.c}" data-act="frmnew">➕ جديد</button></div></form>`;
+    const rows = () => {
+      let list = S.data[cfg.ent].slice();
+      if (cfg.dated) { const {from, to} = getRange(); list = list.filter(r => r.date >= from && r.date <= to); }
+      if (q) list = list.filter(r => JSON.stringify(r).toLowerCase().includes(q));
+      return (cfg.sort ? list.sort(cfg.sort) : list.reverse());
+    };
+    const listHTML = () => {
+      const list = rows(); const cols = cfg.cols;
+      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
+      return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
+    };
+    const frm = () => $('#frm', main);
+    const reset = () => {
+      editing = null; const f = frm(); f.reset(); $('#ftitle', f).textContent = `➕ ${cfg.add || 'إضافة جديد'}`;
+      const vals = defaults(); fields.forEach(x => { if (!(x.k in vals) && x.t !== 'html') vals[x.k] = (x.t === 'seg' ? x.opts[0].v : (x.t === 'chk' ? false : '')); });
+      setForm(f, vals); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, reset: true});
+    };
+    const showGroups = () => { const v = readForm(frm()); Object.keys(grps).forEach(g => $(`[data-grp="${g}"]`, frm()).classList.toggle('hidden', !grps[g].show(v))); };
+    const draw = () => {
+      main.innerHTML = `${pageHead(cfg.t, cfg.i, cfg.c)}${cfg.dated ? rangeBar() : ''}${frmHTML()}<div class="bar noprint"><input type="text" id="srch" placeholder="🔎 بحث…" value="${esc(q)}">${window.exportButtons}${cfg.tools ? cfg.tools() : ''}</div><div id="lst">${listHTML()}</div>`;
+      reset(); hydrateImgs(main);
+      $('#srch').oninput = e => { q = e.target.value.trim().toLowerCase(); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); };
+      frm().addEventListener('change', ev => { showGroups(); cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing}); });
+      frm().addEventListener('input', ev => { if (ev.target.matches('[data-sg],input[type=number],[data-dt]')) cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing, typing: true}); });
+      frm().onsubmit = ev => { ev.preventDefault(); guard($('button[type=submit]', frm()), async () => {
+        const raw = readForm(frm()); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
+        for (const f of fields) if (f.req && !String(rec[f.k] == null ? raw[f.k] : rec[f.k]).trim()) throw new Error(`حقل "${f.l}" مطلوب`);
+        for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
+        if (cfg.validate) { const m = cfg.validate(rec, editing); if (m) throw new Error(m); }
+        if (editing) rec.id = editing;
+        const r = await API.call('save', {entity: cfg.ent, record: rec});
+        if (cfg.after) await cfg.after(r.record, rec);
+        await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset();
+      }); };
+    };
+    S.view = {refresh: draw,
+      edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
+      del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
+      reset};
+    draw();
+  };
+}
+Acts.edit = el => S.view && S.view.edit(el.dataset.id);
+Acts.del = el => S.view && S.view.del(el.dataset.id);
+Acts.frmnew = () => S.view && S.view.reset();
+const setv = (frm, n, v) => { const el = $(`[name="${n}"]`, frm); if (el) el.value = v == null ? '' : v; };
+const getv = (frm, n) => { const el = $(`[name="${n}"]`, frm); return el ? el.value.trim() : ''; };
+const tagCat = c => `<span class="tag c-${CATC[c || 'cash']}">${CAT[c || 'cash']}</span>`;
+const thumb = id => id ? `<img class="mini-img" data-fid="${esc(id)}" data-act="lightbox" alt="">` : '';
+const docOpts = clinic => [{v: '', l: '— اختر الطبيب —'}, ...S.data.doctors.filter(d => !clinic || d.clinic === clinic).map(d => ({v: d.id, l: clinic ? d.name : `${d.name} — ${d.clinic}`}))];
+const docSelectHTML = (clinic, cur) => docOpts(clinic).map(o => `<option value="${esc(o.v)}" ${o.v === cur ? 'selected' : ''}>${esc(o.l)}</option>`).join('');
+
+/* ---------- العاملين ---------- */
+SCREEN_RENDER.staff = crud({k: 'staff', ent: 'staff', t: 'العاملين', i: '👥', c: 'lime', add: 'موظف جديد',
+  fields: [{k: 'code', l: 'كود الموظف (تلقائي)', t: 'ro'}, {k: 'name', l: 'الاسم', req: 1, sg: 'staff.name'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, sg: 'staff.nationalId'}, {k: 'idPhoto', l: 'صورة الرقم القومي', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}],
+  cols: [{h: 'الكود', f: r => r.code}, {h: 'الاسم', f: r => esc(r.name)}, {h: 'الرقم القومي', f: r => esc(r.nationalId)}, {h: 'صورة الرقم القومي', f: r => thumb(r.idPhoto)}, {h: 'الصورة', f: r => thumb(r.photo)}],
+  sort: (a, b) => (a.code || 0) - (b.code || 0),
+  defaults: () => ({code: S.data.staff.reduce((m, x) => Math.max(m, x.code || 0), 0) + 1})
+});
+
+/* ---------- الأطباء ---------- */
+SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء', i: '👨‍⚕️', c: 'violet', add: 'طبيب جديد',
+  fields: [{k: 'code', l: 'كود الطبيب (تلقائي)', t: 'ro'}, {k: 'name', l: 'اسم الطبيب', req: 1, sg: 'doctors.name'}, {k: 'clinic', l: 'العيادة', t: 'sel', req: 1, opts: () => ['', ...clinicNames()]}, {k: 'phone', l: 'رقم التليفون', num: 1}, {k: 'nationalId', l: 'رقم البطاقة', num: 1}, {k: 'idPhoto', l: 'صورة البطاقة', t: 'img'}, {k: 'syndicatePhoto', l: 'صورة الكارنية', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}, {k: 'hireDate', l: 'تاريخ التعيين', t: 'date'}, {k: 'percent', l: 'نسبة الطبيب %', t: 'num'}, {k: 'fixed', l: 'الثابت (الفكسيد) يومياً', t: 'num'}, {k: 'opPercent', l: 'نسبة العمليات %', t: 'num'}],
+  cols: [{h: 'الكود', f: r => r.code}, {h: 'الطبيب', f: r => L.doctor(r.name)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'تاريخ التعيين', f: r => esc(r.hireDate)}, {h: 'النسبة %', f: r => fmtN(r.percent)}, {h: 'الثابت', f: r => fmtN(r.fixed)}, {h: 'آخر أجر مستحق (تلقائي)', f: r => { const d = lastDue(r); return d ? `<b>${fmtN(d.amount)}</b> <small>(${d.date})</small>` : '—'; }}, {h: 'البطاقة', f: r => thumb(r.idPhoto)}, {h: 'الكارنية', f: r => thumb(r.syndicatePhoto)}, {h: 'الصورة', f: r => thumb(r.photo)}],
+  sort: (a, b) => (a.code || 0) - (b.code || 0),
+  defaults: () => ({code: S.data.doctors.reduce((m, x) => Math.max(m, x.code || 0), 0) + 1, hireDate: today()}),
+  validate: (r, ed) => S.data.doctors.some(d => d.id !== ed && d.name === r.name && d.clinic === r.clinic) ? 'هذا الطبيب مسجل في نفس العيادة' : ''
+});
+
+/* ---------- الخدمات ---------- */
+SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – أشعة – تحاليل)', i: '💉', c: 'orange', add: 'خدمة جديدة',
+  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: [{v: 'clinic', l: 'عيادة', c: 'orange'}, {v: 'radiology', l: 'أشعة', c: 'cyan'}, {v: 'lab', l: 'تحاليل', c: 'pink'}]}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
+  cols: [{h: 'النوع', f: r => `<span class="tag c-${{clinic: 'orange', radiology: 'cyan', lab: 'pink'}[r.type]}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
+  sort: (a, b) => (a.type || '').localeCompare(b.type) || a.name.localeCompare(b.name, 'ar'),
+  validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : ''
+});
+
+/* ---------- المرضى ---------- */
+SCREEN_RENDER.patients = crud({k: 'patients', ent: 'patients', t: 'المرضى', i: '🧑‍🤝‍🧑', c: 'blue', add: 'مريض جديد',
+  fields: [{k: 'name', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم الهاتف', num: 1}],
+  cols: [{h: 'الاسم', f: r => L.patient(r.name)}, {h: 'الهاتف', f: r => esc(r.phone)}, {h: 'عدد الزيارات', f: r => S.data.visits.filter(v => v.patient === r.name).length}, {h: 'آخر زيارة', f: r => { const v = lastVisitOf(r.name, r.phone); return v ? `${v.date} — ${esc(v.visitType)}` : '—'; }}],
+  validate: (r, ed) => S.data.patients.some(p => p.id !== ed && p.name === r.name && (p.phone || '') === (r.phone || '')) ? 'المريض مسجل من قبل بنفس الهاتف' : ''
+});
+
+/* ---------- شركات التأمين ---------- */
+SCREEN_RENDER.companies = crud({k: 'companies', ent: 'companies', t: 'شركات التأمين', i: '🏢', c: 'cyan', add: 'شركة جديدة',
+  fields: [{k: 'name', l: 'اسم الشركة', req: 1, sg: 'companies'}, {k: 'fee', l: 'قيمة الكشف', t: 'num', req: 1}, {k: 'contact', l: 'مسئول التعاقد', sg: 'companies.contact'}],
+  cols: [{h: 'الشركة', f: r => L.company(r.name)}, {h: 'قيمة الكشف', f: r => fmtN(r.fee)}, {h: 'مسئول التعاقد', f: r => esc(r.contact)}, {h: 'عدد الزيارات', f: r => S.data.visits.filter(v => v.company === r.name).length}],
+  validate: (r, ed) => S.data.companies.some(c => c.id !== ed && c.name === r.name) ? 'الشركة مسجلة من قبل' : ''
+});
+
+/* ---------- المصروفات ---------- */
+SCREEN_RENDER.expenses = crud({k: 'expenses', ent: 'expenses', t: 'المصروفات', i: '💸', c: 'gold', add: 'مصروف جديد', dated: true,
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
+  sort: (a, b) => b.date.localeCompare(a.date),
+  defaults: () => ({date: getRange().from === getRange().to && validDate(getRange().from) ? getRange().from : today()}),
+  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; return o; },
+  validate: r => !r.category && !r.doctor ? 'اختر بند المصروف أو اسم الطبيب' : (r.doctor && !S.data.doctors.some(d => d.name === r.doctor) ? 'اسم الطبيب غير مسجل في شاشة الأطباء' : '')
+});
+
+/* ---------- العمليات ---------- */
+const opsShare = f => { const p = +getv(f, 'doctorPercent') || 0; setv(f, '_share', fmtN((+getv(f, 'value') || 0) * p / 100)); };
+SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'operations.operation'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'نصيب الطبيب', f: r => fmtN((+r.value || 0) * (+r.doctorPercent || 0) / 100), sum: r => (+r.value || 0) * (+r.doctorPercent || 0) / 100}, {h: 'ملاحظات', f: r => esc(r.notes)}],
+  sort: (a, b) => b.date.localeCompare(a.date),
+  defaults: () => ({date: today()}),
+  collect: raw => { const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; return o; },
+  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
+  onChange: (n, f) => { if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', '*'].includes(n)) opsShare(f); }
+});
+
+/* ---------- الزيارات ---------- */
+function visitAuto(f, why) {
+  const clinic = getv(f, 'clinic'), vt = getv(f, 'visitType'), cat = getv(f, 'category'), svc = getv(f, 'service');
+  const c = clinicOf(clinic), sv = S.data.services.find(s => s.name === svc && s.type !== 'clinic');
+  if (why === 'clinic') { setv(f, 'tax', c ? c.tax || 0 : 0); }
+  if (['clinic', 'visitType', 'category', 'company', 'service'].includes(why)) {
+    let val = null;
+    if (sv && why === 'service') val = sv.price;
+    else if ((vt === 'كشف' || vt === 'استشارة') && c) val = c.price;
+    if (val != null && (why !== 'service' || sv)) setv(f, 'value', val);
+  }
+  const co = S.data.companies.find(x => x.name === getv(f, 'company')), fee = co && co.fee > 0 && vt === 'كشف' ? co.fee : (+getv(f, 'value') || 0);
+  setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
+  const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
+}
+function visitLast(f, ctx) {
+  const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
+  setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
+}
+SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
+  groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  fields: [
+    {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
+    {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
+    {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS]},
+    {k: '_doc', l: 'الطبيب المعالج', t: 'sel', opts: () => docOpts('')},
+    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة', t: 'ro'},
+    {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
+    {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
+    {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
+    {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
+    {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
+    {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
+    {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
+  ],
+  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
+  collect: raw => {
+    const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
+    o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
+    if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId'].forEach(k => o[k] = ''); o.patientPct = 0; }
+    if (o.category !== 'insurance') o.discount = 0;
+    return o;
+  },
+  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date), _by: r.registeredBy || S.user.username}),
+  validate: r => r.category === 'company' && !r.company ? 'اختر اسم الشركة' : '',
+  after: async (rec, sent) => {
+    const p = S.data.patients.find(x => x.name === sent.patient);
+    try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
+  },
+  onChange: (n, f, ctx) => {
+    if (n === '*') { if (ctx.reset) $('[name=_doc]', f).innerHTML = docSelectHTML('', ''); else { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); setv(f, '_doc', cur); } visitLast(f, ctx); visitAuto(f, '*'); return; }
+    if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
+    if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
+    if (n === 'phone') visitLast(f, ctx);
+    if (n === 'clinic') { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); const only = S.data.doctors.filter(d => d.clinic === getv(f, 'clinic')); setv(f, '_doc', only.some(d => d.id === cur) ? cur : (only.length === 1 ? only[0].id : '')); }
+    if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount'].includes(n) && !ctx.typing) visitAuto(f, n);
+    if (n === 'value' || n === 'patientPct' || n === 'discount') visitAuto(f, n);
+  }
+});
+
+/* ---------- المستخدمين والصلاحيات ---------- */
+const PERM_ITEMS = [...SCREENS.map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
+SCREEN_RENDER.users = crud({k: 'users', ent: 'users', t: 'المستخدمين والصلاحيات', i: '🔐', c: 'pink', add: 'مستخدم جديد',
+  fields: [{k: 'username', l: 'اسم المستخدم', req: 1}, {k: 'password', l: 'كلمة السر (اتركها فارغة للإبقاء)', pw: 1}, {k: 'nationalId', l: 'الرقم القومي', num: 1}, {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date'}, {k: 'isAdmin', l: 'مدير النظام (كل الصلاحيات)', t: 'chk', l2: 'مدير'}, {k: 'active', l: 'الحساب', t: 'chk', l2: 'مفعّل'},
+    {k: '_perms', t: 'html', html: () => `<div class="fld full"><label>الصلاحيات — الشاشات والتقارير المسموح فتحها</label><div class="actions" style="margin:0 0 6px"><button type="button" class="btn sm c-lime" data-act="permall" data-v="1">تحديد الكل</button><button type="button" class="btn sm ghost" data-act="permall" data-v="0">إلغاء الكل</button></div><div class="perm-grid">${PERM_ITEMS.map(p => `<label><input type="checkbox" name="p_${p.k}"> ${esc(p.l)}</label>`).join('')}</div></div>`}],
+  cols: [{h: 'المستخدم', f: r => esc(r.username)}, {h: 'الرقم القومي', f: r => esc(r.nationalId)}, {h: 'تاريخ الميلاد', f: r => esc(r.birthDate)}, {h: 'الدور', f: r => r.isAdmin ? '<span class="tag c-gold">مدير</span>' : '<span class="tag c-blue">مستخدم</span>'}, {h: 'الحالة', f: r => r.active ? '<span class="tag c-lime">مفعّل</span>' : '<span class="tag c-red">بانتظار الموافقة</span>'}, {h: 'الصلاحيات', f: r => r.isAdmin ? 'الكل' : (r.perms || []).filter(p => p !== '*').map(p => (PERM_ITEMS.find(x => x.k === p) || {l: p}).l).join('، ')}],
+  sort: (a, b) => a.username.localeCompare(b.username),
+  defaults: () => ({active: true}),
+  collect: raw => { const o = {username: raw.username, password: raw.password, nationalId: raw.nationalId, birthDate: raw.birthDate, isAdmin: raw.isAdmin, active: raw.active || raw.isAdmin}; o.perms = PERM_ITEMS.filter(p => raw['p_' + p.k]).map(p => p.k); return o; },
+  fill: r => { const o = Object.assign({}, r, {password: ''}); (r.perms || []).forEach(p => o['p_' + p] = true); PERM_ITEMS.forEach(p => { if (!(('p_' + p.k) in o)) o['p_' + p.k] = false; }); return o; },
+  validate: (r, ed) => !ed && (r.password || '').length < 4 ? 'كلمة السر 4 أحرف على الأقل' : ''
+});
+Acts.permall = el => $$('.perm-grid input').forEach(c => c.checked = el.dataset.v === '1');
+
+/* ---------- مركز التقارير ---------- */
+SCREEN_RENDER.reports = () => {
+  $('#main').innerHTML = `${pageHead('التقارير', '📊', 'violet')}<div class="cards">${REPS.filter(r => can(r.k)).map(r => `<button class="glow tile c-${r.c}" data-act="go" data-s="${r.k}"><span class="ic">${r.i}</span><b>${r.t}</b></button>`).join('') || '<div class="panel">لا توجد تقارير مصرح بها</div>'}</div>`;
+};
+
+</script>
+<script>
+/* ============ التقارير: كل تقرير يعمل لليوم أو تاريخ محدد أو فترة، والأسماء روابط لتقارير تفصيلية ============ */
+'use strict';
+const tbl = (heads, rows, foot) => `<div class="tbl-wrap"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${heads.length}" class="empty">لا توجد بيانات في هذه الفترة</td></tr>`}</tbody>${foot ? `<tfoot><tr>${foot.map(c => `<td>${c}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
+const kpiRow = items => `<div class="kpis">${items.map((k, i) => `<div class="glow kpi c-${k[2] || ALL_COLORS[i % 9]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>`;
+const sect = t => `<div class="sect"><h2>${t}</h2></div>`;
+const sum = (a, f) => a.reduce((s, x) => s + (+f(x) || 0), 0);
+function groupBy(arr, kf) { const m = new Map(); arr.forEach(x => { const k = kf(x) || '—'; (m.get(k) || m.set(k, []).get(k)).push(x); }); return m; }
+const val = v => +v.value || 0;
+const expIn = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t);
+const opsIn = (f, t) => S.data.operations.filter(x => x.date >= f && x.date <= t);
+const opShare = o => { const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor); return (+o.value || 0) * (+(o.doctorPercent !== '' && o.doctorPercent != null ? o.doctorPercent : (d ? d.opPercent : 0)) || 0) / 100; };
+const visitRows = vs => vs.slice().sort((a, b) => (a.date + (a.serial || 0)).localeCompare(b.date + (b.serial || 0))).map(v => [v.serial, esc(v.date), L.patient(v.patient), L.clinic(v.clinic), L.doctor(v.doctor), esc(v.visitType), esc(v.service), fmtN(v.value), tagCat(v.category), L.company(v.company)]);
+const visitHeads = ['م', 'التاريخ', 'المريض', 'العيادة', 'الطبيب', 'الزيارة', 'البيان', 'القيمة', 'النوع', 'الشركة'];
+const visitFoot = vs => ['', '', '', '', '', '', `الإجمالي (${vs.length})`, fmtN(sum(vs, val)), '', ''];
+
+function repScreen(key, title, icon, color, build, picker) {
+  return async function (arg) {
+    if (!can(key)) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية هذا التقرير</div>'; return; }
+    const main = $('#main'); let cur = arg || '';
+    const scopeKey = {rep_doctors: 'doctor', rep_clinics: 'clinic', rep_companies: 'company', rep_patients: 'patient'}[key];
+    const draw = () => {
+      S.scope = scopeKey && cur ? {[scopeKey]: cur} : {};
+      main.innerHTML = `${pageHead(title + (cur ? ' — ' + cur : ''), icon, color)}${rangeBar()}<div class="bar noprint">${picker ? `<input type="text" id="pk" data-sg="${picker.sg}" placeholder="${esc(picker.ph)}" value="${esc(cur)}" autocomplete="off"><button class="btn c-${color}" data-act="pkgo">عرض</button>${cur ? '<button class="btn ghost" data-act="pkclear">عرض الكل</button>' : ''}` : ''}${window.exportButtons}</div><div id="rb">${build(cur)}</div>`;
+      const pk = $('#pk'); if (pk) pk.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); Acts.pkgo(); } };
+      hydrateImgs(main);
+    };
+    S.view = {refresh: draw, pick: v => { cur = v; draw(); }}; draw();
+  };
+}
+Acts.pkgo = () => S.view && S.view.pick(($('#pk') || {}).value.trim());
+Acts.pkclear = () => S.view && S.view.pick('');
+Acts.lnk2 = el => Acts.lnk(el);
+
+/* ---------- ملخص اليوم والإيرادات ---------- */
+function bodyDaily() {
+  const {from, to} = getRange(), vs = visitsIn(from, to), ex = expIn(from, to), acc = accounts(from, to);
+  const rev = sum(vs, val) + opsRevenue(from, to), tax = sum(vs, v => v.tax), exp = sum(ex, x => x.amount), dues = sum(acc, r => r.right + r.ops), dayRev = rev, st = statementRows(from, to);
+  const shares = sum(vs, patientShare), cash = sum(vs.filter(v => (v.category || 'cash') === 'cash'), val) + shares;
+  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs.filter(v => v.category === 'committee'), val);
+  const byType = VTYPES.map(t => [t, vs.filter(v => v.visitType === t)]);
+  const byCat = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
+  const byClinic = [...groupBy(vs, v => v.clinic)].sort((a, b) => sum(b[1], val) - sum(a[1], val));
+  const days = [...new Set([...vs.map(v => v.date), ...ex.map(x => x.date)])].sort();
+  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['الضريبة', fmtN(tax), 'pink'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal']])
+    + `<div class="charts"><div class="panel"><h3>حسب نوع الزيارة</h3>${donut(byCat.map(([k, a]) => ({l: CAT[k], v: sum(a, val), c: CATC[k]})))}</div><div class="panel"><h3>حسب العيادة</h3>${bars(byClinic.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, val)})), 'clinicrep')}</div></div>`
+    + sect('ملخص الزيارات') + tbl(['الزيارة', 'العدد', 'القيمة'], byType.map(([t, a]) => [esc(t), a.length, fmtN(sum(a, val))]), ['الإجمالي', vs.length, fmtN(rev)])
+    + sect('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], byCat.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]))
+    + sect('حسب العيادة') + tbl(['العيادة', 'الزيارات', 'الإيراد', 'الضريبة'], byClinic.map(([n, a]) => [L.clinic(n), a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax))]), ['الإجمالي', vs.length, fmtN(rev), fmtN(tax)])
+    + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'الإيراد', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; })) : '');
+}
+SCREEN_RENDER.rep_daily = repScreen('rep_daily', 'ملخص اليوم والإيرادات', '📈', 'teal', bodyDaily);
+
+/* ---------- حسابات الأطباء ---------- */
+function bodyDoctors(name) {
+  const {from, to} = getRange();
+  if (!name) {
+    const acc = accounts(from, to);
+    return kpiRow([['الأطباء', acc.length, 'violet'], ['إجمالي الإيراد', fmtN(sum(acc, r => r.total)), 'orange'], ['الضريبة', fmtN(sum(acc, r => r.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(acc, r => r.right)), 'teal'], ['نصيب العمليات', fmtN(sum(acc, r => r.ops)), 'red']])
+      + tbl(['العيادة', 'الطبيب', 'كشف', 'متنوع', 'لجنة', 'شركات', 'تأمين', 'الإجمالي (نقدي)', 'استشارة', 'إجمالي الإيراد', 'الضريبة', 'المستحق', 'الثابت', 'حق الطبيب', 'نسبة العمليات'],
+        acc.map(r => [L.clinic(r.clinic), L.doctor(r.name), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.committee), fmtN(r.company), fmtN(r.insurance), fmtN(r.cash), r.consult, fmtN(r.total), fmtN(r.tax), fmtN(r.due), fmtN(r.fixed), `<b>${fmtN(r.right)}</b>`, fmtN(r.ops)]),
+        ['', 'الإجمالي', ...['kosf', 'mixed', 'committee', 'company', 'insurance', 'cash', 'consult', 'total', 'tax', 'due', 'fixed', 'right', 'ops'].map(k => fmtN(sum(acc, r => r[k])))]);
+  }
+  const docs = S.data.doctors.filter(d => d.name === name), acc = accounts(from, to).filter(r => r.name === name);
+  const vs = visitsIn(from, to).filter(v => v.doctor === name), ops = opsIn(from, to).filter(o => o.doctor === name);
+  const head = docs.length ? `<div class="panel accent c-violet" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">${docs.map(d => `${d.photo ? `<img class="mini-img" style="width:70px;height:70px" data-fid="${d.photo}" data-act="lightbox">` : ''}<div><b style="font-size:1.2rem">${esc(d.name)}</b><br>العيادة: ${L.clinic(d.clinic)} — كود ${d.code}<br>النسبة: ${fmtN(d.percent)}% — الثابت: ${fmtN(d.fixed)} — نسبة العمليات: ${fmtN(d.opPercent)}%<br>تاريخ التعيين: ${esc(d.hireDate) || '—'} ${d.phone ? '— ' + esc(d.phone) : ''}</div>`).join('<hr>')}</div>` : '';
+  const dayRows = []; acc.forEach(r => [...r.dayMap.entries()].sort().forEach(([d, m]) => { const pct = r.doc ? +r.doc.percent || 0 : 0, fx = r.doc ? +r.doc.fixed || 0 : 0, due = (m.rev - m.tax) * pct / 100; dayRows.push([`${dayName(d)} ${d}`, L.clinic(r.clinic), fmtN(m.rev), fmtN(m.tax), fmtN(due), fmtN(fx), `<b>${fmtN(Math.max(fx, due))}</b>`]); }));
+  const A = k => sum(acc, r => r[k]);
+  return head + kpiRow([['الزيارات', vs.length, 'teal'], ['إجمالي الإيراد', fmtN(A('total')), 'orange'], ['الضريبة', fmtN(A('tax')), 'pink'], ['حق الطبيب من الكشوفات', fmtN(A('right')), 'violet'], ['نصيب العمليات', fmtN(A('ops')), 'red'], ['إجمالي المستحق', fmtN(A('right') + A('ops')), 'lime']])
+    + sect('الحساب اليومي') + tbl(['اليوم', 'العيادة', 'الإيراد', 'الضريبة', 'المستحق بالنسبة', 'الثابت', 'حق الطبيب'], dayRows, ['الإجمالي', '', fmtN(A('total')), fmtN(A('tax')), fmtN(A('due')), fmtN(A('fixed')), fmtN(A('right'))])
+    + sect('الزيارات') + tbl(visitHeads, visitRows(vs), visitFoot(vs))
+    + (ops.length ? sect('العمليات') + tbl(['التاريخ', 'المريض', 'العملية', 'القيمة', 'نصيب الطبيب'], ops.map(o => [esc(o.date), L.patient(o.patient), esc(o.operation), fmtN(o.value), fmtN(opShare(o))]), ['', '', 'الإجمالي', fmtN(sum(ops, o => o.value)), fmtN(sum(ops, opShare))]) : '');
+}
+SCREEN_RENDER.rep_doctors = repScreen('rep_doctors', 'حسابات الأطباء', '👨‍⚕️', 'violet', bodyDoctors, {sg: 'doctors', ph: 'اكتب اسم الطبيب لعرض كشف حسابه…'});
+
+/* ---------- العيادات ---------- */
+function bodyClinics(name) {
+  const {from, to} = getRange(), all = visitsIn(from, to);
+  if (!name) {
+    const names = [...new Set([...clinicNames(), ...EXTRA_CLINICS, ...all.map(v => v.clinic).filter(Boolean)])];
+    const rows = names.map(n => { const a = all.filter(v => v.clinic === n); return {n, a}; }).filter(x => x.a.length || clinicOf(x.n)).sort((x, y) => sum(y.a, val) - sum(x.a, val));
+    return kpiRow([['عدد الزيارات', all.length, 'teal'], ['إجمالي الإيراد', fmtN(sum(all, val)), 'orange'], ['الضريبة', fmtN(sum(all, v => v.tax)), 'pink']]) + `<div class="panel"><h3>الإيراد حسب العيادة</h3>${bars(rows.filter(r => r.a.length).slice(0, 12).map(r => ({l: r.n, v: sum(r.a, val)})), 'clinicrep')}</div>`
+      + tbl(['العيادة', 'سعر الكشف', 'الزيارات', 'الإيراد', 'الضريبة', 'نقدي', 'شركات/تأمين', 'لجنة'], rows.map(r => [L.clinic(r.n), fmtN((clinicOf(r.n) || {}).price), r.a.length, fmtN(sum(r.a, val)), fmtN(sum(r.a, v => v.tax)), fmtN(sum(r.a.filter(v => (v.category || 'cash') === 'cash'), val)), fmtN(sum(r.a.filter(v => v.category === 'company' || v.category === 'insurance'), val)), fmtN(sum(r.a.filter(v => v.category === 'committee'), val))]), ['الإجمالي', '', all.length, fmtN(sum(all, val)), fmtN(sum(all, v => v.tax)), '', '', '']);
+  }
+  const vs = all.filter(v => v.clinic === name), acc = accounts(from, to).filter(r => r.clinic === name), days = [...groupBy(vs, v => v.date)].sort();
+  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(acc, r => r.right)), 'violet']])
+    + sect('الأطباء') + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب'], acc.map(r => [L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right)]), ['الإجمالي', sum(acc, r => r.visits), fmtN(sum(acc, r => r.total)), fmtN(sum(acc, r => r.tax)), fmtN(sum(acc, r => r.right))])
+    + sect('يوماً بيوم') + tbl(['اليوم', 'الزيارات', 'الإيراد'], days.map(([d, a]) => [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val))]))
+    + sect('الزيارات') + tbl(visitHeads, visitRows(vs), visitFoot(vs));
+}
+SCREEN_RENDER.rep_clinics = repScreen('rep_clinics', 'تقارير العيادات', '🏨', 'orange', bodyClinics, {sg: 'clinics', ph: 'اكتب اسم العيادة لعرض تفاصيلها…'});
+
+/* ---------- شركات التأمين: التعامل بقيمة كشف الشركة (من شاشة شركات التأمين) ---------- */
+function bodyCompanies(name) {
+  const {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.category === 'company' && (!name || v.company === name));
+  const kp = a => kpiRow([['الزيارات', a.length, 'teal'], ['قيمة الكشف بالشركة', fmtN(sum(a, coVal)), 'orange'], ['تحمل المرضى', fmtN(sum(a, coShare)), 'pink'], ['مستحق على الشركة', fmtN(sum(a, coDue)), 'cyan']]);
+  if (!name) {
+    const g = [...groupBy(vs, v => v.company)].sort((a, b) => sum(b[1], coDue) - sum(a[1], coDue));
+    return kp(vs) + `<div class="panel"><h3>المستحق على كل شركة</h3>${bars(g.map(([n, a]) => ({l: n, v: sum(a, coDue)})), 'cmprep')}</div>`
+      + tbl(['الشركة', 'قيمة كشف الشركة', 'الزيارات', 'إجمالي قيمة الشركة', 'تحمل المرضى', 'مستحق على الشركة'], g.map(([n, a]) => [L.company(n), fmtN(coFee(n)), a.length, fmtN(sum(a, coVal)), fmtN(sum(a, coShare)), `<b>${fmtN(sum(a, coDue))}</b>`]), ['الإجمالي', '', vs.length, fmtN(sum(vs, coVal)), fmtN(sum(vs, coShare)), fmtN(sum(vs, coDue))]);
+  }
+  return kp(vs) + `<div class="panel accent c-cyan"><b>${esc(name)}</b> — قيمة كشف الشركة: ${fmtN(coFee(name))}</div>`
+    + tbl(['التاريخ', 'المريض', 'العيادة', 'الطبيب', 'الزيارة', 'رقم النموذج', 'صورة النموذج', 'رقم الكارنية', 'صورة الكارنية', 'قيمة الشركة', 'نسبة التحمل %', 'تحمل المريض', 'على الشركة'], vs.sort((a, b) => a.date.localeCompare(b.date)).map(v => [esc(v.date), L.patient(v.patient), L.clinic(v.clinic), L.doctor(v.doctor), esc(v.visitType), esc(v.formNo), thumb(v.formPhoto), esc(v.cardNo), thumb(v.cardPhoto), fmtN(coVal(v)), fmtN(v.patientPct), fmtN(coShare(v)), fmtN(coDue(v))]), ['', '', '', '', '', '', '', '', 'الإجمالي', fmtN(sum(vs, coVal)), '', fmtN(sum(vs, coShare)), fmtN(sum(vs, coDue))]);
+}
+Acts.cmprep = el => nav('rep_companies', el.dataset.v);
+SCREEN_RENDER.rep_companies = repScreen('rep_companies', 'تقارير شركات التأمين', '🏢', 'cyan', bodyCompanies, {sg: 'companies', ph: 'اكتب اسم الشركة لعرض كشف حسابها…'});
+
+/* ---------- المرضى ---------- */
+function bodyPatients(name) {
+  const {from, to} = getRange();
+  if (!name) {
+    const vs = visitsIn(from, to), g = [...groupBy(vs, v => v.patient)].sort((a, b) => b[1].length - a[1].length);
+    return kpiRow([['مرضى الفترة', g.length, 'blue'], ['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange']])
+      + tbl(['المريض', 'الهاتف', 'الزيارات', 'الإجمالي', 'آخر زيارة', 'نوعها'], g.map(([n, a]) => { const l = a.slice().sort((x, y) => y.date.localeCompare(x.date))[0], p = S.data.patients.find(x => x.name === n); return [L.patient(n), esc(p ? p.phone : l.phone), a.length, fmtN(sum(a, val)), esc(l.date), esc(l.visitType)]; }));
+  }
+  const vs = visitsIn(from, to).filter(v => v.patient === name), ops = opsIn(from, to).filter(o => o.patient === name), p = S.data.patients.find(x => x.name === name);
+  const lv = lastVisitOf(name, p && p.phone);
+  return `<div class="panel accent c-blue"><b style="font-size:1.2rem">${esc(name)}</b> — الهاتف: ${esc(p ? p.phone : '') || '—'}${lv ? ` — آخر زيارة: ${lv.date} (${esc(lv.visitType)})` : ''}</div>`
+    + kpiRow([['الزيارات', vs.length, 'teal'], ['إجمالي القيمة', fmtN(sum(vs, val)), 'orange'], ['المدفوع من المريض', fmtN(sum(vs.filter(v => (v.category || 'cash') === 'cash'), val) + sum(vs, patientShare)), 'lime'], ['العمليات', ops.length, 'red']])
+    + sect('سجل الزيارات') + tbl(visitHeads, visitRows(vs), visitFoot(vs))
+    + (ops.length ? sect('العمليات') + tbl(['التاريخ', 'العملية', 'الطبيب', 'القيمة'], ops.map(o => [esc(o.date), esc(o.operation), L.doctor(o.doctor), fmtN(o.value)]), ['', '', 'الإجمالي', fmtN(sum(ops, o => o.value))]) : '');
+}
+SCREEN_RENDER.rep_patients = repScreen('rep_patients', 'تقارير المرضى', '🧑‍🤝‍🧑', 'blue', bodyPatients, {sg: 'patients', ph: 'اكتب اسم المريض لعرض ملفه…'});
+
+/* ---------- الخدمات ---------- */
+function bodyServices() {
+  const {from, to} = getRange(), vs = visitsIn(from, to);
+  const byS = [...groupBy(vs, v => v.service || '(بدون بيان)')].sort((a, b) => sum(b[1], val) - sum(a[1], val));
+  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange']])
+    + sect('حسب الزيارة') + tbl(['الزيارة', 'العدد', 'القيمة'], VTYPES.map(t => { const a = vs.filter(v => v.visitType === t); return [esc(t), a.length, fmtN(sum(a, val))]; }))
+    + sect('حسب البيان / الخدمة') + tbl(['الخدمة', 'السعر المسجل', 'العدد', 'القيمة'], byS.map(([n, a]) => { const s = S.data.services.find(x => x.name === n); return [esc(n), s ? fmtN(s.price) : '—', a.length, fmtN(sum(a, val))]; }), ['الإجمالي', '', vs.length, fmtN(sum(vs, val))])
+    + sect('قائمة الخدمات') + tbl(['النوع', 'الخدمة', 'القيمة', 'الضريبة'], S.data.services.slice().sort((a, b) => a.type.localeCompare(b.type)).map(s => [SVTYPE[s.type], esc(s.name), fmtN(s.price), fmtN(s.tax)]));
+}
+SCREEN_RENDER.rep_services = repScreen('rep_services', 'تقارير الخدمات', '💉', 'pink', bodyServices);
+
+/* ---------- العمليات ---------- */
+function bodyOps() {
+  const {from, to} = getRange(), ops = opsIn(from, to), g = [...groupBy(ops, o => o.doctor)];
+  return kpiRow([['عدد العمليات', ops.length, 'red'], ['إجمالي القيمة', fmtN(sum(ops, o => o.value)), 'orange'], ['نصيب الأطباء', fmtN(sum(ops, opShare)), 'violet']])
+    + sect('حسب الطبيب') + tbl(['الطبيب', 'العمليات', 'القيمة', 'نصيب الطبيب'], g.map(([n, a]) => [L.doctor(n), a.length, fmtN(sum(a, o => o.value)), fmtN(sum(a, opShare))]))
+    + sect('التفاصيل') + tbl(['التاريخ', 'المريض', 'العملية', 'الطبيب', 'القيمة', 'نصيب الطبيب'], ops.slice().sort((a, b) => a.date.localeCompare(b.date)).map(o => [esc(o.date), L.patient(o.patient), esc(o.operation), L.doctor(o.doctor), fmtN(o.value), fmtN(opShare(o))]), ['', '', '', 'الإجمالي', fmtN(sum(ops, o => o.value)), fmtN(sum(ops, opShare))]);
+}
+SCREEN_RENDER.rep_operations = repScreen('rep_operations', 'تقارير العمليات', '🏥', 'red', bodyOps);
+
+/* ---------- المصروفات ---------- */
+function bodyExp(cat) {
+  const {from, to} = getRange(), ex = expIn(from, to).filter(x => !cat || x.category === cat), g = [...groupBy(ex, x => x.category)].sort((a, b) => sum(b[1], x => x.amount) - sum(a[1], x => x.amount));
+  return kpiRow([['عدد البنود', ex.length, 'gold'], ['إجمالي المصروفات', fmtN(sum(ex, x => x.amount)), 'red']])
+    + `<div class="panel"><h3>حسب البند</h3>${bars(g.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, x => x.amount)})), 'exprep')}</div>`
+    + tbl(['البند', 'العدد', 'المبلغ'], g.map(([n, a]) => [`<span class="lnk" data-act="exprep" data-v="${esc(n)}">${esc(n)}</span>`, a.length, fmtN(sum(a, x => x.amount))]), ['الإجمالي', ex.length, fmtN(sum(ex, x => x.amount))])
+    + sect('التفاصيل') + tbl(['التاريخ', 'البند', 'الطبيب', 'المبلغ', 'ملاحظات', 'سجّله'], ex.slice().sort((a, b) => a.date.localeCompare(b.date)).map(x => [esc(x.date), esc(x.category), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes), esc(x.registeredBy)]));
+}
+Acts.exprep = el => S.view && S.view.pick && S.screen === 'rep_expenses' ? S.view.pick(el.dataset.v) : nav('rep_expenses', el.dataset.v);
+SCREEN_RENDER.rep_expenses = repScreen('rep_expenses', 'تقارير المصروفات', '💸', 'gold', bodyExp, {sg: 'expcats', ph: 'اكتب بند المصروف…'});
+
+/* ---------- نشاط مسئولي التسجيل ---------- */
+function bodyStaff() {
+  const {from, to} = getRange(), vs = visitsIn(from, to), ex = expIn(from, to), names = [...new Set([...vs.map(v => v.registeredBy), ...ex.map(x => x.registeredBy)].filter(Boolean))];
+  return tbl(['المسئول', 'عدد الزيارات', 'إيراد الزيارات', 'عدد المصروفات', 'مبلغ المصروفات'], names.map(n => { const a = vs.filter(v => v.registeredBy === n), e = ex.filter(x => x.registeredBy === n); return [esc(n), a.length, fmtN(sum(a, val)), e.length, fmtN(sum(e, x => x.amount))]; }));
+}
+SCREEN_RENDER.rep_staff = repScreen('rep_staff', 'نشاط مسئولي التسجيل', '👥', 'lime', bodyStaff);
+
+</script>
+<script>
+/* ============ نوافذ التفاصيل عند الضغط على الكروت + تقرير الإجماليات التفصيلي ============ */
+'use strict';
+const opsRevenue = (f, t) => sum(opsIn(f, t), o => o.value);
+function scopedVisits() {
+  const {from, to} = getRange(), sc = S.scope || {}; let vs = visitsIn(from, to);
+  if (sc.doctor) vs = vs.filter(v => v.doctor === sc.doctor);
+  if (sc.clinic) vs = vs.filter(v => v.clinic === sc.clinic);
+  if (sc.company) vs = vs.filter(v => v.company === sc.company);
+  if (sc.patient) vs = vs.filter(v => v.patient === sc.patient);
+  return vs;
+}
+const byTable = (title, arr, kf, linker) => { const g = [...groupBy(arr, kf)].sort((a, b) => sum(b[1], val) - sum(a[1], val)); return `<h4>${title}</h4>` + tbl(['البيان', 'العدد', 'القيمة'], g.map(([n, a]) => [linker ? linker(n) : esc(n), a.length, fmtN(sum(a, val))]), ['الإجمالي', arr.length, fmtN(sum(arr, val))]); };
+function statementRows(from, to) {
+  const vs = visitsIn(from, to), acc = accounts(from, to), opsRev = opsRevenue(from, to);
+  const kosf = sum(vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(vs.filter(v => v.visitType === 'متنوع'), val), dayRev = kosf + mixed + opsRev;
+  const co = sum(vs.filter(v => v.category === 'company'), val), ins = sum(vs, discountAmt), com = sum(vs.filter(v => v.category === 'committee'), val), tax = sum(vs, v => v.tax);
+  const due = sum(acc, r => r.right + r.ops), paid = docPaid(from, to), expO = expOther(from, to), net = dayRev - co - ins - com - tax - paid - expO;
+  return {rows: [['إيراد الكشف', kosf], ['إيراد متنوع', mixed], ['إيراد العمليات', opsRev], ['إجمالي إيراد اليوم', dayRev], ['يخصم: الشركات', -co], ['يخصم: التأمين (قيمة نسبة الخصم فقط)', -ins], ['يخصم: اللجنة', -com], ['الضريبة', -tax], ['يخصم: المدفوع للأطباء فعلياً', -paid], ['المصروفات (بخلاف الأطباء)', -expO], ['الصافي', net]],
+    memo: [['مستحقات الأطباء (إجمالي المستحق)', due], ['المدفوع منها', paid], ['المتبقي بدون صرف (غير مخصوم من الصافي)', due - paid]], net, dayRev, kosf, mixed, opsRev, due, paid, expO, gross: kosf + mixed};
+}
+function kpiDetail(label, value) {
+  const {from, to} = getRange(), vs = scopedVisits(), sc = S.scope || {}, scoped = Object.keys(sc).some(k => sc[k]);
+  const L_ = label;
+  let body = '';
+  if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.date >= from && x.date <= to && x.doctor); body = tbl(['التاريخ', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(x.date), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
+  else if (/إيراد الكشف|إيراد متنوع/.test(L_)) { const mx = /متنوع/.test(L_); const a = vs.filter(v => mx ? v.visitType === 'متنوع' : v.visitType !== 'متنوع'); body = byTable('حسب العيادة', a, v => v.clinic, L.clinic) + byTable('حسب البيان', a, v => v.service || '(بدون بيان)'); }
+  else if (/إيراد اليوم/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.slice(0, 4).map(r => [r[0], fmtN(r[1])])) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic); }
+  else if (/صافي/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.map(r => [r[0], fmtN(r[1])])) + '<h4>مستحقات الأطباء</h4>' + tbl(['البند', 'القيمة'], s.memo.map(r => [r[0], fmtN(r[1])])); }
+  else if (/مصروف|البنود/.test(L_)) { const ex = expIn(from, to).filter(x => !x.doctor); body = tbl(['البند', 'العدد', 'المبلغ'], [...groupBy(ex, x => x.category)].sort((a, b) => sum(b[1], x => x.amount) - sum(a[1], x => x.amount)).map(([n, a]) => [esc(n), a.length, fmtN(sum(a, x => x.amount))]), ['الإجمالي', ex.length, fmtN(sum(ex, x => x.amount))]); }
+  else if (/ضريب/.test(L_)) body = tbl(['العيادة', 'الزيارات', 'الضريبة'], [...groupBy(vs, v => v.clinic)].map(([n, a]) => [L.clinic(n), a.length, fmtN(sum(a, v => v.tax))]), ['الإجمالي', vs.length, fmtN(sum(vs, v => v.tax))]);
+  else if (/مستحق على|تحمل|الشركة|الخصم|شركات/.test(L_)) { const cv = vs.filter(v => v.category === 'company' || v.category === 'insurance'); body = tbl(['التاريخ', 'المريض', 'النوع', 'الشركة', 'القيمة', 'تحمل / خصم', 'على الجهة'], cv.map(v => [esc(v.date), L.patient(v.patient), tagCat(v.category), L.company(v.company), fmtN(v.category === 'company' ? coVal(v) : v.value), fmtN(v.category === 'company' ? coShare(v) : discountAmt(v)), fmtN(v.category === 'company' ? coDue(v) : val(v) - discountAmt(v))])); }
+  else if (/حقوق|حق |نصيب|المستحق|الأطباء|متبقي/.test(L_)) { const acc = accounts(from, to).filter(r => !sc.clinic || r.clinic === sc.clinic).filter(r => !sc.doctor || r.name === sc.doctor); body = tbl(['الطبيب', 'العيادة', 'الزيارات', 'الإيراد', 'حق الطبيب', 'العمليات'], acc.map(r => [L.doctor(r.name), L.clinic(r.clinic), r.visits, fmtN(r.total), fmtN(r.right), fmtN(r.ops)]), ['الإجمالي', '', sum(acc, r => r.visits), fmtN(sum(acc, r => r.total)), fmtN(sum(acc, r => r.right)), fmtN(sum(acc, r => r.ops))]); }
+  else if (/مرضى/.test(L_)) body = tbl(['المريض', 'الزيارات', 'القيمة'], [...groupBy(vs, v => v.patient)].sort((a, b) => b[1].length - a[1].length).slice(0, 15).map(([n, a]) => [L.patient(n), a.length, fmtN(sum(a, val))]));
+  else if (/عمليات/.test(L_)) { const o = opsIn(from, to); body = tbl(['التاريخ', 'المريض', 'العملية', 'الطبيب', 'القيمة'], o.map(x => [esc(x.date), L.patient(x.patient), esc(x.operation), L.doctor(x.doctor), fmtN(x.value)]), ['', '', '', 'الإجمالي', fmtN(sum(o, x => x.value))]); }
+  else if (/زيارات|الزيارات|عدد/.test(L_)) body = byTable('حسب نوع الزيارة', vs, v => v.visitType) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']);
+  else if (/إيراد|قيمة|الإجمالي|الإيرادات|المدفوع|نقد|المحصّل|الدرج/.test(L_)) body = byTable('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic) + byTable('حسب الزيارة', vs, v => v.visitType);
+  else body = '<p>لا توجد تفاصيل إضافية لهذا الكرت.</p>';
+  return `<div style="min-width:min(520px,88vw)"><h3>${esc(L_)}: <b>${esc(value)}</b></h3><small>${esc(rangeLabel())}${scoped ? ' — ' + esc(Object.values(sc).filter(Boolean).join(' / ')) : ''}</small><div style="max-height:62vh;overflow:auto;margin-top:8px">${body}</div><div class="actions"><button class="btn c-teal" data-act="closemodal">إغلاق</button></div></div>`;
+}
+Acts.kpi = el => modal(kpiDetail(el.dataset.l, el.dataset.v || ''));
+Acts.closemodal = el => { const m = el.closest('.modal'); if (m) m.remove(); };
+
+/* نافذة كرت العيادة */
+Acts.clinicrep = el => {
+  const n = el.dataset.v, {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.clinic === n), acc = accounts(from, to).filter(r => r.clinic === n), c = clinicOf(n);
+  const last = vs.slice().sort((a, b) => (b.date + (b.serial || 0)).localeCompare(a.date + (a.serial || 0))).slice(0, 8);
+  modal(`<div style="min-width:min(540px,88vw)"><h3>🏨 ${esc(n)}</h3><small>${esc(rangeLabel())} — سعر الكشف: ${fmtN(c ? c.price : 0)}</small>
+  ${kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink']]).replace(/data-act="kpi"/g, '')}
+  <div style="max-height:46vh;overflow:auto">${acc.length ? '<h4>الأطباء</h4>' + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'حق الطبيب'], acc.map(r => [L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.right)])) : ''}
+  ${vs.length ? '<h4>حسب نوع الدفع</h4>' + tbl(['النوع', 'العدد', 'القيمة'], Object.keys(CAT).map(k => { const a = vs.filter(v => (v.category || 'cash') === k); return [tagCat(k), a.length, fmtN(sum(a, val))]; })) + '<h4>آخر الزيارات</h4>' + tbl(['التاريخ', 'المريض', 'الطبيب', 'الزيارة', 'القيمة'], last.map(v => [esc(v.date), L.patient(v.patient), L.doctor(v.doctor), esc(v.visitType), fmtN(v.value)])) : '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>
+  <div class="actions">${can('rep_clinics') ? `<button class="btn c-violet" data-act="clinicfull" data-v="${esc(n)}">📋 التقرير الكامل</button>` : ''}<button class="btn ghost" data-act="closemodal">إغلاق</button></div></div>`);
+};
+Acts.clinicfull = el => { const m = el.closest('.modal'); if (m) m.remove(); nav('rep_clinics', el.dataset.v); };
+
+/* ---------- تقرير الإجماليات بالتفصيل ---------- */
+function bodyTotals() {
+  const {from, to} = getRange(), vs = visitsIn(from, to), ex = expIn(from, to), ops = opsIn(from, to), acc = accounts(from, to), st = statementRows(from, to);
+  const cats = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
+  const shares = sum(vs, patientShare), cash = sum(cats[0][1], val) + shares;
+  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs.filter(v => v.category === 'committee'), val);
+  const clinicNamesUsed = [...new Set(vs.map(v => v.clinic || '—'))].sort((a, b) => sum(vs.filter(v => (v.clinic || '—') === b), val) - sum(vs.filter(v => (v.clinic || '—') === a), val));
+  const clinicRows = [];
+  clinicNamesUsed.forEach(n => {
+    const a = vs.filter(v => (v.clinic || '—') === n);
+    clinicRows.push([`<b>${L.clinic(n)}</b>`, '', a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax)), fmtN(sum(acc.filter(r => (r.clinic || '—') === n), r => r.right)), ...Object.keys(CAT).map(k => fmtN(sum(a.filter(v => (v.category || 'cash') === k), val)))]);
+    acc.filter(r => (r.clinic || '—') === n).forEach(r => { const d = a.filter(v => (findDoctor(v) ? findDoctor(v).id : v.doctor) === (r.doc ? r.doc.id : r.name) || (!r.doc && v.doctor === r.name)); clinicRows.push(['', L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right), ...Object.keys(CAT).map(k => fmtN(sum(d.filter(v => (v.category || 'cash') === k), val)))]); });
+  });
+  const days = [...new Set([...vs.map(v => v.date), ...ex.map(x => x.date), ...ops.map(o => o.date)])].sort();
+  const cos = [...groupBy(vs.filter(v => v.category === 'company'), v => v.company)];
+  const svc = [...groupBy(vs, v => v.service || '(بدون بيان)')].sort((a, b) => sum(b[1], val) - sum(a[1], val)).slice(0, 15);
+  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal']])
+    + sect('قائمة الدخل') + tbl(['البند', 'القيمة'], st.rows.map(r => [r[0], fmtN(r[1])])) + sect('مستحقات الأطباء') + tbl(['البند', 'القيمة'], st.memo.map(r => [r[0], fmtN(r[1])]))
+    + sect('حسب نوع الزيارة') + tbl(['الزيارة', 'العدد', 'القيمة'], VTYPES.map(t => { const a = vs.filter(v => v.visitType === t); return [esc(t), a.length, fmtN(sum(a, val))]; }), ['الإجمالي', vs.length, fmtN(sum(vs, val))])
+    + sect('حسب نوع الدفع') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], cats.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]), ['الإجمالي', vs.length, fmtN(sum(vs, val)), fmtN(shares), fmtN(sum(vs, discountAmt))])
+    + sect('العيادات والأطباء بالتفصيل') + tbl(['العيادة', 'الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب', 'نقدي', 'شركة', 'لجنة', 'تأمين'], clinicRows, ['الإجمالي', '', vs.length, fmtN(sum(vs, val)), fmtN(sum(vs, v => v.tax)), fmtN(sum(acc, r => r.right)), ...cats.map(([, a]) => fmtN(sum(a, val)))])
+    + (cos.length ? sect('الشركات') + tbl(['الشركة', 'الزيارات', 'قيمة الشركة', 'تحمل المرضى', 'مستحق على الشركة'], cos.map(([n, a]) => [L.company(n), a.length, fmtN(sum(a, coVal)), fmtN(sum(a, coShare)), fmtN(sum(a, coDue))]), ['الإجمالي', cos.reduce((s, c) => s + c[1].length, 0), fmtN(sum(cos.flatMap(c => c[1]), coVal)), fmtN(sum(cos.flatMap(c => c[1]), coShare)), fmtN(sum(cos.flatMap(c => c[1]), coDue))]) : '')
+    + sect('أكثر الخدمات / البيانات') + tbl(['البيان', 'العدد', 'القيمة'], svc.map(([n, a]) => [esc(n), a.length, fmtN(sum(a, val))]))
+    + (ops.length ? sect('العمليات') + tbl(['الطبيب', 'العمليات', 'القيمة', 'نصيب الطبيب'], [...groupBy(ops, o => o.doctor)].map(([n, a]) => [L.doctor(n), a.length, fmtN(sum(a, o => o.value)), fmtN(sum(a, opShare))]), ['الإجمالي', ops.length, fmtN(sum(ops, o => o.value)), fmtN(sum(ops, opShare))]) : '')
+    + (ex.length ? sect('المصروفات') + tbl(['البند', 'العدد', 'المبلغ'], [...groupBy(ex, x => x.category)].sort((a, b) => sum(b[1], x => x.amount) - sum(a[1], x => x.amount)).map(([n, a]) => [esc(n), a.length, fmtN(sum(a, x => x.amount))]), ['الإجمالي', ex.length, fmtN(sum(ex, x => x.amount))]) : '')
+    + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'إيراد الزيارات', 'العمليات', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(ops.filter(o => o.date === d), o => o.value)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; }), ['الإجمالي', vs.length, fmtN(sum(vs, val)), fmtN(sum(ops, o => o.value)), fmtN(sum(vs, v => v.tax)), fmtN(sum(ex, x => x.amount))]) : '');
+}
+SCREEN_RENDER.rep_totals = repScreen('rep_totals', 'تقرير الإجماليات بالتفصيل', '🧮', 'gold', bodyTotals);
+
+</script>
+<script>
+/* ============ شاشة مستحقات الأطباء: المستحق / المدفوع / المتبقي حسب زيارات الفترة (اليوم افتراضياً) ============ */
+'use strict';
+function duesRows(from, to) {
+  const m = new Map();
+  accounts(from, to).forEach(r => { let x = m.get(r.name); if (!x) m.set(r.name, x = {name: r.name, clinics: new Set(), visits: 0, total: 0, tax: 0, right: 0, ops: 0, paid: 0}); if (r.clinic) x.clinics.add(r.clinic); x.visits += r.visits; x.total += r.total; x.tax += r.tax; x.right += r.right; x.ops += r.ops; });
+  S.data.expenses.filter(e => e.doctor && e.date >= from && e.date <= to).forEach(e => { let x = m.get(e.doctor); if (!x) m.set(e.doctor, x = {name: e.doctor, clinics: new Set(), visits: 0, total: 0, tax: 0, right: 0, ops: 0, paid: 0}); x.paid += +e.amount || 0; });
+  return [...m.values()].map(x => Object.assign(x, {due: x.right + x.ops, rest: x.right + x.ops - x.paid})).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+}
+SCREEN_RENDER.dues = async function () {
+  if (!can('dues')) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
+  const main = $('#main');
+  const draw = () => {
+    const {from, to} = getRange(), rows = duesRows(from, to), pays = S.data.expenses.filter(e => e.doctor && e.date >= from && e.date <= to).sort((a, b) => b.date.localeCompare(a.date));
+    const T = k => sum(rows, r => r[k]);
+    const tag = r => r.due <= 0 && r.paid <= 0 ? '' : r.rest <= 0.005 ? '<span class="tag c-lime">تم الصرف</span>' : r.paid > 0 ? '<span class="tag c-orange">صرف جزئي</span>' : '<span class="tag c-red">لم يُصرف</span>';
+    main.innerHTML = `${pageHead('مستحقات الأطباء', '💵', 'lime')}${rangeBar()}<div class="bar noprint">${window.exportButtons}</div>
+    ${kpiRow([['إجمالي المستحق', fmtN(T('due')), 'violet'], ['المدفوع', fmtN(T('paid')), 'lime'], ['المتبقي', fmtN(T('rest')), 'red']])}
+    ${tbl(['الطبيب', 'العيادات', 'الزيارات', 'إيراد الزيارات', 'الضريبة', 'مستحق الكشوفات', 'نصيب العمليات', 'إجمالي المستحق', 'المدفوع', 'المتبقي', 'الحالة', ''],
+      rows.map(r => [L.doctor(r.name), esc([...r.clinics].join('، ')), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right), fmtN(r.ops), `<b>${fmtN(r.due)}</b>`, fmtN(r.paid), `<b>${fmtN(r.rest)}</b>`, tag(r), r.rest > 0.005 ? `<button class="btn sm c-lime" data-act="paydoc" data-v="${esc(r.name)}" data-r="${r.rest}">💵 صرف</button>` : '']),
+      ['الإجمالي', '', T('visits'), fmtN(T('total')), fmtN(T('tax')), fmtN(T('right')), fmtN(T('ops')), fmtN(T('due')), fmtN(T('paid')), fmtN(T('rest')), '', ''])}
+    ${sect('سجل المدفوعات')}${tbl(['التاريخ', 'الطبيب', 'المبلغ', 'ملاحظات', 'سجّله', ''], pays.map(e => [esc(e.date), L.doctor(e.doctor), fmtN(e.amount), esc(e.notes), esc(e.registeredBy), `<button class="btn sm c-red noprint" data-act="delpay" data-id="${e.id}">🗑️</button>`]), ['', 'الإجمالي', fmtN(sum(pays, e => e.amount)), '', '', ''])}`;
+  };
+  S.view = {refresh: draw}; draw();
+};
+Acts.paydoc = el => {
+  const name = el.dataset.v, rest = Math.max(0, Math.round((+el.dataset.r || 0) * 100) / 100), {from, to} = getRange();
+  const def = from === to && validDate(from) ? from : today();
+  const m = modal(`<form id="pf" style="min-width:min(420px,86vw)"><h3>💵 صرف مستحقات — ${esc(name)}</h3><small>${esc(rangeLabel())} — المتبقي: ${fmtN(rest)}</small>
+    <div class="grid" style="margin-top:10px"><div class="fld"><label>تاريخ الصرف</label>${dateFld('date', def)}</div><div class="fld"><label>المبلغ</label><input name="amount" type="number" step="any" value="${rest}"></div><div class="fld full"><label>ملاحظات</label><input name="notes"></div></div>
+    <div class="actions"><button class="btn c-lime" type="submit">حفظ الصرف</button><button class="btn ghost" type="button" data-act="closemodal">إلغاء</button></div></form>`);
+  $('#pf', m).onsubmit = ev => { ev.preventDefault(); guard($('button[type=submit]', m), async () => {
+    const v = readForm($('#pf', m)); if (!validDate(v.date)) throw new Error('التاريخ يجب أن يكون yyyy/mm/dd'); if (!(+v.amount > 0)) throw new Error('أدخل مبلغاً أكبر من صفر');
+    await API.call('save', {entity: 'expenses', record: {date: v.date, category: 'مستحقات أطباء', doctor: name, amount: +v.amount, notes: v.notes}});
+    await loadAll(['expenses']); m.remove(); toast('تم تسجيل الصرف ✔'); refreshView();
+  }); };
+};
+Acts.delpay = async el => { if (!await confirmBox('حذف هذا الصرف؟ سيعود المبلغ إلى المتبقي.')) return; await guard(null, async () => { await API.call('delete', {entity: 'expenses', id: el.dataset.id}); await loadAll(['expenses']); toast('تم الحذف'); refreshView(); }); };
+
+</script>
+<script>
+/* ============ التصدير: Excel (xlsx حقيقي بدون مكتبات) و PDF (عبر نافذة الطباعة: حفظ كـ PDF) ============ */
+'use strict';
+(function () {
+  const enc = new TextEncoder();
+  const crcT = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  const crc32 = u => { let c = 0xFFFFFFFF; for (let i = 0; i < u.length; i++) c = crcT[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  function zip(files) { // تخزين بدون ضغط
+    const parts = [], cen = []; let off = 0;
+    for (const [name, text] of files) {
+      const nb = enc.encode(name), d = enc.encode(text), c = crc32(d);
+      const lh = new DataView(new ArrayBuffer(30)); lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true); lh.setUint32(14, c, true); lh.setUint32(18, d.length, true); lh.setUint32(22, d.length, true); lh.setUint16(26, nb.length, true);
+      parts.push(new Uint8Array(lh.buffer), nb, d);
+      const ch = new DataView(new ArrayBuffer(46)); ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint32(16, c, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true); ch.setUint16(28, nb.length, true); ch.setUint32(42, off, true);
+      cen.push(new Uint8Array(ch.buffer), nb); off += 30 + nb.length + d.length;
+    }
+    const csz = cen.reduce((s, x) => s + x.length, 0), end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, csz, true); end.setUint32(16, off, true);
+    return new Blob([...parts, ...cen, new Uint8Array(end.buffer)], {type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  }
+  const xe = s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const colName = i => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + (i - 1) % 26) + s; return s; };
+  const toNum = t => { if (typeof t === 'number') return t; if (!/^-?(\d{1,3}(,\d{3})+|\d+)(\.\d+)?$/.test(t)) return null; if (!/[.,]/.test(t) && (t[0] === '0' && t.length > 1 || t.length > 9)) return null; return parseFloat(t.replace(/,/g, '')); };
+
+  function sheetXML(rows, headRows) {
+    const widths = []; rows.forEach(r => r.forEach((c, i) => { widths[i] = Math.min(45, Math.max(widths[i] || 8, String(c).length * 1.5 + 3)); }));
+    let x = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView rightToLeft="1" workbookViewId="0"><pane ySplit="${headRows}" topLeftCell="A${headRows + 1}" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols><sheetData>`;
+    rows.forEach((r, ri) => {
+      x += `<row r="${ri + 1}">`;
+      r.forEach((c, ci) => {
+        const ref = colName(ci) + (ri + 1), head = ri < headRows, n = head ? null : toNum(c);
+        if (n !== null) x += `<c r="${ref}" s="2"><v>${n}</v></c>`; else x += `<c r="${ref}" s="${head ? 1 : 0}" t="inlineStr"><is><t xml:space="preserve">${xe(c)}</t></is></c>`;
+      });
+      x += '</row>';
+    });
+    return x + '</sheetData></worksheet>';
+  }
+  function xlsx(sheets) { // sheets: [{name, rows:[[...]], headRows}]
+    const used = new Set(), names = sheets.map((s, i) => { let n = String(s.name || 'ورقة' + (i + 1)).replace(/[\[\]:*?\/\\]/g, ' ').trim().slice(0, 28) || 'ورقة' + (i + 1); let m = n, k = 2; while (used.has(m)) m = n.slice(0, 25) + ' ' + k++; used.add(m); return m; });
+    const files = [
+      ['[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>${sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}</Types>`],
+      ['_rels/.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+      ['xl/workbook.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${names.map((n, i) => `<sheet name="${xe(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`],
+      ['xl/_rels/workbook.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${sheets.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+      ['xl/styles.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="12"/><name val="Times New Roman"/></font><font><b/><sz val="12"/><name val="Times New Roman"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFBFEFE8"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="right"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="right"/></xf><xf numFmtId="4" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="right"/></xf></cellXfs></styleSheet>`]
+    ];
+    sheets.forEach((s, i) => files.push([`xl/worksheets/sheet${i + 1}.xml`, sheetXML(s.rows, s.headRows || 1)]));
+    return zip(files);
+  }
+
+  /* ---------- قراءة الجداول الظاهرة على الشاشة ---------- */
+  function domSheets(root, title) {
+    const out = [];
+    $$('table', root).forEach((t, i) => {
+      const heads = $$('thead th', t).map(th => th.textContent.replace(/\s+/g, ' ').trim()), keep = heads.map(h => h !== '');
+      const pick = cells => cells.filter((_, j) => keep[j]);
+      const rows = [pick(heads)];
+      $$('tbody tr', t).forEach(tr => { const tds = $$('td', tr); if (tds.length === 1 && tds[0].classList.contains('empty')) return; rows.push(pick(tds.map(td => { const tx = td.textContent.replace(/\s+/g, ' ').trim(); return !tx && td.querySelector('img,[data-fid]') ? 'مرفق' : tx; }))); });
+      $$('tfoot tr', t).forEach(tr => rows.push(pick($$('td', tr).map(td => td.textContent.replace(/\s+/g, ' ').trim()))));
+      if (rows.length < 2 && !$('tfoot', t)) return;
+      let nm = title, p = t.closest('.tbl-wrap') || t, prev = p.previousElementSibling;
+      while (prev && !prev.classList.contains('sect')) prev = prev.previousElementSibling;
+      if (prev) nm = prev.textContent.trim(); else if (i > 0) nm = title + ' ' + (i + 1);
+      out.push({name: nm, rows});
+    });
+    return out;
+  }
+  const pageTitle = () => (($('#main h1') || {}).textContent || 'تقرير').replace(/\s+/g, ' ').trim();
+  const stamp = () => today().replace(/\//g, '-');
+
+  function saveBlob(blob, name) {
+    if (window.AndroidBridge && window.AndroidBridge.saveFile) {
+      const fr = new FileReader(); fr.onload = () => window.AndroidBridge.saveFile(name, blob.type, String(fr.result).split(',')[1]); fr.readAsDataURL(blob); return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+  }
+  Acts.xlsx = () => {
+    const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    let sheets = S.view && S.view.exportData ? S.view.exportData() : domSheets($('#main'), title.slice(0, 24));
+    if (!sheets.length) return toast('لا توجد بيانات للتصدير', true);
+    const meta = [[CENTER], [title], [S.view && S.view.noRange ? '' : rangeLabel()], ['تاريخ التصدير: ' + today() + ' — ' + (S.user ? S.user.username : '')], []];
+    sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
+    saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
+  };
+  Acts.pdf = () => {
+    const old = $('.printhead'); if (old) old.remove();
+    const h = document.createElement('div'); h.className = 'printhead';
+    h.innerHTML = `<h2>${esc(CENTER)}</h2><h3>${esc(pageTitle())}</h3><div>${esc(S.view && S.view.noRange ? '' : rangeLabel())} — طُبع في ${today()} بواسطة ${esc(S.user ? S.user.username : '')}</div>`;
+    const m = $('#main'); m.insertBefore(h, m.firstChild);
+    const t0 = document.title; document.title = pageTitle();
+    const done = () => { h.remove(); document.title = t0; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done); setTimeout(done, 6000);
+    if (window.AndroidBridge) window.AndroidBridge.print(); else window.print();
+  };
+  Acts.print = Acts.pdf;
+  window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';
+})();
+
+</script>
+
+</body>
+</html>
