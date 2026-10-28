@@ -131,6 +131,216 @@
    "name": "طبيب اطفال",
    "price": 0,
    "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (فيلم)",
+   "price": 40,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (2 فيلم)",
+   "price": 80,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (4 أفلام)",
+   "price": 160,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة عادية",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "موجات صوتية",
+   "price": 250,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "تحاليل",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "تحاليل شركات",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "معمل لاب تولاب",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "عمليات جراحية",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "فتح خراج",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "استئصال كيس شمعي",
+   "price": 450,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "استئصال بواسير وشرخ شرجي",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "خياطة جرح تحت مخدر موضعي",
+   "price": 77,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "تركيب جبيرة تحت الركبة",
+   "price": 110,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "جبس تحت الركبة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "طوارئ جراحة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "طوارئ عظام",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "كشف",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "استشارة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "غيار",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خياطة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "نسبة شركات",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خلع أسنان عادي (ضرس)",
+   "price": 200,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خلع جراحي",
+   "price": 350,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو أسنان",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو كمبوزيت (ضرس)",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو ليزر (ضرس)",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو عصب (ضرس)",
+   "price": 750,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "إزالة رواسب",
+   "price": 300,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "طربوش بورسلين",
+   "price": 1000,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "دعامة فايبر جلاس",
+   "price": 600,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "علاج طبيعي (جلسة)",
+   "price": 50,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "جلسات علاج طبيعي (6)",
+   "price": 300,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "جلسات علاج طبيعي (12)",
+   "price": 600,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حجامة",
+   "price": 200,
+   "tax": 0
   }
  ],
  "doctors": [

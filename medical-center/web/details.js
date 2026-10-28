@@ -22,7 +22,7 @@ function kpiDetail(label, value) {
   const {from, to} = getRange(), vs = scopedVisits(), sc = S.scope || {}, scoped = Object.keys(sc).some(k => sc[k]);
   const L_ = label;
   let body = '';
-  if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.date >= from && x.date <= to && x.doctor); body = tbl(['التاريخ', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(x.date), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
+  if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.doctor && payDay(x) >= from && payDay(x) <= to); body = tbl(['عن يوم', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(payDay(x)), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
   else if (/إيراد الكشف|إيراد متنوع/.test(L_)) { const mx = /متنوع/.test(L_); const a = vs.filter(v => mx ? v.visitType === 'متنوع' : v.visitType !== 'متنوع'); body = byTable('حسب العيادة', a, v => v.clinic, L.clinic) + byTable('حسب البيان', a, v => v.service || '(بدون بيان)'); }
   else if (/إيراد اليوم/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.slice(0, 4).map(r => [r[0], fmtN(r[1])])) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic); }
   else if (/صافي/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.map(r => [r[0], fmtN(r[1])])) + '<h4>مستحقات الأطباء</h4>' + tbl(['البند', 'القيمة'], s.memo.map(r => [r[0], fmtN(r[1])])); }

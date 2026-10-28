@@ -15,10 +15,10 @@ var FIELDS = {
   patients: 'name,phone',
   companies: 'name,fee,contact',
   visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  expenses: 'date,category,amount,notes,doctor'
+  expenses: 'date,category,amount,notes,doctor,dueDate'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial'.split(',');
-var DATES = ['date', 'hireDate', 'birthDate'];
+var DATES = ['date', 'hireDate', 'birthDate', 'dueDate'];
 var AUTO = {staff: 'code', doctors: 'code', visits: 'serial'};
 var TOKEN_TTL = 21600; // 6 ساعات (أقصى مدة للـ CacheService)
 

@@ -4,6 +4,7 @@ window.SCREEN_RENDER = window.SCREEN_RENDER || {};
 const stripTags = h => String(h).replace(/<[^>]+>/g, ' ');
 
 function crud(cfg) {
+  (window.CRUDS = window.CRUDS || {})[cfg.ent] = cfg;
   return async function () {
     if (!can(cfg.k)) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
     const main = $('#main'); let editing = null, q = '';
@@ -18,7 +19,7 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -81,12 +82,26 @@ SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء',
 });
 
 /* ---------- الخدمات ---------- */
-SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – أشعة – تحاليل)', i: '💉', c: 'orange', add: 'خدمة جديدة',
-  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: [{v: 'clinic', l: 'عيادة', c: 'orange'}, {v: 'radiology', l: 'أشعة', c: 'cyan'}, {v: 'lab', l: 'تحاليل', c: 'pink'}]}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
-  cols: [{h: 'النوع', f: r => `<span class="tag c-${{clinic: 'orange', radiology: 'cyan', lab: 'pink'}[r.type]}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
-  sort: (a, b) => (a.type || '').localeCompare(b.type) || a.name.localeCompare(b.name, 'ar'),
-  validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : ''
+SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – عمليات – أشعة – تحاليل – خدمات)', i: '💉', c: 'orange', add: 'خدمة جديدة',
+  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
+  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
+  sort: (a, b) => Object.keys(SVTYPE).indexOf(a.type) - Object.keys(SVTYPE).indexOf(b.type) || a.name.localeCompare(b.name, 'ar'),
+  validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : '',
+  tools: () => can('services') ? '<button class="btn sm c-gold" data-act="importseed" title="يضيف الناقص فقط من بيانات الإكسيل ولا يعدّل ما عدّلته">📥 استيراد من الإكسيل</button>' : ''
 });
+Acts.importseed = async el => {
+  const SD = window.SEED; if (!SD) return toast('لا توجد بيانات للاستيراد');
+  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل والخدمات والأطباء والشركات غير الموجودة فقط من ملف الإكسيل، دون تغيير ما عدّلته. متابعة؟')) return;
+  await guard(el, async () => {
+    const jobs = [];
+    (SD.services || []).forEach(x => { if (!S.data.services.some(s => s.type === x.type && s.name === x.name)) jobs.push(['services', x]); });
+    if (can('doctors')) (SD.doctors || []).forEach(x => { if (!S.data.doctors.some(d => d.name === x.name && d.clinic === x.clinic)) jobs.push(['doctors', x]); });
+    if (can('companies')) (SD.companies || []).forEach(x => { if (!S.data.companies.some(c => c.name === x.name)) jobs.push(['companies', x]); });
+    if (!jobs.length) return toast('كل البيانات موجودة بالفعل');
+    for (let i = 0; i < jobs.length; i += 5) await Promise.all(jobs.slice(i, i + 5).map(([entity, record]) => API.call('save', {entity, record})));
+    await loadAll(['services', 'doctors', 'companies']); toast(`تمت إضافة ${jobs.length} سجل ✔`); refreshView();
+  });
+};
 
 /* ---------- المرضى ---------- */
 SCREEN_RENDER.patients = crud({k: 'patients', ent: 'patients', t: 'المرضى', i: '🧑‍🤝‍🧑', c: 'blue', add: 'مريض جديد',
@@ -104,24 +119,24 @@ SCREEN_RENDER.companies = crud({k: 'companies', ent: 'companies', t: 'شركات
 
 /* ---------- المصروفات ---------- */
 SCREEN_RENDER.expenses = crud({k: 'expenses', ent: 'expenses', t: 'المصروفات', i: '💸', c: 'gold', add: 'مصروف جديد', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
-  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'dueDate', l: 'عن يوم (استحقاق الطبيب)', t: 'date'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'عن يوم', f: r => r.doctor ? esc(r.dueDate || r.date) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: getRange().from === getRange().to && validDate(getRange().from) ? getRange().from : today()}),
-  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; return o; },
+  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; if (!o.doctor) o.dueDate = ''; else if (!o.dueDate) o.dueDate = o.date; return o; },
   validate: r => !r.category && !r.doctor ? 'اختر بند المصروف أو اسم الطبيب' : (r.doctor && !S.data.doctors.some(d => d.name === r.doctor) ? 'اسم الطبيب غير مسجل في شاشة الأطباء' : '')
 });
 
 /* ---------- العمليات ---------- */
 const opsShare = f => { const p = +getv(f, 'doctorPercent') || 0; setv(f, '_share', fmtN((+getv(f, 'value') || 0) * p / 100)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'operations.operation'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'نصيب الطبيب', f: r => fmtN((+r.value || 0) * (+r.doctorPercent || 0) / 100), sum: r => (+r.value || 0) * (+r.doctorPercent || 0) / 100}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
   collect: raw => { const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; return o; },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
-  onChange: (n, f) => { if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', '*'].includes(n)) opsShare(f); }
+  onChange: (n, f) => { if (n === 'operation') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); } if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', '*'].includes(n)) opsShare(f); }
 });
 
 /* ---------- الزيارات ---------- */

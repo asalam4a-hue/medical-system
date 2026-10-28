@@ -185,11 +185,724 @@ tfoot td{font-weight:bold;background:linear-gradient(135deg,var(--gold2),var(--o
 .newuser sup{font-size:.8rem;color:#ff3d9a;font-weight:bold}
 .hidden{display:none!important}
 
+/* ---------- تصغير الشاشات والكروت ---------- */
+html,body{font-size:14px}
+.top{padding:6px 12px;gap:8px}.top .brand{font-size:1rem}.top .brand svg{width:32px;height:32px}.top .who{font-size:.85rem}
+.main{padding:10px}
+.pagehead{margin-bottom:8px;gap:8px}.pagehead h1{font-size:1.2rem;margin:0;gap:8px}.pagehead .ico{width:34px;height:34px;border-radius:10px;font-size:1.1rem}
+.glow{border-radius:14px}
+.btn{padding:6px 12px;border-radius:9px;font-size:.9rem}.btn.sm{padding:3px 8px;font-size:.8rem;border-radius:7px}
+.panel{padding:10px;border-radius:14px;margin-bottom:10px}.panel>h3{margin:0 0 6px;font-size:1rem}
+.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.fld label{font-size:.85rem}.fld input,.fld select,.fld textarea,.bar input,.bar select{padding:5px 8px;border-radius:8px;border-width:1.5px}
+table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.kpi{padding:8px 6px}.kpi small{font-size:.78rem}.kpi strong{font-size:1.2rem;margin-top:2px}
+.sect{margin:12px 0 6px}.sect h2{font-size:1.05rem;margin:0}.sect::after{height:3px}
+.cards{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.tile{padding:8px 6px;min-height:76px;gap:3px}.tile .ic{font-size:1.5rem}.tile b{font-size:.88rem}.tile .n{font-size:1.05rem}
+.tile.clinic{padding:8px 10px;min-height:72px}.tile.clinic .meter{height:5px}
+.charts{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.login .box{width:min(380px,100%)}.login .logo svg{width:84px;height:84px}.login h1{font-size:1.35rem}
+.modal .box,.modal>div{max-width:min(560px,96vw)}
+
 </style>
 </head>
 <body>
 <div id="app"></div>
-<script>window.API_MODE='gas';</script>
+<script>window.API_MODE='gas';window.SEED={
+ "services": [
+  {
+   "type": "clinic",
+   "name": "عظام",
+   "price": 100.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "رمد",
+   "price": 100.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "باطنه وطوارئ",
+   "price": 60.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "كلى والكلى الصناعية",
+   "price": 100.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "جلديه",
+   "price": 90.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "انف واذن",
+   "price": 80.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "جهاز هضمي وكبد",
+   "price": 110.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "مخ وأعصاب",
+   "price": 130.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "نساء",
+   "price": 100.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "تخاطب وتنمية مهارات",
+   "price": 50.0,
+   "tax": 5.0
+  },
+  {
+   "type": "clinic",
+   "name": "صدر",
+   "price": 90.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "جراحة عامه",
+   "price": 70.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "علاج طبيعى",
+   "price": 50.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "مسالك بوليه",
+   "price": 110.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "اسنان",
+   "price": 40.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "تركيبات الاسنان",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "clinic",
+   "name": "عمليات جراحية",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "clinic",
+   "name": "تحاليل",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "clinic",
+   "name": "معمل شركات",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "clinic",
+   "name": "الحجامه",
+   "price": 200.0,
+   "tax": 10.0
+  },
+  {
+   "type": "clinic",
+   "name": "تخدير",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "clinic",
+   "name": "طبيب اطفال",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (فيلم)",
+   "price": 40,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (2 فيلم)",
+   "price": 80,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة أسنان (4 أفلام)",
+   "price": 160,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "أشعة عادية",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "radiology",
+   "name": "موجات صوتية",
+   "price": 250,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "تحاليل",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "تحاليل شركات",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "lab",
+   "name": "معمل لاب تولاب",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "عمليات جراحية",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "فتح خراج",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "استئصال كيس شمعي",
+   "price": 450,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "استئصال بواسير وشرخ شرجي",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "خياطة جرح تحت مخدر موضعي",
+   "price": 77,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "تركيب جبيرة تحت الركبة",
+   "price": 110,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "جبس تحت الركبة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "طوارئ جراحة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "operation",
+   "name": "طوارئ عظام",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "كشف",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "استشارة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "غيار",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خياطة",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "نسبة شركات",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خلع أسنان عادي (ضرس)",
+   "price": 200,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "خلع جراحي",
+   "price": 350,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو أسنان",
+   "price": 0,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو كمبوزيت (ضرس)",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو ليزر (ضرس)",
+   "price": 400,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حشو عصب (ضرس)",
+   "price": 750,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "إزالة رواسب",
+   "price": 300,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "طربوش بورسلين",
+   "price": 1000,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "دعامة فايبر جلاس",
+   "price": 600,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "علاج طبيعي (جلسة)",
+   "price": 50,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "جلسات علاج طبيعي (6)",
+   "price": 300,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "جلسات علاج طبيعي (12)",
+   "price": 600,
+   "tax": 0
+  },
+  {
+   "type": "service",
+   "name": "حجامة",
+   "price": 200,
+   "tax": 0
+  }
+ ],
+ "doctors": [
+  {
+   "name": "عبدالغنى احمد",
+   "clinic": "جراحة عامه",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "ياسر طه",
+   "clinic": "تخدير",
+   "percent": 100.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "ايه رأفت",
+   "clinic": "اسنان",
+   "percent": 40.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "كامل ربيع",
+   "clinic": "تحاليل",
+   "percent": 0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "عمر محمود",
+   "clinic": "اسنان",
+   "percent": 40.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "اسماء محمد",
+   "clinic": "نساء",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "احمد عبدالحميد",
+   "clinic": "عظام",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "اسلام السيد",
+   "clinic": "باطنه وطوارئ",
+   "percent": 50.0,
+   "fixed": 500.0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد صلاح",
+   "clinic": "علاج طبيعى",
+   "percent": 50.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "كريم مشالى",
+   "clinic": "اسنان",
+   "percent": 50.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "حسنى جمال",
+   "clinic": "طبيب اطفال",
+   "percent": 100.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد الجمل",
+   "clinic": "عظام",
+   "percent": 70.0,
+   "fixed": 100.0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد شاكر",
+   "clinic": "اسنان",
+   "percent": 40.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد طه",
+   "clinic": "جهاز هضمي وكبد",
+   "percent": 50.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "ندى عادل",
+   "clinic": "اسنان",
+   "percent": 40.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "اشرف الالفى",
+   "clinic": "باطنه وطوارئ",
+   "percent": 50.0,
+   "fixed": 500.0,
+   "opPercent": 0
+  },
+  {
+   "name": "جمال الخولى",
+   "clinic": "مسالك بوليه",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد عباس",
+   "clinic": "رمد",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "منصور مهدى",
+   "clinic": "صدر",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "احمد اشرف",
+   "clinic": "باطنه وطوارئ",
+   "percent": 50.0,
+   "fixed": 500.0,
+   "opPercent": 0
+  },
+  {
+   "name": "عاطف حسن",
+   "clinic": "كلى والكلى الصناعية",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "هانم عبدالفتاح الدموكي",
+   "clinic": "تخاطب وتنمية مهارات",
+   "percent": 50.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "اسماء محمد",
+   "clinic": "عمليات جراحية",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "يارا بهاء",
+   "clinic": "جلديه",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "جمال هنداوى",
+   "clinic": "اسنان",
+   "percent": 40.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "على محجوب",
+   "clinic": "انف واذن",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "علاء الدين محمود",
+   "clinic": "مخ وأعصاب",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد ايمن",
+   "clinic": "باطنه وطوارئ",
+   "percent": 50.0,
+   "fixed": 500.0,
+   "opPercent": 0
+  },
+  {
+   "name": "على محجوب",
+   "clinic": "عمليات جراحية",
+   "percent": 45.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "عبدالغنى احمد",
+   "clinic": "عمليات جراحية",
+   "percent": 60.0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "محمد صلاح",
+   "clinic": "الحجامه",
+   "percent": 0,
+   "fixed": 0,
+   "opPercent": 0
+  },
+  {
+   "name": "اميره بهاء",
+   "clinic": "رمد",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "عبدالرحمن على",
+   "clinic": "جلديه",
+   "percent": 60.0,
+   "fixed": 200.0,
+   "opPercent": 0
+  },
+  {
+   "name": "سوسن محمود",
+   "clinic": "نساء",
+   "percent": 50.0,
+   "fixed": 0,
+   "opPercent": 0
+  }
+ ],
+ "companies": [
+  {
+   "name": "AXA",
+   "fee": 160.0
+  },
+  {
+   "name": "الاهلى للخدمات الطبية",
+   "fee": 100.0
+  },
+  {
+   "name": "DMS",
+   "fee": 175.0
+  },
+  {
+   "name": "Careplus",
+   "fee": 180.0
+  },
+  {
+   "name": "المشرق",
+   "fee": 150.0
+  },
+  {
+   "name": "EGYMED",
+   "fee": 200.0
+  },
+  {
+   "name": "SMART",
+   "fee": 160.0
+  },
+  {
+   "name": "Nextcare",
+   "fee": 140.0
+  }
+ ],
+ "staff": [
+  {
+   "name": "حماده حسن محمود"
+  },
+  {
+   "name": "سعد سعيد ناجي"
+  },
+  {
+   "name": "احمد عبدالسلام"
+  },
+  {
+   "name": "منى عبدالعزيز عبد الوهاب"
+  },
+  {
+   "name": "عواطف علي عبدالعظيم"
+  },
+  {
+   "name": "ايمان فؤاد علي"
+  },
+  {
+   "name": "هبه محمود رمضان"
+  },
+  {
+   "name": "فاطمه فتحي عبد الوارث"
+  }
+ ],
+ "expenseCats": [
+  "مصاريف متنوعة",
+  "زيت",
+  "مصاريف تشغيل",
+  "مصاريف نقل",
+  "تجهيزات طبيه وأخرى",
+  "بنزين",
+  "مكأفات",
+  "مكأفات عمليات",
+  "بوفية",
+  "مصروفات محطة المياه",
+  "صيانه",
+  "تراخيص ورسوم وكارتات وجراج",
+  "جاز",
+  "مصروفات المصعد",
+  "رسوم تراخيص طبيه",
+  "انتقالات",
+  "مصروفات نقل",
+  "اتصالات وتليفون وانترنت",
+  "دعايا",
+  "مطبوعات",
+  "أدوات كتابيه",
+  "سباكه",
+  "نثريات وإكراميات ومصروفات أخرى",
+  "بوفيه",
+  "بدل ضيافه",
+  "مصروفات نظافه",
+  "كهرباء",
+  "نجاره ودهانات",
+  "اجهزة كهربائيه",
+  "إيصالات كهرباء",
+  "إيصال مياه",
+  "إيصال ضرائب",
+  "صيانة أجهزه طبيه",
+  "معمل لاب تولاب",
+  "مستلزمات معمل",
+  "تركيبات أسنان",
+  "مستلزمات أسنان",
+  "مستلزمات طبيه وأدويه",
+  "مرتبات الموظفين والعمال",
+  "اجور الأطباء والتمريض",
+  "مكافآت",
+  "بدلات",
+  "حوافز",
+  "مصروفات التأمين الصحي",
+  "الرد النقدي"
+ ]
+};</script>
 <script>
 /* طبقة الاتصال: php | gas | local (تجريبي داخل المتصفح)
    نفس الأوامر تعمل في الثلاثة: status, register, login, me, logout, list, save, delete, upload, file */
@@ -237,10 +950,10 @@ const FIELDS = {
   patients:'name,phone',
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  expenses:'date,category,amount,notes,doctor'
+  expenses:'date,category,amount,notes,doctor,dueDate'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial'.split(','));
-const DATES = new Set(['date','hireDate','birthDate']);
+const DATES = new Set(['date','hireDate','birthDate','dueDate']);
 const AUTO = {staff:'code', doctors:'code', visits:'serial'};
 
 const mem = {};
@@ -372,7 +1085,8 @@ const dayName = s => { if (!validDate(s)) return ''; const [y,m,d] = s.split('/'
 const CAT = {cash:'نقدي', company:'شركة', committee:'لجنة', insurance:'تأمين'};
 const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange'};
 const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
-const SVTYPE = {clinic:'عيادة', radiology:'أشعة', lab:'تحاليل'};
+const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
+const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
 const EXTRA_CLINICS = ['الأشعة','التحاليل'];
 const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
 
@@ -524,10 +1238,11 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
+  opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
   services: () => uniq(S.data.services.map(s => s.name)),
   expcats: () => uniq([...S.data.expenses.map(x => x.category), ...SEED_EXP]),
-  bayan: () => { const cl = ($('[name=clinic]') || {}).value; const t = cl === 'الأشعة' ? 'radiology' : cl === 'التحاليل' ? 'lab' : null; return uniq([...S.data.services.filter(s => t ? s.type === t : s.type !== 'clinic').map(s => s.name), ...S.data.visits.map(v => v.service)]); }
+  bayan: () => { const cl = ($('[name=clinic]') || {}).value; const t = cl === 'الأشعة' ? 'radiology' : cl === 'التحاليل' ? 'lab' : cl === 'عمليات جراحية' ? 'operation' : null; return uniq([...S.data.services.filter(s => t ? s.type === t : s.type !== 'clinic').map(s => s.name), ...S.data.visits.map(v => v.service)]); }
 };
 function sgList(key) { if (SG[key]) return SG[key](); const [e, f] = key.split('.'); return uniq((S.data[e] || []).map(r => r[f])); }
 function sgClose() { if (sgBox) { sgBox.remove(); sgBox = null; sgIdx = -1; } }
@@ -615,7 +1330,8 @@ const coShare = v => coVal(v) * (+v.patientPct || 0) / 100;
 const coDue = v => coVal(v) - coShare(v);
 /* إيراد اليوم = كل الزيارات؛ الصافي يُخصم منه الشركات واللجنة وقيمة نسبة خصم التأمين فقط */
 const expOther = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && !x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
-const docPaid = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
+const payDay = x => x.dueDate || x.date;
+const docPaid = (f, t) => S.data.expenses.filter(x => x.doctor && payDay(x) >= f && payDay(x) <= t).reduce((s, x) => s + (+x.amount || 0), 0);
 const isCash = v => (v.category || 'cash') === 'cash';
 const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
 const patientShare = v => v.category === 'company' ? coShare(v) : 0;
@@ -688,9 +1404,9 @@ function tick() {
   const dl = $('#dl'); if (dl) dl.textContent = `${DAYS[n.getDay()]}  ${toStr(n)}`;
 }
 async function renderLogin(app) {
-  let hasUsers = true; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) {}
+  let hasUsers = true, connErr = ''; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) { connErr = e.message || 'تعذر الاتصال بالخادم'; }
   const canServer = API.mode === 'php';
-  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><div class="logo">${LOGO}</div><h1>${CENTER}</h1>
+  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><div class="logo">${LOGO}</div><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
   <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
   <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">الدخول بعد موافقة المدير فقط</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
@@ -771,6 +1487,7 @@ window.SCREEN_RENDER = window.SCREEN_RENDER || {};
 const stripTags = h => String(h).replace(/<[^>]+>/g, ' ');
 
 function crud(cfg) {
+  (window.CRUDS = window.CRUDS || {})[cfg.ent] = cfg;
   return async function () {
     if (!can(cfg.k)) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
     const main = $('#main'); let editing = null, q = '';
@@ -785,7 +1502,7 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -848,12 +1565,26 @@ SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء',
 });
 
 /* ---------- الخدمات ---------- */
-SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – أشعة – تحاليل)', i: '💉', c: 'orange', add: 'خدمة جديدة',
-  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: [{v: 'clinic', l: 'عيادة', c: 'orange'}, {v: 'radiology', l: 'أشعة', c: 'cyan'}, {v: 'lab', l: 'تحاليل', c: 'pink'}]}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
-  cols: [{h: 'النوع', f: r => `<span class="tag c-${{clinic: 'orange', radiology: 'cyan', lab: 'pink'}[r.type]}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
-  sort: (a, b) => (a.type || '').localeCompare(b.type) || a.name.localeCompare(b.name, 'ar'),
-  validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : ''
+SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – عمليات – أشعة – تحاليل – خدمات)', i: '💉', c: 'orange', add: 'خدمة جديدة',
+  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
+  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
+  sort: (a, b) => Object.keys(SVTYPE).indexOf(a.type) - Object.keys(SVTYPE).indexOf(b.type) || a.name.localeCompare(b.name, 'ar'),
+  validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : '',
+  tools: () => can('services') ? '<button class="btn sm c-gold" data-act="importseed" title="يضيف الناقص فقط من بيانات الإكسيل ولا يعدّل ما عدّلته">📥 استيراد من الإكسيل</button>' : ''
 });
+Acts.importseed = async el => {
+  const SD = window.SEED; if (!SD) return toast('لا توجد بيانات للاستيراد');
+  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل والخدمات والأطباء والشركات غير الموجودة فقط من ملف الإكسيل، دون تغيير ما عدّلته. متابعة؟')) return;
+  await guard(el, async () => {
+    const jobs = [];
+    (SD.services || []).forEach(x => { if (!S.data.services.some(s => s.type === x.type && s.name === x.name)) jobs.push(['services', x]); });
+    if (can('doctors')) (SD.doctors || []).forEach(x => { if (!S.data.doctors.some(d => d.name === x.name && d.clinic === x.clinic)) jobs.push(['doctors', x]); });
+    if (can('companies')) (SD.companies || []).forEach(x => { if (!S.data.companies.some(c => c.name === x.name)) jobs.push(['companies', x]); });
+    if (!jobs.length) return toast('كل البيانات موجودة بالفعل');
+    for (let i = 0; i < jobs.length; i += 5) await Promise.all(jobs.slice(i, i + 5).map(([entity, record]) => API.call('save', {entity, record})));
+    await loadAll(['services', 'doctors', 'companies']); toast(`تمت إضافة ${jobs.length} سجل ✔`); refreshView();
+  });
+};
 
 /* ---------- المرضى ---------- */
 SCREEN_RENDER.patients = crud({k: 'patients', ent: 'patients', t: 'المرضى', i: '🧑‍🤝‍🧑', c: 'blue', add: 'مريض جديد',
@@ -871,24 +1602,24 @@ SCREEN_RENDER.companies = crud({k: 'companies', ent: 'companies', t: 'شركات
 
 /* ---------- المصروفات ---------- */
 SCREEN_RENDER.expenses = crud({k: 'expenses', ent: 'expenses', t: 'المصروفات', i: '💸', c: 'gold', add: 'مصروف جديد', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
-  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'dueDate', l: 'عن يوم (استحقاق الطبيب)', t: 'date'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'عن يوم', f: r => r.doctor ? esc(r.dueDate || r.date) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: getRange().from === getRange().to && validDate(getRange().from) ? getRange().from : today()}),
-  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; return o; },
+  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; if (!o.doctor) o.dueDate = ''; else if (!o.dueDate) o.dueDate = o.date; return o; },
   validate: r => !r.category && !r.doctor ? 'اختر بند المصروف أو اسم الطبيب' : (r.doctor && !S.data.doctors.some(d => d.name === r.doctor) ? 'اسم الطبيب غير مسجل في شاشة الأطباء' : '')
 });
 
 /* ---------- العمليات ---------- */
 const opsShare = f => { const p = +getv(f, 'doctorPercent') || 0; setv(f, '_share', fmtN((+getv(f, 'value') || 0) * p / 100)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'operations.operation'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'نصيب الطبيب', f: r => fmtN((+r.value || 0) * (+r.doctorPercent || 0) / 100), sum: r => (+r.value || 0) * (+r.doctorPercent || 0) / 100}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
   collect: raw => { const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; return o; },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
-  onChange: (n, f) => { if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', '*'].includes(n)) opsShare(f); }
+  onChange: (n, f) => { if (n === 'operation') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); } if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', '*'].includes(n)) opsShare(f); }
 });
 
 /* ---------- الزيارات ---------- */
@@ -1162,7 +1893,7 @@ function kpiDetail(label, value) {
   const {from, to} = getRange(), vs = scopedVisits(), sc = S.scope || {}, scoped = Object.keys(sc).some(k => sc[k]);
   const L_ = label;
   let body = '';
-  if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.date >= from && x.date <= to && x.doctor); body = tbl(['التاريخ', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(x.date), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
+  if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.doctor && payDay(x) >= from && payDay(x) <= to); body = tbl(['عن يوم', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(payDay(x)), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
   else if (/إيراد الكشف|إيراد متنوع/.test(L_)) { const mx = /متنوع/.test(L_); const a = vs.filter(v => mx ? v.visitType === 'متنوع' : v.visitType !== 'متنوع'); body = byTable('حسب العيادة', a, v => v.clinic, L.clinic) + byTable('حسب البيان', a, v => v.service || '(بدون بيان)'); }
   else if (/إيراد اليوم/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.slice(0, 4).map(r => [r[0], fmtN(r[1])])) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic); }
   else if (/صافي/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.map(r => [r[0], fmtN(r[1])])) + '<h4>مستحقات الأطباء</h4>' + tbl(['البند', 'القيمة'], s.memo.map(r => [r[0], fmtN(r[1])])); }
@@ -1228,14 +1959,14 @@ SCREEN_RENDER.rep_totals = repScreen('rep_totals', 'تقرير الإجمالي�
 function duesRows(from, to) {
   const m = new Map();
   accounts(from, to).forEach(r => { let x = m.get(r.name); if (!x) m.set(r.name, x = {name: r.name, clinics: new Set(), visits: 0, total: 0, tax: 0, right: 0, ops: 0, paid: 0}); if (r.clinic) x.clinics.add(r.clinic); x.visits += r.visits; x.total += r.total; x.tax += r.tax; x.right += r.right; x.ops += r.ops; });
-  S.data.expenses.filter(e => e.doctor && e.date >= from && e.date <= to).forEach(e => { let x = m.get(e.doctor); if (!x) m.set(e.doctor, x = {name: e.doctor, clinics: new Set(), visits: 0, total: 0, tax: 0, right: 0, ops: 0, paid: 0}); x.paid += +e.amount || 0; });
+  S.data.expenses.filter(e => e.doctor && payDay(e) >= from && payDay(e) <= to).forEach(e => { let x = m.get(e.doctor); if (!x) m.set(e.doctor, x = {name: e.doctor, clinics: new Set(), visits: 0, total: 0, tax: 0, right: 0, ops: 0, paid: 0}); x.paid += +e.amount || 0; });
   return [...m.values()].map(x => Object.assign(x, {due: x.right + x.ops, rest: x.right + x.ops - x.paid})).sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 }
 SCREEN_RENDER.dues = async function () {
   if (!can('dues')) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
   const main = $('#main');
   const draw = () => {
-    const {from, to} = getRange(), rows = duesRows(from, to), pays = S.data.expenses.filter(e => e.doctor && e.date >= from && e.date <= to).sort((a, b) => b.date.localeCompare(a.date));
+    const {from, to} = getRange(), rows = duesRows(from, to), pays = S.data.expenses.filter(e => e.doctor && payDay(e) >= from && payDay(e) <= to).sort((a, b) => payDay(b).localeCompare(payDay(a)) || b.date.localeCompare(a.date));
     const T = k => sum(rows, r => r[k]);
     const tag = r => r.due <= 0 && r.paid <= 0 ? '' : r.rest <= 0.005 ? '<span class="tag c-lime">تم الصرف</span>' : r.paid > 0 ? '<span class="tag c-orange">صرف جزئي</span>' : '<span class="tag c-red">لم يُصرف</span>';
     main.innerHTML = `${pageHead('مستحقات الأطباء', '💵', 'lime')}${rangeBar()}<div class="bar noprint">${window.exportButtons}</div>
@@ -1243,7 +1974,7 @@ SCREEN_RENDER.dues = async function () {
     ${tbl(['الطبيب', 'العيادات', 'الزيارات', 'إيراد الزيارات', 'الضريبة', 'مستحق الكشوفات', 'نصيب العمليات', 'إجمالي المستحق', 'المدفوع', 'المتبقي', 'الحالة', ''],
       rows.map(r => [L.doctor(r.name), esc([...r.clinics].join('، ')), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right), fmtN(r.ops), `<b>${fmtN(r.due)}</b>`, fmtN(r.paid), `<b>${fmtN(r.rest)}</b>`, tag(r), r.rest > 0.005 ? `<button class="btn sm c-lime" data-act="paydoc" data-v="${esc(r.name)}" data-r="${r.rest}">💵 صرف</button>` : '']),
       ['الإجمالي', '', T('visits'), fmtN(T('total')), fmtN(T('tax')), fmtN(T('right')), fmtN(T('ops')), fmtN(T('due')), fmtN(T('paid')), fmtN(T('rest')), '', ''])}
-    ${sect('سجل المدفوعات')}${tbl(['التاريخ', 'الطبيب', 'المبلغ', 'ملاحظات', 'سجّله', ''], pays.map(e => [esc(e.date), L.doctor(e.doctor), fmtN(e.amount), esc(e.notes), esc(e.registeredBy), `<button class="btn sm c-red noprint" data-act="delpay" data-id="${e.id}">🗑️</button>`]), ['', 'الإجمالي', fmtN(sum(pays, e => e.amount)), '', '', ''])}`;
+    ${sect('سجل المدفوعات')}${tbl(['عن يوم', 'تاريخ الصرف', 'الطبيب', 'المبلغ', 'ملاحظات', 'سجّله', ''], pays.map(e => [esc(payDay(e)), esc(e.date), L.doctor(e.doctor), fmtN(e.amount), esc(e.notes), esc(e.registeredBy), `<button class="btn sm c-red noprint" data-act="delpay" data-id="${e.id}">🗑️</button>`]), ['', 'الإجمالي', fmtN(sum(pays, e => e.amount)), '', '', ''])}`;
   };
   S.view = {refresh: draw}; draw();
 };
@@ -1251,11 +1982,11 @@ Acts.paydoc = el => {
   const name = el.dataset.v, rest = Math.max(0, Math.round((+el.dataset.r || 0) * 100) / 100), {from, to} = getRange();
   const def = from === to && validDate(from) ? from : today();
   const m = modal(`<form id="pf" style="min-width:min(420px,86vw)"><h3>💵 صرف مستحقات — ${esc(name)}</h3><small>${esc(rangeLabel())} — المتبقي: ${fmtN(rest)}</small>
-    <div class="grid" style="margin-top:10px"><div class="fld"><label>تاريخ الصرف</label>${dateFld('date', def)}</div><div class="fld"><label>المبلغ</label><input name="amount" type="number" step="any" value="${rest}"></div><div class="fld full"><label>ملاحظات</label><input name="notes"></div></div>
+    <div class="grid" style="margin-top:10px"><div class="fld"><label>تاريخ الصرف</label>${dateFld('date', today())}</div><div class="fld"><label>عن يوم (استحقاق)</label>${dateFld('dueDate', def)}</div><div class="fld"><label>المبلغ</label><input name="amount" type="number" step="any" value="${rest}"></div><div class="fld full"><label>ملاحظات</label><input name="notes"></div></div>
     <div class="actions"><button class="btn c-lime" type="submit">حفظ الصرف</button><button class="btn ghost" type="button" data-act="closemodal">إلغاء</button></div></form>`);
   $('#pf', m).onsubmit = ev => { ev.preventDefault(); guard($('button[type=submit]', m), async () => {
-    const v = readForm($('#pf', m)); if (!validDate(v.date)) throw new Error('التاريخ يجب أن يكون yyyy/mm/dd'); if (!(+v.amount > 0)) throw new Error('أدخل مبلغاً أكبر من صفر');
-    await API.call('save', {entity: 'expenses', record: {date: v.date, category: 'مستحقات أطباء', doctor: name, amount: +v.amount, notes: v.notes}});
+    const v = readForm($('#pf', m)); if (!validDate(v.date) || (v.dueDate && !validDate(v.dueDate))) throw new Error('التاريخ يجب أن يكون yyyy/mm/dd'); if (!(+v.amount > 0)) throw new Error('أدخل مبلغاً أكبر من صفر');
+    await API.call('save', {entity: 'expenses', record: {date: v.date, dueDate: validDate(v.dueDate) ? v.dueDate : v.date, category: 'مستحقات أطباء', doctor: name, amount: +v.amount, notes: v.notes}});
     await loadAll(['expenses']); m.remove(); toast('تم تسجيل الصرف ✔'); refreshView();
   }); };
 };
@@ -1347,15 +2078,50 @@ Acts.delpay = async el => { if (!await confirmBox('حذف هذا الصرف؟ س
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
+  /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
+  const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px}.hd h2{margin:0;font-size:18px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}
+table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
+.sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
+img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
+  function printDoc(title, sub, bodyHTML, land) {
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+    if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
+      window.AndroidBridge.print(); setTimeout(back, 4000); return;
+    }
+    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0'; document.body.appendChild(fr);
+    const d = fr.contentDocument; d.open(); d.write(doc); d.close();
+    const go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة', true); } setTimeout(() => fr.remove(), 60000); };
+    setTimeout(go, 350);
+  }
+  function cleanContent() {
+    const m = $('#main').cloneNode(true);
+    m.querySelectorAll('.pagehead,form,.bar,.noprint,.cards,.modal,input,select,textarea,script,.imgfld,[data-rangebar]').forEach(n => n.remove());
+    m.querySelectorAll('.printhead').forEach(n => n.remove());
+    m.querySelectorAll('button').forEach(bt => { if (bt.classList.contains('btn') || bt.dataset.act === 'kpi') bt.remove(); else bt.replaceWith(document.createTextNode(bt.textContent)); });
+    m.querySelectorAll('table').forEach(t => { // حذف عمود الأزرار (رأس فارغ)
+      const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
+    });
+    m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
+    const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);
+    return {html: m.innerHTML, land};
+  }
   Acts.pdf = () => {
-    const old = $('.printhead'); if (old) old.remove();
-    const h = document.createElement('div'); h.className = 'printhead';
-    h.innerHTML = `<h2>${esc(CENTER)}</h2><h3>${esc(pageTitle())}</h3><div>${esc(S.view && S.view.noRange ? '' : rangeLabel())} — طُبع في ${today()} بواسطة ${esc(S.user ? S.user.username : '')}</div>`;
-    const m = $('#main'); m.insertBefore(h, m.firstChild);
-    const t0 = document.title; document.title = pageTitle();
-    const done = () => { h.remove(); document.title = t0; window.removeEventListener('afterprint', done); };
-    window.addEventListener('afterprint', done); setTimeout(done, 6000);
-    if (window.AndroidBridge) window.AndroidBridge.print(); else window.print();
+    const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land);
+  };
+  /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
+  Acts.prow = el => {
+    const cfg = (window.CRUDS || {})[el.dataset.e], r = cfg && S.data[cfg.ent].find(x => x.id === el.dataset.id); if (!r) return;
+    const rows = cfg.fields.filter(f => f.l && !['html', 'img'].includes(f.t) && !f.k.startsWith('_') || f.k === '_doc').map(f => {
+      let v = f.k === '_doc' ? r.doctor : r[f.k]; if (v == null || v === '') return ''; if (f.t === 'chk') v = v ? 'نعم' : 'لا'; if (f.t === 'seg') { const o = f.opts.find(x => x.v === v); v = o ? o.l : v; }
+      return `<tr><td>${esc(f.l)}</td><td>${esc(v)}</td></tr>`;
+    }).join('');
+    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
+    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
   Acts.print = Acts.pdf;
   window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';

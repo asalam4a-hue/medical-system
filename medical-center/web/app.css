@@ -176,3 +176,24 @@ tfoot td{font-weight:bold;background:linear-gradient(135deg,var(--gold2),var(--o
 .newuser{position:fixed;top:14px;inset-inline-start:14px;width:42px;height:42px;border-radius:50%;border:2px solid #ff3d9a;background:#fff;font-size:1.2rem;cursor:pointer;box-shadow:0 0 12px rgba(255,61,154,.5);z-index:5}
 .newuser sup{font-size:.8rem;color:#ff3d9a;font-weight:bold}
 .hidden{display:none!important}
+
+/* ---------- تصغير الشاشات والكروت ---------- */
+html,body{font-size:14px}
+.top{padding:6px 12px;gap:8px}.top .brand{font-size:1rem}.top .brand svg{width:32px;height:32px}.top .who{font-size:.85rem}
+.main{padding:10px}
+.pagehead{margin-bottom:8px;gap:8px}.pagehead h1{font-size:1.2rem;margin:0;gap:8px}.pagehead .ico{width:34px;height:34px;border-radius:10px;font-size:1.1rem}
+.glow{border-radius:14px}
+.btn{padding:6px 12px;border-radius:9px;font-size:.9rem}.btn.sm{padding:3px 8px;font-size:.8rem;border-radius:7px}
+.panel{padding:10px;border-radius:14px;margin-bottom:10px}.panel>h3{margin:0 0 6px;font-size:1rem}
+.grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.fld label{font-size:.85rem}.fld input,.fld select,.fld textarea,.bar input,.bar select{padding:5px 8px;border-radius:8px;border-width:1.5px}
+table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px}
+.kpi{padding:8px 6px}.kpi small{font-size:.78rem}.kpi strong{font-size:1.2rem;margin-top:2px}
+.sect{margin:12px 0 6px}.sect h2{font-size:1.05rem;margin:0}.sect::after{height:3px}
+.cards{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px}
+.tile{padding:8px 6px;min-height:76px;gap:3px}.tile .ic{font-size:1.5rem}.tile b{font-size:.88rem}.tile .n{font-size:1.05rem}
+.tile.clinic{padding:8px 10px;min-height:72px}.tile.clinic .meter{height:5px}
+.charts{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.login .box{width:min(380px,100%)}.login .logo svg{width:84px;height:84px}.login h1{font-size:1.35rem}
+.modal .box,.modal>div{max-width:min(560px,96vw)}

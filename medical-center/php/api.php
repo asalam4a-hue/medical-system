@@ -10,6 +10,12 @@ header('Cache-Control: no-store');
 $DATA = getenv('MC_DATA_DIR') ?: (__DIR__ . '/data');
 $TOKEN_TTL = 12 * 3600;
 
+/* صفحة تشخيص: افتح api.php في المتصفح لمعرفة حالة الاستضافة */
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
+  $okDir = (is_dir($DATA) || @mkdir($DATA, 0700, true)) && is_writable($DATA);
+  jout(['app' => 'medical-center', 'php' => PHP_VERSION, 'pdo_sqlite' => extension_loaded('pdo_sqlite'), 'mbstring' => extension_loaded('mbstring'), 'curl' => extension_loaded('curl'), 'data_dir_writable' => $okDir, 'gas_proxy' => is_file(__DIR__ . '/gas_url.txt') && trim((string)file_get_contents(__DIR__ . '/gas_url.txt')) !== '', 'seed_json' => is_file(__DIR__ . '/seed.json'), 'ok' => extension_loaded('pdo_sqlite') && $okDir]);
+}
+
 /* ربط مع جوجل شيت: ضع رابط نشر Google Apps Script (ينتهي بـ /exec) في ملف gas_url.txt بجوار هذا الملف
    أو في المتغير MC_GAS_URL، فتعمل كل النسخ (ويب/أندرويد/جوجل) على نفس قاعدة البيانات. */
 $GAS = trim((string)(getenv('MC_GAS_URL') ?: (is_file(__DIR__ . '/gas_url.txt') ? file_get_contents(__DIR__ . '/gas_url.txt') : '')));
@@ -21,6 +27,9 @@ if ($GAS !== '' && preg_match('#^https://script\.google\.com/#', $GAS) && $_SERV
   echo $out; exit;
 }
 
+if (!function_exists('mb_strlen')) { function mb_strlen($s) { return preg_match_all('/./us', (string)$s) ?: 0; } }
+if (!function_exists('mb_strtolower')) { function mb_strtolower($s) { return strtolower((string)$s); } }
+if (!function_exists('mb_substr')) { function mb_substr($s, $a, $l = null) { $c = preg_split('//u', (string)$s, -1, PREG_SPLIT_NO_EMPTY) ?: []; return implode('', array_slice($c, $a, $l)); } }
 function jout(array $a): void { echo json_encode($a, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit; }
 function jerr(string $m, ?string $code = null): void { jout(['error' => $m, 'code' => $code]); }
 
@@ -36,10 +45,10 @@ const FIELDS = [
   'patients'=>'name,phone',
   'companies'=>'name,fee,contact',
   'visits'=>'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  'expenses'=>'date,category,amount,notes,doctor',
+  'expenses'=>'date,category,amount,notes,doctor,dueDate',
 ];
 const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial'];
-const DATES = ['date','hireDate','birthDate'];
+const DATES = ['date','hireDate','birthDate','dueDate'];
 const AUTO = ['staff'=>'code','doctors'=>'code','visits'=>'serial'];
 
 if (!is_dir($DATA)) { @mkdir($DATA, 0700, true); }

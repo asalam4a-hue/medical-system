@@ -14,7 +14,8 @@ const dayName = s => { if (!validDate(s)) return ''; const [y,m,d] = s.split('/'
 const CAT = {cash:'نقدي', company:'شركة', committee:'لجنة', insurance:'تأمين'};
 const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange'};
 const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
-const SVTYPE = {clinic:'عيادة', radiology:'أشعة', lab:'تحاليل'};
+const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
+const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
 const EXTRA_CLINICS = ['الأشعة','التحاليل'];
 const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
 
@@ -166,10 +167,11 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
+  opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
   services: () => uniq(S.data.services.map(s => s.name)),
   expcats: () => uniq([...S.data.expenses.map(x => x.category), ...SEED_EXP]),
-  bayan: () => { const cl = ($('[name=clinic]') || {}).value; const t = cl === 'الأشعة' ? 'radiology' : cl === 'التحاليل' ? 'lab' : null; return uniq([...S.data.services.filter(s => t ? s.type === t : s.type !== 'clinic').map(s => s.name), ...S.data.visits.map(v => v.service)]); }
+  bayan: () => { const cl = ($('[name=clinic]') || {}).value; const t = cl === 'الأشعة' ? 'radiology' : cl === 'التحاليل' ? 'lab' : cl === 'عمليات جراحية' ? 'operation' : null; return uniq([...S.data.services.filter(s => t ? s.type === t : s.type !== 'clinic').map(s => s.name), ...S.data.visits.map(v => v.service)]); }
 };
 function sgList(key) { if (SG[key]) return SG[key](); const [e, f] = key.split('.'); return uniq((S.data[e] || []).map(r => r[f])); }
 function sgClose() { if (sgBox) { sgBox.remove(); sgBox = null; sgIdx = -1; } }
@@ -257,7 +259,8 @@ const coShare = v => coVal(v) * (+v.patientPct || 0) / 100;
 const coDue = v => coVal(v) - coShare(v);
 /* إيراد اليوم = كل الزيارات؛ الصافي يُخصم منه الشركات واللجنة وقيمة نسبة خصم التأمين فقط */
 const expOther = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && !x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
-const docPaid = (f, t) => S.data.expenses.filter(x => x.date >= f && x.date <= t && x.doctor).reduce((s, x) => s + (+x.amount || 0), 0);
+const payDay = x => x.dueDate || x.date;
+const docPaid = (f, t) => S.data.expenses.filter(x => x.doctor && payDay(x) >= f && payDay(x) <= t).reduce((s, x) => s + (+x.amount || 0), 0);
 const isCash = v => (v.category || 'cash') === 'cash';
 const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
 const patientShare = v => v.category === 'company' ? coShare(v) : 0;
@@ -330,9 +333,9 @@ function tick() {
   const dl = $('#dl'); if (dl) dl.textContent = `${DAYS[n.getDay()]}  ${toStr(n)}`;
 }
 async function renderLogin(app) {
-  let hasUsers = true; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) {}
+  let hasUsers = true, connErr = ''; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) { connErr = e.message || 'تعذر الاتصال بالخادم'; }
   const canServer = API.mode === 'php';
-  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><div class="logo">${LOGO}</div><h1>${CENTER}</h1>
+  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><div class="logo">${LOGO}</div><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
   <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
   <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">الدخول بعد موافقة المدير فقط</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}

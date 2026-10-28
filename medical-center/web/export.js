@@ -82,15 +82,50 @@
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
+  /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
+  const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px}.hd h2{margin:0;font-size:18px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}
+table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
+.sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
+img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
+  function printDoc(title, sub, bodyHTML, land) {
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+    if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
+      window.AndroidBridge.print(); setTimeout(back, 4000); return;
+    }
+    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0'; document.body.appendChild(fr);
+    const d = fr.contentDocument; d.open(); d.write(doc); d.close();
+    const go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة', true); } setTimeout(() => fr.remove(), 60000); };
+    setTimeout(go, 350);
+  }
+  function cleanContent() {
+    const m = $('#main').cloneNode(true);
+    m.querySelectorAll('.pagehead,form,.bar,.noprint,.cards,.modal,input,select,textarea,script,.imgfld,[data-rangebar]').forEach(n => n.remove());
+    m.querySelectorAll('.printhead').forEach(n => n.remove());
+    m.querySelectorAll('button').forEach(bt => { if (bt.classList.contains('btn') || bt.dataset.act === 'kpi') bt.remove(); else bt.replaceWith(document.createTextNode(bt.textContent)); });
+    m.querySelectorAll('table').forEach(t => { // حذف عمود الأزرار (رأس فارغ)
+      const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
+    });
+    m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
+    const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);
+    return {html: m.innerHTML, land};
+  }
   Acts.pdf = () => {
-    const old = $('.printhead'); if (old) old.remove();
-    const h = document.createElement('div'); h.className = 'printhead';
-    h.innerHTML = `<h2>${esc(CENTER)}</h2><h3>${esc(pageTitle())}</h3><div>${esc(S.view && S.view.noRange ? '' : rangeLabel())} — طُبع في ${today()} بواسطة ${esc(S.user ? S.user.username : '')}</div>`;
-    const m = $('#main'); m.insertBefore(h, m.firstChild);
-    const t0 = document.title; document.title = pageTitle();
-    const done = () => { h.remove(); document.title = t0; window.removeEventListener('afterprint', done); };
-    window.addEventListener('afterprint', done); setTimeout(done, 6000);
-    if (window.AndroidBridge) window.AndroidBridge.print(); else window.print();
+    const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land);
+  };
+  /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
+  Acts.prow = el => {
+    const cfg = (window.CRUDS || {})[el.dataset.e], r = cfg && S.data[cfg.ent].find(x => x.id === el.dataset.id); if (!r) return;
+    const rows = cfg.fields.filter(f => f.l && !['html', 'img'].includes(f.t) && !f.k.startsWith('_') || f.k === '_doc').map(f => {
+      let v = f.k === '_doc' ? r.doctor : r[f.k]; if (v == null || v === '') return ''; if (f.t === 'chk') v = v ? 'نعم' : 'لا'; if (f.t === 'seg') { const o = f.opts.find(x => x.v === v); v = o ? o.l : v; }
+      return `<tr><td>${esc(f.l)}</td><td>${esc(v)}</td></tr>`;
+    }).join('');
+    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
+    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
   Acts.print = Acts.pdf;
   window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';
