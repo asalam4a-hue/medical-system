@@ -40,13 +40,13 @@ const FIELDS = {
   staff:'code,name,nationalId,idPhoto,photo',
   doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
   services:'type,name,price,tax',
-  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes',
+  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   expenses:'date,category,amount,notes,doctor,dueDate'
 };
-const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial'.split(','));
+const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate']);
 const AUTO = {staff:'code', doctors:'code', visits:'serial'};
 

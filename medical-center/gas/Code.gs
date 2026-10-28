@@ -11,13 +11,13 @@ var FIELDS = {
   staff: 'code,name,nationalId,idPhoto,photo',
   doctors: 'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
   services: 'type,name,price,tax',
-  operations: 'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes',
+  operations: 'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients: 'name,phone',
   companies: 'name,fee,contact',
   visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   expenses: 'date,category,amount,notes,doctor,dueDate'
 };
-var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial'.split(',');
+var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate'];
 var AUTO = {staff: 'code', doctors: 'code', visits: 'serial'};
 var TOKEN_TTL = 21600; // 6 ساعات (أقصى مدة للـ CacheService)

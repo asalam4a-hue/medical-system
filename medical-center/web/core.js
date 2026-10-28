@@ -217,6 +217,13 @@ function findDoctor(v) {
   const D = S.data.doctors;
   return D.find(d => d.id === v.doctorId) || D.find(d => d.name === v.doctor && d.clinic === v.clinic) || D.find(d => d.name === v.doctor);
 }
+const isOn = v => v === true || v === 'true' || v === '1' || v === 1;
+/* حساب العملية: نصيب الطبيب بعد خصم التخدير (إن اختيرت الخانة) + مستحق طبيب التخدير */
+function opCalc(o) {
+  const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor);
+  const pct = +(o.doctorPercent != null && o.doctorPercent !== '' ? o.doctorPercent : (d ? d.opPercent : 0)) || 0, an = +o.anesthesia || 0, base = Math.max(0, (+o.value || 0) - (isOn(o.deductAnes) ? an : 0));
+  return {doc: d, pct, anes: an, base, surgeon: base * pct / 100};
+}
 function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
 function accounts(from, to) {
   const map = new Map();
@@ -238,7 +245,12 @@ function accounts(from, to) {
     const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor);
     const key = d ? d.id : '?|' + (o.doctor || '') + '|' + (o.clinic || '');
     let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (o.doctor || '—'), d ? d.clinic : o.clinic); r.cash = 0; map.set(key, r); }
-    r.ops += (+o.value || 0) * (+(o.doctorPercent != null && o.doctorPercent !== '' ? o.doctorPercent : (d ? d.opPercent : 0)) || 0) / 100;
+    const oc = opCalc(o); r.ops += oc.surgeon;
+    if (oc.anes > 0 && (o.anesthetistId || o.anesthetist)) {
+      const ad = S.data.doctors.find(x => x.id === o.anesthetistId) || S.data.doctors.find(x => x.name === o.anesthetist), ak = ad ? ad.id : '?|' + (o.anesthetist || '') + '|';
+      let ar = map.get(ak); if (!ar) { ar = emptyAcc(ak, ad, ad ? ad.name : (o.anesthetist || '—'), ad ? ad.clinic : ''); ar.cash = 0; map.set(ak, ar); }
+      ar.ops += oc.anes;
+    }
   }
   return [...map.values()].sort((a, b) => (a.clinic || '').localeCompare(b.clinic || '', 'ar') || a.name.localeCompare(b.name, 'ar'));
 }
