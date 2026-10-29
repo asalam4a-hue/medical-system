@@ -1720,6 +1720,14 @@ SCREEN_RENDER.reports = () => {
 'use strict';
 const tbl = (heads, rows, foot) => `<div class="tbl-wrap"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${heads.length}" class="empty">لا توجد بيانات في هذه الفترة</td></tr>`}</tbody>${foot ? `<tfoot><tr>${foot.map(c => `<td>${c}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
 const kpiRow = items => `<div class="kpis">${items.map((k, i) => `<div class="glow kpi c-${k[2] || ALL_COLORS[i % 9]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>`;
+/* حسب العيادة: سطر لكل (عيادة، طبيب) — الزيارات، كشف، متنوع، الإيرادات، الضريبة */
+function clinicDocRows(arr) {
+  const g = new Map(); arr.forEach(v => { const k = (v.clinic || '—') + '\u0001' + (v.doctor || '—'); (g.get(k) || g.set(k, []).get(k)).push(v); });
+  const rows = [...g.entries()].map(([k, a]) => { const [c, d] = k.split('\u0001'); return {c, d, n: a.length, kosf: sum(a.filter(v => v.visitType !== 'متنوع'), val), mixed: sum(a.filter(v => v.visitType === 'متنوع'), val), rev: sum(a, val), tax: sum(a, v => v.tax)}; }).sort((x, y) => x.c.localeCompare(y.c, 'ar') || x.d.localeCompare(y.d, 'ar'));
+  const T = k => sum(rows, r => r[k]);
+  return tbl(['العيادة', 'الطبيب', 'عدد الزيارات', 'كشف', 'متنوع', 'الإيرادات', 'الضريبة'], rows.map(r => [L.clinic(r.c), r.d === '—' ? '—' : L.doctor(r.d), r.n, fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax)]), ['الإجمالي', '', T('n'), fmtN(T('kosf')), fmtN(T('mixed')), fmtN(T('rev')), fmtN(T('tax'))]);
+}
+const byClinicDoc = arr => '<h4>حسب العيادة</h4>' + clinicDocRows(arr);
 const sect = t => `<div class="sect"><h2>${t}</h2></div>`;
 const sum = (a, f) => a.reduce((s, x) => s + (+f(x) || 0), 0);
 function groupBy(arr, kf) { const m = new Map(); arr.forEach(x => { const k = kf(x) || '—'; (m.get(k) || m.set(k, []).get(k)).push(x); }); return m; }
@@ -1763,7 +1771,7 @@ function bodyDaily() {
     + `<div class="charts"><div class="panel"><h3>حسب نوع الزيارة</h3>${donut(byCat.map(([k, a]) => ({l: CAT[k], v: sum(a, val), c: CATC[k]})))}</div><div class="panel"><h3>حسب العيادة</h3>${bars(byClinic.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, val)})), 'clinicrep')}</div></div>`
     + sect('ملخص الزيارات') + tbl(['الزيارة', 'العدد', 'القيمة'], byType.map(([t, a]) => [esc(t), a.length, fmtN(sum(a, val))]), ['الإجمالي', vs.length, fmtN(rev)])
     + sect('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], byCat.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]))
-    + sect('حسب العيادة') + tbl(['العيادة', 'الزيارات', 'الإيراد', 'الضريبة'], byClinic.map(([n, a]) => [L.clinic(n), a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax))]), ['الإجمالي', vs.length, fmtN(rev), fmtN(tax)])
+    + sect('حسب العيادة') + clinicDocRows(vs)
     + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'الإيراد', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; })) : '');
 }
 SCREEN_RENDER.rep_daily = repScreen('rep_daily', 'ملخص اليوم والإيرادات', '📈', 'teal', bodyDaily);
@@ -1961,8 +1969,8 @@ function kpiDetail(label, value) {
   const L_ = label;
   let body = '';
   if (/مدفوع/.test(L_)) { const p = S.data.expenses.filter(x => x.doctor && payDay(x) >= from && payDay(x) <= to); body = tbl(['عن يوم', 'الطبيب', 'المبلغ', 'ملاحظات'], p.map(x => [esc(payDay(x)), L.doctor(x.doctor), fmtN(x.amount), esc(x.notes)]), ['', 'الإجمالي', fmtN(sum(p, x => x.amount)), '']); }
-  else if (/إيراد الكشف|إيراد متنوع/.test(L_)) { const mx = /متنوع/.test(L_); const a = vs.filter(v => mx ? v.visitType === 'متنوع' : v.visitType !== 'متنوع'); body = byTable('حسب العيادة', a, v => v.clinic, L.clinic) + byTable('حسب البيان', a, v => v.service || '(بدون بيان)'); }
-  else if (/إيراد اليوم/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.slice(0, 4).map(r => [r[0], fmtN(r[1])])) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic); }
+  else if (/إيراد الكشف|إيراد متنوع/.test(L_)) { const mx = /متنوع/.test(L_); const a = vs.filter(v => mx ? v.visitType === 'متنوع' : v.visitType !== 'متنوع'); body = byClinicDoc(a) + byTable('حسب البيان', a, v => v.service || '(بدون بيان)'); }
+  else if (/إيراد اليوم/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.slice(0, 4).map(r => [r[0], fmtN(r[1])])) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']) + byClinicDoc(vs); }
   else if (/صافي/.test(L_)) { const s = statementRows(from, to); body = tbl(['البند', 'القيمة'], s.rows.map(r => [r[0], fmtN(r[1])])) + '<h4>مستحقات الأطباء</h4>' + tbl(['البند', 'القيمة'], s.memo.map(r => [r[0], fmtN(r[1])])); }
   else if (/مصروف|البنود/.test(L_)) { const ex = expIn(from, to).filter(x => !x.doctor); body = tbl(['البند', 'العدد', 'المبلغ'], [...groupBy(ex, x => x.category)].sort((a, b) => sum(b[1], x => x.amount) - sum(a[1], x => x.amount)).map(([n, a]) => [esc(n), a.length, fmtN(sum(a, x => x.amount))]), ['الإجمالي', ex.length, fmtN(sum(ex, x => x.amount))]); }
   else if (/ضريب/.test(L_)) body = tbl(['العيادة', 'الزيارات', 'الضريبة'], [...groupBy(vs, v => v.clinic)].map(([n, a]) => [L.clinic(n), a.length, fmtN(sum(a, v => v.tax))]), ['الإجمالي', vs.length, fmtN(sum(vs, v => v.tax))]);
@@ -1970,8 +1978,8 @@ function kpiDetail(label, value) {
   else if (/حقوق|حق |نصيب|المستحق|الأطباء|متبقي/.test(L_)) { const acc = accounts(from, to).filter(r => !sc.clinic || r.clinic === sc.clinic).filter(r => !sc.doctor || r.name === sc.doctor); body = tbl(['الطبيب', 'العيادة', 'الزيارات', 'الإيراد', 'حق الطبيب', 'العمليات'], acc.map(r => [L.doctor(r.name), L.clinic(r.clinic), r.visits, fmtN(r.total), fmtN(r.right), fmtN(r.ops)]), ['الإجمالي', '', sum(acc, r => r.visits), fmtN(sum(acc, r => r.total)), fmtN(sum(acc, r => r.right)), fmtN(sum(acc, r => r.ops))]); }
   else if (/مرضى/.test(L_)) body = tbl(['المريض', 'الزيارات', 'القيمة'], [...groupBy(vs, v => v.patient)].sort((a, b) => b[1].length - a[1].length).slice(0, 15).map(([n, a]) => [L.patient(n), a.length, fmtN(sum(a, val))]));
   else if (/عمليات/.test(L_)) { const o = opsIn(from, to); body = tbl(['التاريخ', 'المريض', 'العملية', 'الطبيب', 'القيمة'], o.map(x => [esc(x.date), L.patient(x.patient), esc(x.operation), L.doctor(x.doctor), fmtN(x.value)]), ['', '', '', 'الإجمالي', fmtN(sum(o, x => x.value))]); }
-  else if (/زيارات|الزيارات|عدد/.test(L_)) body = byTable('حسب نوع الزيارة', vs, v => v.visitType) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']);
-  else if (/إيراد|قيمة|الإجمالي|الإيرادات|المدفوع|نقد|المحصّل|الدرج/.test(L_)) body = byTable('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)', vs, v => CAT[v.category || 'cash']) + byTable('حسب العيادة', vs, v => v.clinic, L.clinic) + byTable('حسب الزيارة', vs, v => v.visitType);
+  else if (/زيارات|الزيارات|عدد/.test(L_)) body = byTable('حسب نوع الزيارة', vs, v => v.visitType) + byClinicDoc(vs) + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']);
+  else if (/إيراد|قيمة|الإجمالي|الإيرادات|المدفوع|نقد|المحصّل|الدرج/.test(L_)) body = byTable('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)', vs, v => CAT[v.category || 'cash']) + byClinicDoc(vs) + byTable('حسب الزيارة', vs, v => v.visitType);
   else body = '<p>لا توجد تفاصيل إضافية لهذا الكرت.</p>';
   return `<div style="min-width:min(520px,88vw)"><h3>${esc(L_)}: <b>${esc(value)}</b></h3><small>${esc(rangeLabel())}${scoped ? ' — ' + esc(Object.values(sc).filter(Boolean).join(' / ')) : ''}</small><div style="max-height:62vh;overflow:auto;margin-top:8px">${body}</div><div class="actions"><button class="btn c-teal" data-act="closemodal">إغلاق</button></div></div>`;
 }

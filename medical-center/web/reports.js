@@ -2,6 +2,14 @@
 'use strict';
 const tbl = (heads, rows, foot) => `<div class="tbl-wrap"><table><thead><tr>${heads.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${heads.length}" class="empty">لا توجد بيانات في هذه الفترة</td></tr>`}</tbody>${foot ? `<tfoot><tr>${foot.map(c => `<td>${c}</td>`).join('')}</tr></tfoot>` : ''}</table></div>`;
 const kpiRow = items => `<div class="kpis">${items.map((k, i) => `<div class="glow kpi c-${k[2] || ALL_COLORS[i % 9]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>`;
+/* حسب العيادة: سطر لكل (عيادة، طبيب) — الزيارات، كشف، متنوع، الإيرادات، الضريبة */
+function clinicDocRows(arr) {
+  const g = new Map(); arr.forEach(v => { const k = (v.clinic || '—') + '\u0001' + (v.doctor || '—'); (g.get(k) || g.set(k, []).get(k)).push(v); });
+  const rows = [...g.entries()].map(([k, a]) => { const [c, d] = k.split('\u0001'); return {c, d, n: a.length, kosf: sum(a.filter(v => v.visitType !== 'متنوع'), val), mixed: sum(a.filter(v => v.visitType === 'متنوع'), val), rev: sum(a, val), tax: sum(a, v => v.tax)}; }).sort((x, y) => x.c.localeCompare(y.c, 'ar') || x.d.localeCompare(y.d, 'ar'));
+  const T = k => sum(rows, r => r[k]);
+  return tbl(['العيادة', 'الطبيب', 'عدد الزيارات', 'كشف', 'متنوع', 'الإيرادات', 'الضريبة'], rows.map(r => [L.clinic(r.c), r.d === '—' ? '—' : L.doctor(r.d), r.n, fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax)]), ['الإجمالي', '', T('n'), fmtN(T('kosf')), fmtN(T('mixed')), fmtN(T('rev')), fmtN(T('tax'))]);
+}
+const byClinicDoc = arr => '<h4>حسب العيادة</h4>' + clinicDocRows(arr);
 const sect = t => `<div class="sect"><h2>${t}</h2></div>`;
 const sum = (a, f) => a.reduce((s, x) => s + (+f(x) || 0), 0);
 function groupBy(arr, kf) { const m = new Map(); arr.forEach(x => { const k = kf(x) || '—'; (m.get(k) || m.set(k, []).get(k)).push(x); }); return m; }
@@ -45,7 +53,7 @@ function bodyDaily() {
     + `<div class="charts"><div class="panel"><h3>حسب نوع الزيارة</h3>${donut(byCat.map(([k, a]) => ({l: CAT[k], v: sum(a, val), c: CATC[k]})))}</div><div class="panel"><h3>حسب العيادة</h3>${bars(byClinic.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, val)})), 'clinicrep')}</div></div>`
     + sect('ملخص الزيارات') + tbl(['الزيارة', 'العدد', 'القيمة'], byType.map(([t, a]) => [esc(t), a.length, fmtN(sum(a, val))]), ['الإجمالي', vs.length, fmtN(rev)])
     + sect('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], byCat.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]))
-    + sect('حسب العيادة') + tbl(['العيادة', 'الزيارات', 'الإيراد', 'الضريبة'], byClinic.map(([n, a]) => [L.clinic(n), a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax))]), ['الإجمالي', vs.length, fmtN(rev), fmtN(tax)])
+    + sect('حسب العيادة') + clinicDocRows(vs)
     + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'الإيراد', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; })) : '');
 }
 SCREEN_RENDER.rep_daily = repScreen('rep_daily', 'ملخص اليوم والإيرادات', '📈', 'teal', bodyDaily);
