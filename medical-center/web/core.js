@@ -349,16 +349,14 @@ async function renderLogin(app) {
   const canServer = API.mode === 'php';
   app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
   <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
-  <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">الدخول بعد موافقة المدير فقط</p></form>
+  <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">${hasUsers ? 'الدخول بعد موافقة المدير فقط' : 'لا يوجد مستخدمون بعد — اضغط أيقونة 👤＋ لإنشاء أول مستخدم (المدير)'}</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
   <div class="fld"><label>اسم المستخدم</label><input name="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" required></div><div class="fld"><label>الرقم القومي</label><input name="nationalId" inputmode="numeric" maxlength="14"></div><div class="fld"><label>تاريخ الميلاد</label>${dateFld('birthDate', '')}</div><button class="glow c-pink btnbig" type="submit">إنشاء الحساب</button><button type="button" class="linkbtn" id="bk">رجوع لتسجيل الدخول</button></form>
 ${window.AndroidBridge ? '<br><button class="linkbtn" onclick="AndroidBridge.changeServer()">⚙ تغيير عنوان الخادم</button>' : ''}</div></div>`;
   tick(); clockTimer = setInterval(tick, 1000);
-  const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); $('#nu').classList.toggle('hidden', on && !hasUsers); };
-  if (!hasUsers) showReg(true);
+  const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); };
   $('#nu').onclick = () => showReg(true);
   $('#bk').onclick = () => showReg(false);
-  if (!hasUsers) $('#bk').classList.add('hidden');
   if (false) $('#srv').onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_server') || ''; } catch (e) { return ''; } })();
     const u = prompt('الصق رابط نشر Google Apps Script (ينتهي بـ /exec) لتعمل هذه النسخة على نفس بيانات الشيت.\nاتركه فارغاً للعودة للخادم المحلي.', cur);
     if (u === null) return; const t = u.trim(); if (t && !/^https:\/\/script\.google\.com\/.+\/exec/.test(t)) return toast('الرابط غير صحيح');
