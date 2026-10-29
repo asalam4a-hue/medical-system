@@ -41,7 +41,7 @@ function bodyDaily() {
   const byCat = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
   const byClinic = [...groupBy(vs, v => v.clinic)].sort((a, b) => sum(b[1], val) - sum(a[1], val));
   const days = [...new Set([...vs.map(v => v.date), ...ex.map(x => x.date)])].sort();
-  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['الضريبة', fmtN(tax), 'pink'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal']])
+  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal'], ['الضريبة', fmtN(tax), 'pink']])
     + `<div class="charts"><div class="panel"><h3>حسب نوع الزيارة</h3>${donut(byCat.map(([k, a]) => ({l: CAT[k], v: sum(a, val), c: CATC[k]})))}</div><div class="panel"><h3>حسب العيادة</h3>${bars(byClinic.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, val)})), 'clinicrep')}</div></div>`
     + sect('ملخص الزيارات') + tbl(['الزيارة', 'العدد', 'القيمة'], byType.map(([t, a]) => [esc(t), a.length, fmtN(sum(a, val))]), ['الإجمالي', vs.length, fmtN(rev)])
     + sect('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], byCat.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]))
@@ -81,7 +81,7 @@ function clinicsOverview(from, to, all) {
   const rows = [...g.values()].map(x => {
     const kosf = sum(x.vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(x.vs.filter(v => v.visitType === 'متنوع'), val) + sum(x.ops, o => o.value), total = kosf + mixed;
     const co = sum(x.vs.filter(v => v.category === 'company'), val), ins = sum(x.vs, discountAmt), com = sum(x.vs.filter(v => v.category === 'committee'), val), tax = sum(x.vs, v => v.tax);
-    return Object.assign(x, {kosf, mixed, total, co, ins, com, tax, net: total - co - ins - com - tax});
+    return Object.assign(x, {kosf, mixed, total, co, ins, com, tax, net: total - co - ins - com});
   }).sort((a, b) => a.c.localeCompare(b.c, 'ar'));
   const T = k => sum(rows, r => r[k]);
   const revTbl = tbl(['العيادة', 'كشف', 'متنوع', 'الإجمالي', 'شركات', 'تأمين', 'لجنة', 'ضرائب'],
@@ -94,7 +94,7 @@ function clinicsOverview(from, to, all) {
     ...other.slice().sort((a, b) => a.date.localeCompare(b.date)).map(e => [esc(e.notes || e.category || ''), fmtN(e.amount), esc(e.category || '')])];
   const exT = sum(paid, e => e.amount) + sum(other, e => e.amount), net = T('net') - exT;
   const netDay = net, noteRow = t => `<b>${t}</b>`;
-  const stmt = tbl(['البيان', 'القيمة', 'ملاحظات'], [[noteRow('إجمالي الإيرادات (القيمة)'), noteRow(fmtN(T('net'))), 'بعد خصم الشركات والتأمين واللجنة والضرائب'], ...exRows, [noteRow('إجمالي المصروفات'), noteRow(fmtN(exT)), ''], [noteRow('صافي اليوم'), noteRow(fmtN(netDay)), 'الإيرادات − المصروفات']]);
+  const stmt = tbl(['البيان', 'القيمة', 'ملاحظات'], [[noteRow('إجمالي الإيرادات (القيمة)'), noteRow(fmtN(T('net'))), 'بعد الشركات والتأمين واللجنة'], ...exRows, [noteRow('إجمالي المصروفات'), noteRow(fmtN(exT)), ''], [noteRow('صافي اليوم'), noteRow(fmtN(netDay)), 'الإيرادات − المصروفات'], [noteRow('الضريبة'), noteRow(fmtN(T('tax'))), 'غير مخصومة من الصافي']]);
   return kpiRow([['الإيرادات (القيمة)', fmtN(T('net')), 'orange'], ['المصروفات', fmtN(exT), 'red'], ['صافي اليوم', fmtN(net), net >= 0 ? 'lime' : 'pink']])
     + sect('الإيرادات') + revTbl
     + sect('المصروفات مقابل الإيرادات') + stmt
@@ -124,7 +124,8 @@ function detailSections(from, to) {
   const detail = tbl(['العيادة', 'اسم الطبيب', 'كشف', 'متنوع', 'إيرادات', 'شركات', 'لجنة', 'تأمين', 'ضرائب'],
     [...rows.filter(r => r.kind !== 'p').map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.co), fmtN(r.com), fmtN(r.ins), fmtN(r.tax)]),
      [b('الإجمالي'), '', b(fmtN(T('kosf'))), b(fmtN(T('mixed'))), b(fmtN(T('rev'))), b(fmtN(T('co'))), b(fmtN(T('com'))), b(fmtN(T('ins'))), b(fmtN(T('tax')))],
-     [b('صافي اليوم'), '', '', '', b(fmtN(st.net)), '', '', '', '']]);
+     [b('صافي اليوم'), '', '', '', b(fmtN(st.net)), '', '', '', ''],
+     [b('الضريبة'), '', '', '', '', '', '', '', b(fmtN(T('tax')))]]);
   const tag = r => r.due <= 0 && r.paid <= 0 ? '' : r.rest <= 0.005 ? '<span class="tag c-lime">تم الصرف</span>' : r.paid > 0 ? '<span class="tag c-orange">صرف جزئي</span>' : '<span class="tag c-red">لم يُصرف</span>';
   const dues = tbl(['العيادة', 'اسم الطبيب', 'كشف', 'متنوع', 'إيرادات', 'الضرائب', 'المستحق', 'المدفوع', 'الباقي', 'الحالة'],
     [...rows.map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax), b(fmtN(r.due)), fmtN(r.paid), b(fmtN(r.rest)), tag(r)]),

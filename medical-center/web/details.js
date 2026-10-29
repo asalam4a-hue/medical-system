@@ -14,9 +14,9 @@ function statementRows(from, to) {
   const vs = visitsIn(from, to), acc = accounts(from, to), opsRev = opsRevenue(from, to);
   const kosf = sum(vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(vs.filter(v => v.visitType === 'متنوع'), val), dayRev = kosf + mixed + opsRev;
   const co = sum(vs.filter(v => v.category === 'company'), val), ins = sum(vs, discountAmt), com = sum(vs.filter(v => v.category === 'committee'), val), tax = sum(vs, v => v.tax);
-  const due = sum(acc, r => r.right + r.ops), paid = docPaid(from, to), expO = expOther(from, to), net = dayRev - co - ins - com - tax - paid - expO;
-  return {rows: [['إيراد الكشف', kosf], ['إيراد متنوع', mixed], ['إيراد العمليات', opsRev], ['إجمالي إيراد اليوم', dayRev], ['يخصم: الشركات', -co], ['يخصم: التأمين (قيمة نسبة الخصم فقط)', -ins], ['يخصم: اللجنة', -com], ['الضريبة', -tax], ['يخصم: المدفوع للأطباء فعلياً', -paid], ['المصروفات (بخلاف الأطباء)', -expO], ['الصافي', net]],
-    memo: [['مستحقات الأطباء (إجمالي المستحق)', due], ['المدفوع منها', paid], ['المتبقي بدون صرف (غير مخصوم من الصافي)', due - paid]], net, dayRev, kosf, mixed, opsRev, due, paid, expO, gross: kosf + mixed};
+  const due = sum(acc, r => r.right + r.ops), paid = docPaid(from, to), expO = expOther(from, to), net = dayRev - co - ins - com - paid - expO;
+  return {rows: [['إيراد الكشف', kosf], ['إيراد متنوع', mixed], ['إيراد العمليات', opsRev], ['إجمالي إيراد اليوم', dayRev], ['الشركات', -co], ['التأمين (قيمة نسبة الخصم فقط)', -ins], ['اللجنة', -com], ['المدفوع للأطباء فعلياً', -paid], ['المصروفات (بخلاف الأطباء)', -expO], ['الصافي', net], ['الضريبة', tax]],
+    memo: [['مستحقات الأطباء (إجمالي المستحق)', due], ['المدفوع منها', paid], ['المتبقي بدون صرف (غير مخصوم من الصافي)', due - paid]], net, tax, dayRev, kosf, mixed, opsRev, due, paid, expO, gross: kosf + mixed};
 }
 function kpiDetail(label, value) {
   const {from, to} = getRange(), vs = scopedVisits(), sc = S.scope || {}, scoped = Object.keys(sc).some(k => sc[k]);
@@ -68,7 +68,7 @@ function bodyTotals() {
   const ds = detailSections(from, to), days = [...new Set([...vs.map(v => v.date), ...ex.map(x => x.date), ...ops.map(o => o.date)])].sort();
   const cos = [...groupBy(vs.filter(v => v.category === 'company'), v => v.company)];
   const svc = [...groupBy(vs, v => v.service || '(بدون بيان)')].sort((a, b) => sum(b[1], val) - sum(a[1], val)).slice(0, 15);
-  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal']])
+  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink']])
     + sect('قائمة الدخل') + tbl(['البند', 'القيمة'], st.rows.map(r => [r[0], fmtN(r[1])])) + sect('مستحقات الأطباء') + tbl(['البند', 'القيمة'], st.memo.map(r => [r[0], fmtN(r[1])]))
     + sect('حسب نوع الزيارة') + tbl(['الزيارة', 'العدد', 'القيمة'], VTYPES.map(t => { const a = vs.filter(v => v.visitType === t); return [esc(t), a.length, fmtN(sum(a, val))]; }), ['الإجمالي', vs.length, fmtN(sum(vs, val))])
     + sect('حسب نوع الدفع') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], cats.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]), ['الإجمالي', vs.length, fmtN(sum(vs, val)), fmtN(shares), fmtN(sum(vs, discountAmt))])
