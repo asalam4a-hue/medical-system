@@ -37,6 +37,7 @@ const REPS = [
   {k:'rep_daily', t:'ملخص اليوم والإيرادات', i:'📈', c:'teal'},
   {k:'rep_doctors', t:'حسابات الأطباء', i:'👨‍⚕️', c:'violet'},
   {k:'rep_cash', t:'حركة الخزينة', i:'🏦', c:'lime'},
+  {k:'rep_settle', t:'كشف تسويات المصروفات', i:'📑', c:'gold'},
   {k:'rep_journal', t:'تحليل إيرادات العيادة', i:'🧾', c:'cyan'},
   {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
   {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},

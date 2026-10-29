@@ -1110,6 +1110,7 @@ const REPS = [
   {k:'rep_daily', t:'ملخص اليوم والإيرادات', i:'📈', c:'teal'},
   {k:'rep_doctors', t:'حسابات الأطباء', i:'👨‍⚕️', c:'violet'},
   {k:'rep_cash', t:'حركة الخزينة', i:'🏦', c:'lime'},
+  {k:'rep_settle', t:'كشف تسويات المصروفات', i:'📑', c:'gold'},
   {k:'rep_journal', t:'تحليل إيرادات العيادة', i:'🧾', c:'cyan'},
   {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
   {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
@@ -2232,6 +2233,52 @@ SCREEN_RENDER.rep_journal = async function () {
     rows.forEach(r => out.push([r.date, N(r.bal), N(r.in), N(r.out), N(r.co), N(r.refund), N(r.com), N(r.tax), N(r.ins), N(r.cbal), N(r.cd), N(r.cc), r.bayan, r.op, r.doc, r.note, ...groups.flatMap(x => x.idx.map(i => N(r.ex[i])))]));
     out.push(['الإجمالي', N(L_.close.bal), N(T('in')), N(T('out')), N(T('co')), N(T('refund')), N(T('com')), N(T('tax')), N(T('ins')), N(L_.close.cbal), N(T('cd')), N(T('cc')), '', '', '', '', ...groups.flatMap(x => x.idx.map(i => N(leafTot[i])))]);
     return [{name: 'تحليل إيرادات العيادة', rows: out}]; }};
+  draw();
+};
+
+/* ============ كشف تسويات المصروفات: مبلغ / بيان / ملاحظات ============ */
+const STL = [
+  ['تجهيزات طبيه وأخرى', ['تجهيزات طبيه وأخرى']], ['مصروفات محطة المياه', ['مصروفات محطة المياه']],
+  ['مصروفات السياره ( بنزين )', ['بنزين']], ['مصروفات السياره ( زيت )', ['زيت']], ['مصروفات السياره ( صيانه )', ['صيانه', 'صيانة السيارة']],
+  ['تراخيص ورسوم وكارتات وجراج', ['تراخيص ورسوم وكارتات وجراج']], ['مصروفات مولد الكهرباء', ['جاز', 'مصروفات مولد الكهرباء', 'صيانة المولد']],
+  ['صيانه', []], ['مصروفات  المصعد', ['مصروفات المصعد']], ['رسوم تراخيص طبيه', ['رسوم تراخيص طبيه', 'رسوم تراخيص طبية ونفايات']],
+  ['انتقالات', ['انتقالات']], ['مصروفات نقل', ['مصروفات نقل', 'مصاريف نقل']], ['اتصالات وتليفون وانترنت', ['اتصالات وتليفون وانترنت']],
+  ['الأدوات الكتابيه والمطبوعات والدعايا', ['دعايا', 'الأدوات الكتابيه والمطبوعات والدعايا']], ['مطبوعات', ['مطبوعات']], ['أدوات كتابيه', ['أدوات كتابيه']],
+  ['مصروفات البوفيه والضيافه', ['بوفيه', 'بوفية', 'مصروفات البوفيه والضيافه']], ['بدل ضيافه', ['بدل ضيافه']], ['مصروفات نظافه', ['مصروفات نظافه']],
+  ['نثريات وإكراميات ومصروفات أخرى', ['نثريات وإكراميات ومصروفات أخرى', 'مصاريف متنوعة', 'مصاريف تشغيل']],
+  ['مصروفات الصيانه', ['كهرباء', 'مصروفات الصيانه']], ['سباكه', ['سباكه']], ['نجاره ودهانات', ['نجاره ودهانات', 'نجاره والوميتال ودهانات']], ['أجهزة كهربائيه', ['اجهزة كهربائيه']],
+  ['إيصالات كهرباء', ['إيصالات كهرباء']], ['إيصال مياه', ['إيصال مياه']], ['إيصالات ضرائب', ['إيصال ضرائب', 'إيصالات ضرائب', 'إيصالات تأمينات وضرائب']],
+  ['صيانة أجهزه طبيه', ['صيانة أجهزه طبيه']], ['مستلزمات معمل وتحاليل خارجيه ( معامل لاب تولاب )', ['معمل لاب تولاب']], ['مستلزمات معمل', ['مستلزمات معمل']],
+  ['مستلزمات أسنان وتركيبات أسنان', ['تركيبات أسنان']], ['مستلزمات أسنان', ['مستلزمات أسنان']], ['مستلزمات طبيه وأدويه', ['مستلزمات طبيه وأدويه']],
+  ['المستحقات الماليه ( الموظفين والتمريض والعمال )', ['مرتبات الموظفين والعمال', 'اجور الأطباء والتمريض']], ['المستحقات الماليه ( أجور الأطباء )', []],
+  ['الأجور والمرتبات ( مكافآت )', ['مكافآت', 'مكأفات', 'مكأفات عمليات']], ['الأجور والمرتبات ( بدلات )', ['بدلات']], ['الأجور والمرتبات ( حوافز )', ['حوافز']],
+  ['مصروفات تغطية التأمين الصحي ( كشف وخدمات أخرى وصرف أدويه )', ['مصروفات التأمين الصحي']]
+].map(([l, al]) => ({l, al: al.map(jnorm)}));
+const STL_OTHER = STL.findIndex(x => x.l.startsWith('نثريات')), STL_DOC = STL.findIndex(x => x.l.includes('أجور الأطباء'));
+function settlement(from, to) {
+  const amt = STL.map(() => 0), notes = STL.map(() => []); let refund = 0, refNotes = [];
+  S.data.expenses.filter(e => e.date >= from && e.date <= to).forEach(e => {
+    const a = +e.amount || 0, add = (i) => { amt[i] += a; if (e.notes) notes[i].push(e.notes); };
+    if (e.doctor) add(STL_DOC);
+    else if (jnorm(e.category) === jnorm('الرد النقدي')) { refund += a; if (e.notes) refNotes.push(e.notes); }
+    else { const k = jnorm(e.category), i = STL.findIndex(x => x.al.includes(k)); add(i >= 0 ? i : STL_OTHER); }
+  });
+  return {rows: STL.map((x, i) => ({l: x.l, a: amt[i], n: [...new Set(notes[i])].join('، ')})), refund, refNotes: refNotes.join('، '), total: sum(amt, x => x) + refund};
+}
+SCREEN_RENDER.rep_settle = async function () {
+  if (!can('rep_settle')) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية هذا التقرير</div>'; return; }
+  const main = $('#main');
+  const draw = () => {
+    const {from, to} = getRange(), R = settlement(from, to), f = x => (+x).toFixed(2);
+    const all = [...R.rows.map(r => [f(r.a), r.l, r.n]), [f(R.refund), 'الرد النقدي', R.refNotes]];
+    main.innerHTML = `${pageHead('كشف تسويات المصروفات', '🧾', 'gold')}${rangeBar()}<div class="bar noprint">${window.exportButtons}</div>
+    ${kpiRow([['إجمالي المصروفات', fmtN(R.total), 'red'], ['الرد النقدي', fmtN(R.refund), 'orange']])}
+    <div class="tbl-wrap"><table><thead><tr><th>المبـــلغ</th><th>البيـــــــان</th><th>الملاحظات</th></tr></thead><tbody>${all.map(r => `<tr><td>${fmtN(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}<tr class="daytot"><td><b>${fmtN(R.total)}</b></td><td><b>إجمالي المصروفات</b></td><td></td></tr></tbody></table></div>`;
+  };
+  S.view = {refresh: draw, exportData: () => {
+    const {from, to} = getRange(), R = settlement(from, to), N = x => +(+x).toFixed(2);
+    return [{name: 'كشف تسويات المصروفات', rows: [['المبلغ', 'البيان', 'الملاحظات'], ...R.rows.map(r => [N(r.a), r.l, r.n]), [N(R.refund), 'الرد النقدي', R.refNotes], [N(R.total), 'إجمالي المصروفات', '']]}];
+  }};
   draw();
 };
 
