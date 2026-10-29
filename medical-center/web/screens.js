@@ -127,6 +127,14 @@ SCREEN_RENDER.expenses = crud({k: 'expenses', ent: 'expenses', t: 'المصرو�
   validate: r => !r.category && !r.doctor ? 'اختر بند المصروف أو اسم الطبيب' : (r.doctor && !S.data.doctors.some(d => d.name === r.doctor) ? 'اسم الطبيب غير مسجل في شاشة الأطباء' : '')
 });
 
+/* ---------- العهد والسلف ---------- */
+SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد والسلف', i: '💼', c: 'blue', add: 'حركة جديدة', dated: true,
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'person', l: 'اسم صاحب العهدة / السلفة', req: 1, sg: 'custperson'}, {k: 'kind', l: 'النوع', t: 'seg', opts: [{v: 'عهدة', l: 'عهدة', c: 'blue'}, {v: 'سلفة', l: 'سلفة', c: 'orange'}]}, {k: 'dir', l: 'الحركة', t: 'seg', opts: [{v: 'out', l: 'صرف (مدين)', c: 'red'}, {v: 'in', l: 'رد / تسوية (دائن)', c: 'lime'}]}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'docNo', l: 'رقم المستند'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'الاسم', f: r => esc(r.person)}, {h: 'النوع', f: r => esc(r.kind)}, {h: 'مدين (صرف)', f: r => r.dir === 'out' ? fmtN(r.amount) : '', sum: r => r.dir === 'out' ? r.amount : 0}, {h: 'دائن (رد)', f: r => r.dir === 'in' ? fmtN(r.amount) : '', sum: r => r.dir === 'in' ? r.amount : 0}, {h: 'رقم المستند', f: r => esc(r.docNo)}, {h: 'ملاحظات', f: r => esc(r.notes)}],
+  sort: (a, b) => b.date.localeCompare(a.date),
+  defaults: () => ({date: today(), kind: 'عهدة', dir: 'out'})
+});
+
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,

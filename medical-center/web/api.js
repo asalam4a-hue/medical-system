@@ -32,9 +32,9 @@ function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t)
 window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],custody:['custody']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -44,7 +44,8 @@ const FIELDS = {
   patients:'name,phone',
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  expenses:'date,category,amount,notes,doctor,dueDate,docNo'
+  expenses:'date,category,amount,notes,doctor,dueDate,docNo',
+  custody:'date,person,kind,dir,amount,notes,docNo'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate']);
@@ -141,7 +142,7 @@ const Local = {
         if (rec && AUTO[e]) out[AUTO[e]] = rec[AUTO[e]];
       }
       if (rec) Object.assign(rec, out, {updatedAt: new Date().toISOString()});
-      else { rec = Object.assign({id: rid(), createdAt: new Date().toISOString()}, out); if (e === 'visits' || e === 'expenses') rec.registeredBy = me.username; list.push(rec); }
+      else { rec = Object.assign({id: rid(), createdAt: new Date().toISOString()}, out); if (e === 'visits' || e === 'expenses' || e === 'custody') rec.registeredBy = me.username; list.push(rec); }
       this.save(db);
       return {record: e === 'users' ? this.pub(rec) : rec};
     }

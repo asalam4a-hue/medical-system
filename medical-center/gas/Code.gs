@@ -3,9 +3,9 @@
  * قاعدة البيانات: Google Sheets (ورقة لكل شاشة) — الصور: Google Drive (مجلد خاص)
  * نفس أوامر api.js: status, register, login, me, logout, list, save, delete, upload, file
  */
-var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses'];
+var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody'];
 var LOOKUP = ['doctors', 'services', 'patients', 'companies'];
-var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits'], expenses: ['expenses', 'dues']};
+var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits'], expenses: ['expenses', 'dues'], custody: ['custody']};
 var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
@@ -15,7 +15,8 @@ var FIELDS = {
   patients: 'name,phone',
   companies: 'name,fee,contact',
   visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  expenses: 'date,category,amount,notes,doctor,dueDate,docNo'
+  expenses: 'date,category,amount,notes,doctor,dueDate,docNo',
+  custody: 'date,person,kind,dir,amount,notes,docNo'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate'];
@@ -236,7 +237,7 @@ function doSave_(e, me, src) {
     if (AUTO[e]) out[AUTO[e]] = rec ? (rec[AUTO[e]] || 0) : nextCounter_(e, AUTO[e]);
   }
   if (rec) { for (var k in out) rec[k] = out[k]; rec.updatedAt = new Date().toISOString(); }
-  else { rec = {id: rid_(), createdAt: new Date().toISOString()}; for (var k2 in out) rec[k2] = out[k2]; if (e === 'visits' || e === 'expenses') rec.registeredBy = me.username; }
+  else { rec = {id: rid_(), createdAt: new Date().toISOString()}; for (var k2 in out) rec[k2] = out[k2]; if (e === 'visits' || e === 'expenses' || e === 'custody') rec.registeredBy = me.username; }
   put_(e, rec);
   return {record: e === 'users' ? pub_(rec) : rec};
 }

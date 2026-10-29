@@ -29,6 +29,7 @@ const SCREENS = [
   {k:'companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'staff', t:'العاملين', i:'👥', c:'lime'},
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
   {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
 ];
 const REPS = [
@@ -36,6 +37,7 @@ const REPS = [
   {k:'rep_daily', t:'ملخص اليوم والإيرادات', i:'📈', c:'teal'},
   {k:'rep_doctors', t:'حسابات الأطباء', i:'👨‍⚕️', c:'violet'},
   {k:'rep_cash', t:'حركة الخزينة', i:'🏦', c:'lime'},
+  {k:'rep_journal', t:'تحليل إيرادات العيادة', i:'🧾', c:'cyan'},
   {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
   {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'rep_patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
@@ -47,7 +49,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -168,6 +170,7 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
+  custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
   services: () => uniq(S.data.services.map(s => s.name)),
