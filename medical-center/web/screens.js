@@ -19,7 +19,7 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -228,3 +228,15 @@ Acts.permall = el => $$('.perm-grid input').forEach(c => c.checked = el.dataset.
 SCREEN_RENDER.reports = () => {
   $('#main').innerHTML = `${pageHead('التقارير', '📊', 'violet')}<div class="cards">${REPS.filter(r => can(r.k)).map(r => `<button class="glow tile c-${r.c}" data-act="go" data-s="${r.k}"><span class="ic">${r.i}</span><b>${r.t}</b></button>`).join('') || '<div class="panel">لا توجد تقارير مصرح بها</div>'}</div>`;
 };
+
+/* ---------- تنفيذ الشركات ---------- */
+SCREEN_RENDER.execs = crud({k: 'execs', ent: 'execs', t: 'تنفيذ الشركات', i: '📋', c: 'cyan', add: 'سجل جديد', dated: true,
+  fields: [{k: 'date', l: 'تاريخ الكشف', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'cardNo', l: 'رقم الكارنية'}, {k: 'approvalNo', l: 'رقم الموافقة'},
+    {k: 'company', l: 'شركة التأمين', req: 1, sg: 'companies'}, {k: 'approvalProc', l: 'إجراء الموافقة'}, {k: 'required', l: 'الإجراء المطلوب تنفيذه'}, {k: 'done', l: 'ما تم تنفيذه'},
+    {k: 'execDate', l: 'تاريخ التنفيذ', t: 'date'}, {k: 'clinic', l: 'العيادة', sg: 'clinics'}, {k: 'doctor', l: 'اسم الطبيب', sg: 'doctors'}],
+  cols: [{h: 'م', f: (r, i) => i + 1}, {h: 'تاريخ الكشف', f: r => esc(r.date)}, {h: 'اسم المريض', f: r => esc(r.patient)}, {h: 'رقم الكارنية', f: r => esc(r.cardNo)}, {h: 'رقم الموافقة', f: r => esc(r.approvalNo)},
+    {h: 'شركة التأمين', f: r => esc(r.company)}, {h: 'إجراء الموافقة', f: r => esc(r.approvalProc)}, {h: 'الإجراء المطلوب تنفيذه', f: r => esc(r.required)}, {h: 'ما تم تنفيذه', f: r => esc(r.done)},
+    {h: 'تاريخ التنفيذ', f: r => esc(r.execDate)}, {h: 'العيادة', f: r => esc(r.clinic)}, {h: 'اسم الطبيب', f: r => esc(r.doctor)}],
+  sort: (a, b) => b.date.localeCompare(a.date),
+  defaults: () => ({date: today()})
+});

@@ -29,6 +29,7 @@ const SCREENS = [
   {k:'companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'staff', t:'العاملين', i:'👥', c:'lime'},
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
   {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
 ];
@@ -50,7 +51,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 

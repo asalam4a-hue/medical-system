@@ -939,9 +939,9 @@ function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t)
 window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -952,10 +952,11 @@ const FIELDS = {
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
-  custody:'date,person,kind,dir,amount,notes,docNo'
+  custody:'date,person,kind,dir,amount,notes,docNo',
+  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
-const DATES = new Set(['date','hireDate','birthDate','dueDate']);
+const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
 const AUTO = {staff:'code', doctors:'code', visits:'serial'};
 
 const mem = {};
@@ -1102,6 +1103,7 @@ const SCREENS = [
   {k:'companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'staff', t:'العاملين', i:'👥', c:'lime'},
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
   {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
 ];
@@ -1123,7 +1125,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -1519,7 +1521,7 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map(r => `<tr>${cols.map(c => `<td>${c.f(r)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -1728,6 +1730,18 @@ Acts.permall = el => $$('.perm-grid input').forEach(c => c.checked = el.dataset.
 SCREEN_RENDER.reports = () => {
   $('#main').innerHTML = `${pageHead('التقارير', '📊', 'violet')}<div class="cards">${REPS.filter(r => can(r.k)).map(r => `<button class="glow tile c-${r.c}" data-act="go" data-s="${r.k}"><span class="ic">${r.i}</span><b>${r.t}</b></button>`).join('') || '<div class="panel">لا توجد تقارير مصرح بها</div>'}</div>`;
 };
+
+/* ---------- تنفيذ الشركات ---------- */
+SCREEN_RENDER.execs = crud({k: 'execs', ent: 'execs', t: 'تنفيذ الشركات', i: '📋', c: 'cyan', add: 'سجل جديد', dated: true,
+  fields: [{k: 'date', l: 'تاريخ الكشف', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'cardNo', l: 'رقم الكارنية'}, {k: 'approvalNo', l: 'رقم الموافقة'},
+    {k: 'company', l: 'شركة التأمين', req: 1, sg: 'companies'}, {k: 'approvalProc', l: 'إجراء الموافقة'}, {k: 'required', l: 'الإجراء المطلوب تنفيذه'}, {k: 'done', l: 'ما تم تنفيذه'},
+    {k: 'execDate', l: 'تاريخ التنفيذ', t: 'date'}, {k: 'clinic', l: 'العيادة', sg: 'clinics'}, {k: 'doctor', l: 'اسم الطبيب', sg: 'doctors'}],
+  cols: [{h: 'م', f: (r, i) => i + 1}, {h: 'تاريخ الكشف', f: r => esc(r.date)}, {h: 'اسم المريض', f: r => esc(r.patient)}, {h: 'رقم الكارنية', f: r => esc(r.cardNo)}, {h: 'رقم الموافقة', f: r => esc(r.approvalNo)},
+    {h: 'شركة التأمين', f: r => esc(r.company)}, {h: 'إجراء الموافقة', f: r => esc(r.approvalProc)}, {h: 'الإجراء المطلوب تنفيذه', f: r => esc(r.required)}, {h: 'ما تم تنفيذه', f: r => esc(r.done)},
+    {h: 'تاريخ التنفيذ', f: r => esc(r.execDate)}, {h: 'العيادة', f: r => esc(r.clinic)}, {h: 'اسم الطبيب', f: r => esc(r.doctor)}],
+  sort: (a, b) => b.date.localeCompare(a.date),
+  defaults: () => ({date: today()})
+});
 
 </script>
 <script>

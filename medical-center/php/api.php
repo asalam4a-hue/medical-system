@@ -33,9 +33,9 @@ if (!function_exists('mb_substr')) { function mb_substr($s, $a, $l = null) { $c 
 function jout(array $a): void { echo json_encode($a, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit; }
 function jerr(string $m, ?string $code = null): void { jout(['error' => $m, 'code' => $code]); }
 
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'custody'=>['custody']];
+const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody']];
 const FIELDS = [
   'users'=>'username,nationalId,birthDate,perms,isAdmin,active',
   'staff'=>'code,name,nationalId,idPhoto,photo',
@@ -47,9 +47,10 @@ const FIELDS = [
   'visits'=>'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   'expenses'=>'date,category,amount,notes,doctor,dueDate,docNo',
   'custody'=>'date,person,kind,dir,amount,notes,docNo',
+  'execs'=>'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
 ];
 const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial','anesthesia'];
-const DATES = ['date','hireDate','birthDate','dueDate'];
+const DATES = ['date','hireDate','birthDate','dueDate','execDate'];
 const AUTO = ['staff'=>'code','doctors'=>'code','visits'=>'serial'];
 
 if (!is_dir($DATA)) { @mkdir($DATA, 0700, true); }

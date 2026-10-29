@@ -32,9 +32,9 @@ function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t)
 window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -45,10 +45,11 @@ const FIELDS = {
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
-  custody:'date,person,kind,dir,amount,notes,docNo'
+  custody:'date,person,kind,dir,amount,notes,docNo',
+  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
-const DATES = new Set(['date','hireDate','birthDate','dueDate']);
+const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
 const AUTO = {staff:'code', doctors:'code', visits:'serial'};
 
 const mem = {};

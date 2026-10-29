@@ -3,9 +3,9 @@
  * قاعدة البيانات: Google Sheets (ورقة لكل شاشة) — الصور: Google Drive (مجلد خاص)
  * نفس أوامر api.js: status, register, login, me, logout, list, save, delete, upload, file
  */
-var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody'];
+var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs'];
 var LOOKUP = ['doctors', 'services', 'patients', 'companies'];
-var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits'], expenses: ['expenses', 'dues'], custody: ['custody']};
+var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits'], expenses: ['expenses', 'dues'], execs: ['execs'], custody: ['custody']};
 var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
@@ -16,10 +16,11 @@ var FIELDS = {
   companies: 'name,fee,contact',
   visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
   expenses: 'date,category,amount,notes,doctor,dueDate,docNo',
-  custody: 'date,person,kind,dir,amount,notes,docNo'
+  custody: 'date,person,kind,dir,amount,notes,docNo',
+  execs: 'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
-var DATES = ['date', 'hireDate', 'birthDate', 'dueDate'];
+var DATES = ['date', 'hireDate', 'birthDate', 'dueDate', 'execDate'];
 var AUTO = {staff: 'code', doctors: 'code', visits: 'serial'};
 var TOKEN_TTL = 21600; // 6 ساعات (أقصى مدة للـ CacheService)
 
