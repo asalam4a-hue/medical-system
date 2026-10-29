@@ -119,8 +119,8 @@ SCREEN_RENDER.companies = crud({k: 'companies', ent: 'companies', t: 'شركات
 
 /* ---------- المصروفات ---------- */
 SCREEN_RENDER.expenses = crud({k: 'expenses', ent: 'expenses', t: 'المصروفات', i: '💸', c: 'gold', add: 'مصروف جديد', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'dueDate', l: 'عن يوم (استحقاق الطبيب)', t: 'date'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
-  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'عن يوم', f: r => r.doctor ? esc(r.dueDate || r.date) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'category', l: 'بند المصروف', sg: 'expcats'}, {k: 'doctor', l: 'مستحق طبيب (اسم الطبيب)', sg: 'doctors', ph: 'اتركه فارغاً إن لم يكن صرفاً لطبيب'}, {k: 'dueDate', l: 'عن يوم (استحقاق الطبيب)', t: 'date'}, {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'docNo', l: 'رقم المستند'}, {k: 'notes', l: 'البيان / ملاحظات', t: 'area'}],
+  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'رقم المستند', f: r => esc(r.docNo)}, {h: 'البند', f: r => esc(r.category)}, {h: 'مستحق طبيب', f: r => r.doctor ? L.doctor(r.doctor) : ''}, {h: 'عن يوم', f: r => r.doctor ? esc(r.dueDate || r.date) : ''}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'ملاحظات', f: r => esc(r.notes)}, {h: 'سجّله', f: r => esc(r.registeredBy)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: getRange().from === getRange().to && validDate(getRange().from) ? getRange().from : today()}),
   collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); if (o.doctor && !o.category) o.category = 'مستحقات أطباء'; if (!o.doctor) o.dueDate = ''; else if (!o.dueDate) o.dueDate = o.date; return o; },

@@ -15,7 +15,7 @@ var FIELDS = {
   patients: 'name,phone',
   companies: 'name,fee,contact',
   visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes',
-  expenses: 'date,category,amount,notes,doctor,dueDate'
+  expenses: 'date,category,amount,notes,doctor,dueDate,docNo'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate'];

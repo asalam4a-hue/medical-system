@@ -197,3 +197,4 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 .charts{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
 .login .box{width:min(380px,100%)}.login .logo svg{width:84px;height:84px}.login h1{font-size:1.35rem}
 .modal .box,.modal>div{max-width:min(560px,96vw)}
+.daytot td{background:#f3f3f3;font-weight:bold}
