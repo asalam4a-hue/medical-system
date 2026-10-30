@@ -903,7 +903,7 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
   "مصروفات التأمين الصحي",
   "الرد النقدي"
  ]
-};</script>
+};window.API_URL="https://script.google.com/macros/s/AKfycbyPMVle0-RkJTpE4dYdiLk2sftGt5OCRPpcByVlxJEGauSWalQag_8n0KB3RsP1X5TL/exec";</script>
 <script>
 /* طبقة الاتصال: php | gas | local (تجريبي داخل المتصفح)
    نفس الأوامر تعمل في الثلاثة: status, register, login, me, logout, list, save, delete, upload, file */
@@ -933,7 +933,7 @@ async function call(action, payload){
   if (res.error) { const e = new Error(res.error); e.code = res.code; throw e; }
   return res;
 }
-function server(){ let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || window.API_URL || 'api.php'; }
+function server(){ if (window.API_URL) return window.API_URL; let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || 'api.php'; }
 function setServer(u){ try { u ? localStorage.setItem('mc_server', u) : localStorage.removeItem('mc_server'); } catch(e){} setToken(null); }
 function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t) : sessionStorage.removeItem('mc_token'); } catch(e){} }
 window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
@@ -1432,7 +1432,7 @@ async function renderLogin(app) {
   <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">${hasUsers ? 'الدخول بعد موافقة المدير فقط' : 'لا يوجد مستخدمون بعد — اضغط أيقونة 👤＋ لإنشاء أول مستخدم (المدير)'}</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
   <div class="fld"><label>اسم المستخدم</label><input name="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" required></div><div class="fld"><label>الرقم القومي</label><input name="nationalId" inputmode="numeric" maxlength="14"></div><div class="fld"><label>تاريخ الميلاد</label>${dateFld('birthDate', '')}</div><button class="glow c-pink btnbig" type="submit">إنشاء الحساب</button><button type="button" class="linkbtn" id="bk">رجوع لتسجيل الدخول</button></form>
-${window.AndroidBridge ? '<br><button class="linkbtn" onclick="AndroidBridge.changeServer()">⚙ تغيير عنوان الخادم</button>' : ''}</div></div>`;
+</div></div>`;
   tick(); clockTimer = setInterval(tick, 1000);
   const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); };
   $('#nu').onclick = () => showReg(true);

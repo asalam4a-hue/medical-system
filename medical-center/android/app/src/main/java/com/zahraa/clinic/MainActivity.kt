@@ -32,10 +32,7 @@ class MainActivity : Activity() {
     private val reqFile = 41
     private val reqCam = 42
 
-    private val prefs get() = getSharedPreferences("mc", Context.MODE_PRIVATE)
-    private var serverUrl: String
-        get() = prefs.getString("url", DEFAULT_URL) ?: DEFAULT_URL
-        set(v) { prefs.edit().putString("url", v).apply() }
+    private val serverUrl get() = DEFAULT_URL
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
@@ -46,7 +43,7 @@ class MainActivity : Activity() {
         root.addView(bar, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 8))
         setContentView(root)
         setup()
-        if (serverUrl.isEmpty()) askUrl(true) else web.loadUrl(serverUrl)
+        web.loadUrl(serverUrl)
     }
 
     private fun setup() {
@@ -70,7 +67,6 @@ class MainActivity : Activity() {
                 val uri = FileProvider.getUriForFile(this@MainActivity, "com.zahraa.clinic.files", f)
                 startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = mime; putExtra(Intent.EXTRA_STREAM, uri); addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) }, "حفظ / مشاركة الملف"))
             }
-            @JavascriptInterface fun changeServer() = runOnUiThread { askUrl(false) }
         }, "AndroidBridge")
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest): Boolean {
@@ -82,7 +78,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(v: WebView?, u: String?, f: Bitmap?) { bar.visibility = View.VISIBLE }
             override fun onPageFinished(v: WebView?, u: String?) { bar.visibility = View.GONE }
             override fun onReceivedError(v: WebView, r: WebResourceRequest, e: WebResourceError) {
-                if (r.isForMainFrame) askUrl(false, "تعذر الاتصال بالخادم: ${e.description}")
+                if (r.isForMainFrame) retryDialog("تعذر الاتصال بالخادم: ${e.description}")
             }
         }
         web.webChromeClient = object : WebChromeClient() {
@@ -93,18 +89,10 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun askUrl(first: Boolean, msg: String? = null) {
-        val input = EditText(this).apply { setText(serverUrl.ifEmpty { "https://" }); setSingleLine(); textDirection = View.TEXT_DIRECTION_LTR }
-        AlertDialog.Builder(this)
-            .setTitle(if (first) "عنوان البرنامج" else "تغيير العنوان / إعادة المحاولة")
-            .setMessage(msg ?: "اكتب رابط البرنامج (رابط PHP على الخادم أو رابط Google Script).")
-            .setView(input).setCancelable(!first)
-            .setPositiveButton("حفظ وفتح") { _, _ ->
-                var u = input.text.toString().trim()
-                if (u.isNotEmpty() && !u.startsWith("http")) u = "https://$u"
-                if (u.isNotEmpty()) { serverUrl = u; web.loadUrl(u) }
-            }
-            .setNegativeButton("إلغاء", null).show()
+    private fun retryDialog(msg: String) {
+        AlertDialog.Builder(this).setTitle("لا يوجد اتصال").setMessage(msg).setCancelable(false)
+            .setPositiveButton("إعادة المحاولة") { _, _ -> web.loadUrl(serverUrl) }
+            .setNegativeButton("إغلاق", null).show()
     }
 
     /** اختيار صورة من المعرض أو الكاميرا (لصور البطاقات والنماذج والكارنيهات). */

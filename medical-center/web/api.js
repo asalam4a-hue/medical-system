@@ -26,7 +26,7 @@ async function call(action, payload){
   if (res.error) { const e = new Error(res.error); e.code = res.code; throw e; }
   return res;
 }
-function server(){ let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || window.API_URL || 'api.php'; }
+function server(){ if (window.API_URL) return window.API_URL; let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || 'api.php'; }
 function setServer(u){ try { u ? localStorage.setItem('mc_server', u) : localStorage.removeItem('mc_server'); } catch(e){} setToken(null); }
 function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t) : sessionStorage.removeItem('mc_token'); } catch(e){} }
 window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
