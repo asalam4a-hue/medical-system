@@ -63,7 +63,7 @@ a{color:#000}
 #app{min-height:100vh}
 .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 18px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--blue),var(--violet),var(--pink),var(--orange),var(--gold)) 1}
 .top .brand{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:bold;font-size:1.15rem}
-.top .brand svg{width:42px;height:42px}
+.top .brand svg,.top .brand img{width:42px;height:42px;object-fit:contain}
 .top .grow{flex:1}
 .top .who{font-size:.95rem;display:flex;align-items:center;gap:8px}
 .top .who b{padding:2px 10px;border-radius:99px;background:linear-gradient(135deg,var(--gold2),var(--gold))}
@@ -980,6 +980,7 @@ const Local = {
     const fail = (error, code) => ({error, code});
     const A = b.action;
     if (A === 'status') return {hasUsers: (db.rec.users || []).length > 0};
+    if (A === 'settings') return {settings: this.settings(db)};
     if (A === 'register') {
       const users = db.rec.users || (db.rec.users = []);
       const u = String(b.username || '').trim(), p = String(b.password || '');
@@ -1008,6 +1009,23 @@ const Local = {
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
+    if (['settings_save','backup','restore','reset','master_save','master_restore','master_info'].includes(A)) {
+      if (!me.isAdmin) return fail('للمدير فقط', 'forbidden');
+      const snap = () => { const d = {}; ENT.forEach(x => d[x] = JSON.parse(JSON.stringify(db.rec[x] || []))); return {app: 'medical-center', ver: 1, at: new Date().toISOString(), settings: this.settings(db), data: d}; };
+      const restore = bk => {
+        if (!bk || bk.app !== 'medical-center' || !bk.data) return 'ملف النسخة الاحتياطية غير صالح';
+        if (!(bk.data.users || []).some(u => u.isAdmin && u.active)) return 'النسخة لا تحتوي على مدير فعّال';
+        ENT.forEach(x => { db.rec[x] = Array.isArray(bk.data[x]) ? bk.data[x] : []; });
+        if (bk.settings) db.settings = bk.settings; this.save(db); return '';
+      };
+      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : ''}; this.save(db); return {settings: this.settings(db)}; }
+      if (A === 'backup') return {backup: snap()};
+      if (A === 'master_info') return {at: db.master ? db.master.at : ''};
+      if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
+      if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
+      if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
+    }
     const e = b.entity;
     if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
     if (A === 'list') {
@@ -1062,6 +1080,7 @@ const Local = {
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
     return fail('أمر غير معروف');
   },
+  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''}, db.settings || {}); },
   pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
   seed(db){
     const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };
@@ -1074,7 +1093,12 @@ const Local = {
 <script>
 /* ============ النواة: أدوات، حالة، واجهة عامة، دخول، شاشة رئيسية ============ */
 'use strict';
-const CENTER = 'عيادات الزهراء الطبية';
+let CENTER = 'عيادات الزهراء الطبية', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
+function applySettings(s) {
+  if (!s) return; CENTER = s.centerName || CENTER; APPNAME = s.appName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
+  if ((s.logo || '') !== CLOGOID) { CLOGOID = s.logo || ''; CLOGO = ''; if (CLOGOID && S.user) fileURL(CLOGOID).then(u => { CLOGO = u; if (S.user) { const b = $('.top .brand'); if (b) { const sv = $('svg,img', b); if (sv) sv.outerHTML = `<img src="${u}" alt="">`; } } }).catch(() => {}); }
+}
+async function loadSettings() { try { applySettings((await API.call('settings')).settings); } catch (e) {} }
 const $ = (s, e = document) => e.querySelector(s);
 const $$ = (s, e = document) => Array.from(e.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1105,7 +1129,8 @@ const SCREENS = [
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
   {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
-  {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
+  {k:'users', t:'المستخدمين', i:'🔐', c:'pink'},
+  {k:'admin', t:'إدارة البرنامج', i:'⚙️', c:'orange'}
 ];
 const REPS = [
   {k:'rep_totals', t:'الإجماليات بالتفصيل', i:'🧮', c:'gold'},
@@ -1130,7 +1155,7 @@ const Acts = {};
 let clockTimer = null;
 
 /* ---------- صلاحيات ---------- */
-const can = p => S.user && (S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
+const can = p => S.user && (p === 'admin' ? !!S.user.isAdmin : S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
 const anyRep = () => REPS.some(r => can(r.k));
 
 /* ---------- واجهة عامة ---------- */
@@ -1392,6 +1417,7 @@ function startSync() {
   }, 15000);
 }
 async function loadAll(ents) {
+  if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
     try { S.data[e] = (await API.call('list', {entity: e})).items; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
@@ -1404,7 +1430,7 @@ function render() {
   clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
-  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${LOGO}<span>${CENTER}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(CENTER)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = '<div class="panel">الشاشة غير موجودة</div>';
@@ -1425,6 +1451,7 @@ function tick() {
   const dl = $('#dl'); if (dl) dl.textContent = `${DAYS[n.getDay()]}  ${toStr(n)}`;
 }
 async function renderLogin(app) {
+  loadSettings();
   let hasUsers = true, connErr = ''; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) { connErr = e.message || 'تعذر الاتصال بالخادم'; }
   const canServer = API.mode === 'php';
   app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
@@ -1713,7 +1740,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
 });
 
 /* ---------- المستخدمين والصلاحيات ---------- */
-const PERM_ITEMS = [...SCREENS.map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
+const PERM_ITEMS = [...SCREENS.filter(s => s.k !== 'admin').map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
 SCREEN_RENDER.users = crud({k: 'users', ent: 'users', t: 'المستخدمين والصلاحيات', i: '🔐', c: 'pink', add: 'مستخدم جديد',
   fields: [{k: 'username', l: 'اسم المستخدم', req: 1}, {k: 'password', l: 'كلمة السر (اتركها فارغة للإبقاء)', pw: 1}, {k: 'nationalId', l: 'الرقم القومي', num: 1}, {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date'}, {k: 'isAdmin', l: 'مدير النظام (كل الصلاحيات)', t: 'chk', l2: 'مدير'}, {k: 'active', l: 'الحساب', t: 'chk', l2: 'مفعّل'},
     {k: '_perms', t: 'html', html: () => `<div class="fld full"><label>الصلاحيات — الشاشات والتقارير المسموح فتحها</label><div class="actions" style="margin:0 0 6px"><button type="button" class="btn sm c-lime" data-act="permall" data-v="1">تحديد الكل</button><button type="button" class="btn sm ghost" data-act="permall" data-v="0">إلغاء الكل</button></div><div class="perm-grid">${PERM_ITEMS.map(p => `<label><input type="checkbox" name="p_${p.k}"> ${esc(p.l)}</label>`).join('')}</div></div>`}],
@@ -2298,6 +2325,53 @@ SCREEN_RENDER.rep_settle = async function () {
 
 </script>
 <script>
+/* ============ إدارة البرنامج (للمدير فقط): الإعدادات، النسخ الاحتياطي، الاسترجاع، نسخة الماستر، حذف الكل ============ */
+'use strict';
+SCREEN_RENDER.admin = async function () {
+  if (!can('admin')) { $('#main').innerHTML = '<div class="panel">⛔ للمدير فقط</div>'; return; }
+  const main = $('#main'); let st = {}, master = {at: ''};
+  try { st = (await API.call('settings')).settings; master = await API.call('master_info'); } catch (e) {}
+  const fmtAt = a => a ? a.slice(0, 10).replace(/-/g, '/') + ' ' + a.slice(11, 16) + ' UTC' : 'لا توجد نسخة محفوظة';
+  main.innerHTML = `${pageHead('إدارة البرنامج', '⚙️', 'orange')}
+  <div class="panel accent c-teal"><h3>⚙️ إعدادات البرنامج</h3><form id="stf">
+    <div class="fld"><label>اسم البرنامج</label><input name="appName" value="${esc(st.appName)}"></div>
+    <div class="fld"><label>اسم المركز</label><input name="centerName" value="${esc(st.centerName)}"></div>
+    <div class="fld"><label>رقم الهاتف</label><input name="phone" value="${esc(st.phone)}" dir="ltr"></div>
+    <div class="fld"><label>اللوجو</label><div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(st.logo)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 اختيار اللوجو</button><button type="button" class="btn sm ghost" id="nologo">إزالة</button><input type="hidden" name="logo" value="${esc(st.logo)}"></div></div>
+    <div class="actions"><button class="btn c-teal" type="submit">💾 حفظ الإعدادات</button></div></form></div>
+  <div class="panel accent c-blue"><h3>💾 النسخ الاحتياطي والاسترجاع</h3>
+    <p class="muted">النسخة تشمل كل بيانات البرنامج والمستخدمين والإعدادات (الصور لا تدخل في الملف).</p>
+    <div class="actions"><button class="btn c-blue" id="bk">⬇️ تنزيل نسخة احتياطية</button><button class="btn c-orange" id="rs">⬆️ استرجاع من ملف</button><input type="file" id="rsf" accept=".json,application/json" class="hid"></div></div>
+  <div class="panel accent c-violet"><h3>👑 النسخة الماستر</h3>
+    <p class="muted">نسخة كاملة محفوظة على الخادم نفسه تستطيع الرجوع إليها بضغطة واحدة. آخر نسخة: <b id="mat">${fmtAt(master.at)}</b></p>
+    <div class="actions"><button class="btn c-violet" id="ms">📌 حفظ نسخة ماستر الآن</button><button class="btn c-orange" id="mr">↩️ استرجاع النسخة الماستر</button></div></div>
+  <div class="panel accent c-red"><h3>🗑️ حذف كل البيانات</h3>
+    <p class="muted">يحذف الزيارات والمرضى والأطباء والخدمات والعمليات والمصروفات وكل بيانات البرنامج، ويُبقي المستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>
+    <div class="fld"><label>اكتب عبارة التأكيد: حذف الكل</label><input id="rc" autocomplete="off"></div>
+    <div class="actions"><button class="btn c-red" id="rz">🗑️ حذف الكل</button></div></div>`;
+  const reload = async () => { await loadAll(); await loadSettings(); render(); };
+  hydrateImgs(main);
+  $('#nologo').onclick = () => { const h = $('[name=logo]', main); h.value = ''; const th = $('.th', main); th.dataset.fid = ''; th.innerHTML = '🖼️'; };
+  $('#stf').onsubmit = e => { e.preventDefault(); guard($('button[type=submit]', e.target), async () => { const v = readForm(e.target); const r = await API.call('settings_save', v); applySettings(r.settings); toast('تم حفظ الإعدادات'); render(); }); };
+  $('#bk').onclick = e => guard(e.target, async () => {
+    const r = await API.call('backup'); const blob = new Blob([JSON.stringify(r.backup)], {type: 'application/json'});
+    saveBlob(blob, 'zahraa-backup-' + today().replace(/\//g, '-') + '.json'); toast('تم تنزيل النسخة الاحتياطية');
+  });
+  $('#rs').onclick = () => $('#rsf').click();
+  $('#rsf').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    let bk; try { bk = JSON.parse(await f.text()); } catch (x) { return toast('الملف غير صالح', true); }
+    if (!await confirmBox('سيتم استبدال كل بيانات البرنامج الحالية بمحتوى هذه النسخة. هل أنت متأكد؟')) return;
+    await guard(null, async () => { await API.call('restore', {backup: bk}); toast('تم الاسترجاع — سجّل الدخول من جديد'); logoutLocal(); }); };
+  $('#ms').onclick = e => guard(e.target, async () => { const r = await API.call('master_save'); $('#mat').textContent = fmtAt(r.at); toast('تم حفظ النسخة الماستر'); });
+  $('#mr').onclick = async e => { if (!await confirmBox('سيتم استبدال كل البيانات الحالية بالنسخة الماستر. هل أنت متأكد؟')) return;
+    guard(e.target, async () => { await API.call('master_restore'); toast('تم استرجاع النسخة الماستر — سجّل الدخول من جديد'); logoutLocal(); }); };
+  $('#rz').onclick = async e => { if ($('#rc').value.trim() !== 'حذف الكل') return toast('اكتب عبارة التأكيد: حذف الكل', true);
+    if (!await confirmBox('تحذير: سيتم حذف جميع بيانات البرنامج نهائياً. هل أنت متأكد؟')) return;
+    guard(e.target, async () => { await API.call('reset', {confirm: 'حذف الكل'}); toast('تم حذف كل البيانات'); await reload(); }); };
+};
+
+</script>
+<script>
 /* ============ التصدير: Excel (xlsx حقيقي بدون مكتبات) و PDF (عبر نافذة الطباعة: حفظ كـ PDF) ============ */
 'use strict';
 (function () {
@@ -2374,11 +2448,12 @@ SCREEN_RENDER.rep_settle = async function () {
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   }
+  window.saveBlob = saveBlob;
   Acts.xlsx = () => {
     const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
     let sheets = S.view && S.view.exportData ? S.view.exportData() : domSheets($('#main'), title.slice(0, 24));
     if (!sheets.length) return toast('لا توجد بيانات للتصدير', true);
-    const meta = [[CENTER], [title], [S.view && S.view.noRange ? '' : rangeLabel()], ['تاريخ التصدير: ' + today() + ' — ' + (S.user ? S.user.username : '')], []];
+    const meta = [[CENTER], ...(CPHONE ? [['هاتف: ' + CPHONE]] : []), [title], [S.view && S.view.noRange ? '' : rangeLabel()], ['تاريخ التصدير: ' + today() + ' — ' + (S.user ? S.user.username : '')], []];
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
@@ -2389,10 +2464,10 @@ table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
   function printDoc(title, sub, bodyHTML, land) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
     if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
       const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }

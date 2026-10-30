@@ -73,6 +73,7 @@ const Local = {
     const fail = (error, code) => ({error, code});
     const A = b.action;
     if (A === 'status') return {hasUsers: (db.rec.users || []).length > 0};
+    if (A === 'settings') return {settings: this.settings(db)};
     if (A === 'register') {
       const users = db.rec.users || (db.rec.users = []);
       const u = String(b.username || '').trim(), p = String(b.password || '');
@@ -101,6 +102,23 @@ const Local = {
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
+    if (['settings_save','backup','restore','reset','master_save','master_restore','master_info'].includes(A)) {
+      if (!me.isAdmin) return fail('للمدير فقط', 'forbidden');
+      const snap = () => { const d = {}; ENT.forEach(x => d[x] = JSON.parse(JSON.stringify(db.rec[x] || []))); return {app: 'medical-center', ver: 1, at: new Date().toISOString(), settings: this.settings(db), data: d}; };
+      const restore = bk => {
+        if (!bk || bk.app !== 'medical-center' || !bk.data) return 'ملف النسخة الاحتياطية غير صالح';
+        if (!(bk.data.users || []).some(u => u.isAdmin && u.active)) return 'النسخة لا تحتوي على مدير فعّال';
+        ENT.forEach(x => { db.rec[x] = Array.isArray(bk.data[x]) ? bk.data[x] : []; });
+        if (bk.settings) db.settings = bk.settings; this.save(db); return '';
+      };
+      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : ''}; this.save(db); return {settings: this.settings(db)}; }
+      if (A === 'backup') return {backup: snap()};
+      if (A === 'master_info') return {at: db.master ? db.master.at : ''};
+      if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
+      if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
+      if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
+    }
     const e = b.entity;
     if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
     if (A === 'list') {
@@ -155,6 +173,7 @@ const Local = {
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
     return fail('أمر غير معروف');
   },
+  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''}, db.settings || {}); },
   pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
   seed(db){
     const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };

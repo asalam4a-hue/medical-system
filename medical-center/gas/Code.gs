@@ -116,6 +116,7 @@ function withLock_(fn) {
 function route_(b) {
   var A = String(b.action || ''), cache = CacheService.getScriptCache();
   if (A === 'status') return {hasUsers: getAll_('users').length > 0};
+  if (A === 'settings') return {settings: settings_()};
 
   if (A === 'register') {
     var u = String(b.username || '').trim(), p = String(b.password || '');
@@ -150,6 +151,36 @@ function route_(b) {
   me.perms = me.perms || [];
   if (A === 'me') return {user: pub_(me)};
   if (A === 'logout') { cache.remove('t_' + sha_(tk)); return {ok: true}; }
+
+  if (['settings_save', 'backup', 'restore', 'reset', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {
+    if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
+    if (A === 'settings_save') return withLock_(function () {
+      var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : ''};
+      PropertiesService.getScriptProperties().setProperty('SETTINGS', JSON.stringify(o)); return {settings: settings_()};
+    });
+    if (A === 'backup') return {backup: snapshot_()};
+    if (A === 'master_info') return masterInfo_();
+    if (A === 'restore') return withLock_(function () { restoreSnapshot_(b.backup); return {ok: true}; });
+    if (A === 'master_save') return withLock_(function () {
+      var js = JSON.stringify(snapshot_()), sh = ss_().getSheetByName('master') || ss_().insertSheet('master');
+      sh.clear(); sh.getRange('A:A').setNumberFormat('@'); var rows = [];
+      for (var i = 0; i < js.length; i += 40000) rows.push([js.substr(i, 40000)]);
+      sh.getRange(1, 1, rows.length, 1).setValues(rows);
+      PropertiesService.getScriptProperties().setProperty('MASTER_AT', new Date().toISOString());
+      return masterInfo_();
+    });
+    if (A === 'master_restore') return withLock_(function () {
+      var sh = ss_().getSheetByName('master'); if (!sh || sh.getLastRow() < 1) throw new ApiError('لا توجد نسخة ماستر محفوظة');
+      var js = sh.getRange(1, 1, sh.getLastRow(), 1).getValues().map(function (r) { return String(r[0]); }).join('');
+      restoreSnapshot_(JSON.parse(js)); return {ok: true};
+    });
+    if (A === 'reset') return withLock_(function () {
+      if (String(b.confirm || '') !== 'حذف الكل') throw new ApiError('اكتب عبارة التأكيد: حذف الكل');
+      ENT.forEach(function (x) { if (x !== 'users') wipe_(x); });
+      var pr = PropertiesService.getScriptProperties(); ['staff', 'doctors', 'visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
+      return {ok: true};
+    });
+  }
 
   var e = String(b.entity || '');
   if (['list', 'save', 'delete'].indexOf(A) >= 0 && ENT.indexOf(e) < 0) throw new ApiError('كيان غير معروف');
@@ -192,6 +223,38 @@ function route_(b) {
     return {dataUrl: 'data:' + r[2] + ';base64,' + Utilities.base64Encode(blob.getBytes())};
   }
   throw new ApiError('أمر غير معروف');
+}
+
+/* ---------- الإعدادات والنسخ الاحتياطي ---------- */
+function settings_() {
+  var o = {appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''};
+  try { var v = JSON.parse(PropertiesService.getScriptProperties().getProperty('SETTINGS') || '{}'); for (var k in v) if (v[k] !== '' || k === 'logo' || k === 'phone') o[k] = v[k]; } catch (x) {}
+  return o;
+}
+function snapshot_() {
+  var d = {}; ENT.forEach(function (x) { d[x] = getAll_(x); });
+  return {app: 'medical-center', ver: 1, at: new Date().toISOString(), settings: settings_(), data: d};
+}
+function masterInfo_() {
+  var at = PropertiesService.getScriptProperties().getProperty('MASTER_AT') || '', sh = ss_().getSheetByName('master');
+  return {at: sh && sh.getLastRow() > 0 ? at : ''};
+}
+function wipe_(e) { var sh = sheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); }
+function restoreSnapshot_(bk) {
+  if (!bk || bk.app !== 'medical-center' || !bk.data) throw new ApiError('ملف النسخة الاحتياطية غير صالح');
+  var us = bk.data.users || [];
+  if (!us.some(function (u) { return u.isAdmin && u.active; })) throw new ApiError('النسخة لا تحتوي على مدير فعّال');
+  ENT.forEach(function (x) {
+    var items = bk.data[x]; if (!Array.isArray(items)) items = [];
+    wipe_(x); if (!items.length) return;
+    var rows = items.map(function (r) {
+      var c = {}; for (var k in r) if (k !== 'id') c[k] = r[k];
+      return [String(r.id || rid_()), typeof c.date === 'string' ? c.date : '', JSON.stringify(c), new Date().toISOString()];
+    });
+    sheet_(x).getRange(2, 1, rows.length, 4).setValues(rows);
+  });
+  var pr = PropertiesService.getScriptProperties(); ['staff', 'doctors', 'visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
+  if (bk.settings) pr.setProperty('SETTINGS', JSON.stringify(bk.settings));
 }
 
 function folder_() {

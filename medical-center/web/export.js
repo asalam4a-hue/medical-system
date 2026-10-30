@@ -74,11 +74,12 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
   }
+  window.saveBlob = saveBlob;
   Acts.xlsx = () => {
     const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
     let sheets = S.view && S.view.exportData ? S.view.exportData() : domSheets($('#main'), title.slice(0, 24));
     if (!sheets.length) return toast('لا توجد بيانات للتصدير', true);
-    const meta = [[CENTER], [title], [S.view && S.view.noRange ? '' : rangeLabel()], ['تاريخ التصدير: ' + today() + ' — ' + (S.user ? S.user.username : '')], []];
+    const meta = [[CENTER], ...(CPHONE ? [['هاتف: ' + CPHONE]] : []), [title], [S.view && S.view.noRange ? '' : rangeLabel()], ['تاريخ التصدير: ' + today() + ' — ' + (S.user ? S.user.username : '')], []];
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
@@ -89,10 +90,10 @@ table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
   function printDoc(title, sub, bodyHTML, land) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
     if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
       const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2><h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }

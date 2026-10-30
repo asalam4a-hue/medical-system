@@ -1,6 +1,11 @@
 /* ============ النواة: أدوات، حالة، واجهة عامة، دخول، شاشة رئيسية ============ */
 'use strict';
-const CENTER = 'عيادات الزهراء الطبية';
+let CENTER = 'عيادات الزهراء الطبية', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
+function applySettings(s) {
+  if (!s) return; CENTER = s.centerName || CENTER; APPNAME = s.appName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
+  if ((s.logo || '') !== CLOGOID) { CLOGOID = s.logo || ''; CLOGO = ''; if (CLOGOID && S.user) fileURL(CLOGOID).then(u => { CLOGO = u; if (S.user) { const b = $('.top .brand'); if (b) { const sv = $('svg,img', b); if (sv) sv.outerHTML = `<img src="${u}" alt="">`; } } }).catch(() => {}); }
+}
+async function loadSettings() { try { applySettings((await API.call('settings')).settings); } catch (e) {} }
 const $ = (s, e = document) => e.querySelector(s);
 const $$ = (s, e = document) => Array.from(e.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -31,7 +36,8 @@ const SCREENS = [
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
   {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
-  {k:'users', t:'المستخدمين', i:'🔐', c:'pink'}
+  {k:'users', t:'المستخدمين', i:'🔐', c:'pink'},
+  {k:'admin', t:'إدارة البرنامج', i:'⚙️', c:'orange'}
 ];
 const REPS = [
   {k:'rep_totals', t:'الإجماليات بالتفصيل', i:'🧮', c:'gold'},
@@ -56,7 +62,7 @@ const Acts = {};
 let clockTimer = null;
 
 /* ---------- صلاحيات ---------- */
-const can = p => S.user && (S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
+const can = p => S.user && (p === 'admin' ? !!S.user.isAdmin : S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
 const anyRep = () => REPS.some(r => can(r.k));
 
 /* ---------- واجهة عامة ---------- */
@@ -318,6 +324,7 @@ function startSync() {
   }, 15000);
 }
 async function loadAll(ents) {
+  if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
     try { S.data[e] = (await API.call('list', {entity: e})).items; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
@@ -330,7 +337,7 @@ function render() {
   clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
-  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${LOGO}<span>${CENTER}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(CENTER)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = '<div class="panel">الشاشة غير موجودة</div>';
@@ -351,6 +358,7 @@ function tick() {
   const dl = $('#dl'); if (dl) dl.textContent = `${DAYS[n.getDay()]}  ${toStr(n)}`;
 }
 async function renderLogin(app) {
+  loadSettings();
   let hasUsers = true, connErr = ''; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) { connErr = e.message || 'تعذر الاتصال بالخادم'; }
   const canServer = API.mode === 'php';
   app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}

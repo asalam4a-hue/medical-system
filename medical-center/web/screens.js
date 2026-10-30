@@ -211,7 +211,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
 });
 
 /* ---------- المستخدمين والصلاحيات ---------- */
-const PERM_ITEMS = [...SCREENS.map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
+const PERM_ITEMS = [...SCREENS.filter(s => s.k !== 'admin').map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
 SCREEN_RENDER.users = crud({k: 'users', ent: 'users', t: 'المستخدمين والصلاحيات', i: '🔐', c: 'pink', add: 'مستخدم جديد',
   fields: [{k: 'username', l: 'اسم المستخدم', req: 1}, {k: 'password', l: 'كلمة السر (اتركها فارغة للإبقاء)', pw: 1}, {k: 'nationalId', l: 'الرقم القومي', num: 1}, {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date'}, {k: 'isAdmin', l: 'مدير النظام (كل الصلاحيات)', t: 'chk', l2: 'مدير'}, {k: 'active', l: 'الحساب', t: 'chk', l2: 'مفعّل'},
     {k: '_perms', t: 'html', html: () => `<div class="fld full"><label>الصلاحيات — الشاشات والتقارير المسموح فتحها</label><div class="actions" style="margin:0 0 6px"><button type="button" class="btn sm c-lime" data-act="permall" data-v="1">تحديد الكل</button><button type="button" class="btn sm ghost" data-act="permall" data-v="0">إلغاء الكل</button></div><div class="perm-grid">${PERM_ITEMS.map(p => `<label><input type="checkbox" name="p_${p.k}"> ${esc(p.l)}</label>`).join('')}</div></div>`}],
