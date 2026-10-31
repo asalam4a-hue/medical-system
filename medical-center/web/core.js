@@ -157,6 +157,8 @@ function fieldHTML(f, v) {
     case 'area': inner = `<textarea ${nm} rows="2">${esc(val)}</textarea>`; break;
     case 'ro': inner = `<input type="text" ${nm} value="${esc(val)}" readonly tabindex="-1">`; break;
     case 'img': inner = `<div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(val)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 إرفاق صورة</button><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
+    case 'combo': inner = `<input type="text" ${nm} value="${esc(val)}" data-sg="${f.sg}" autocomplete="off" placeholder="اكتب أو اختر…">`; break;
+    case 'docpick': inner = `<div class="docpick"><input type="text" name="${f.k}n" data-sg="${f.sg || 'alldocs'}" autocomplete="off" placeholder="اكتب اسم الطبيب…"><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
     case 'seg': inner = `<div class="seg" data-seg="${f.k}">${f.opts.map(o => `<button type="button" data-act="seg" data-v="${esc(o.v)}" class="c-${o.c || 'blue'} ${o.v === val ? 'on' : ''}">${esc(o.l)}</button>`).join('')}<input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
     case 'chk': inner = `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${nm} ${val ? 'checked' : ''}> ${esc(f.l2 || 'نعم')}</label>`; break;
     default: inner = `<input type="${f.pw ? 'password' : 'text'}" ${nm} value="${esc(val)}" ${f.sg ? `data-sg="${f.sg}" autocomplete="off"` : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''} ${f.num ? 'inputmode="numeric"' : ''}>`;
@@ -174,8 +176,21 @@ function readForm(root) {
 }
 function setForm(root, vals) {
   for (const [k, v] of Object.entries(vals)) { const el = $(`[name="${k}"]`, root); if (!el) continue; if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; if (el.type === 'hidden' && el.closest('[data-seg]')) $$('button', el.closest('[data-seg]')).forEach(b => b.classList.toggle('on', b.dataset.v === v)); if (el.type === 'hidden' && el.closest('.imgfld')) { const th = $('.th', el.closest('.imgfld')); th.dataset.fid = v || ''; th.dataset.done = ''; th.innerHTML = '🖼️'; } }
-  hydrateImgs(root);
+  docSync(root); hydrateImgs(root);
 }
+/* مربعات الطبيب بالكتابة: النص الظاهر ↔ المعرّف المخفي */
+function docSync(root) { $$('.docpick', root).forEach(w => { const id = $('input[type=hidden]', w).value, d = S.data.doctors.find(x => x.id === id), t = $('input[type=text]', w); t.value = d ? d.name : ''; }); }
+function docResolve(name, clinic) {
+  name = String(name || '').trim(); if (!name) return null;
+  const same = S.data.doctors.filter(d => d.name === name); return same.find(d => clinic && d.clinic === clinic) || same[0] || null;
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.matches || !t.matches('.docpick input[type=text]')) return;
+  const form = t.closest('form'), cl = form ? ($('[name=clinic]', form) || {}).value : '', h = $('input[type=hidden]', t.closest('.docpick')), d = docResolve(t.value, cl);
+  h.value = d ? d.id : ''; h.dispatchEvent(new Event('change', {bubbles: true}));
+});
+const docNameCheck = raw => { for (const k of ['_doc', '_anes']) if (raw[k + 'n'] && !raw[k]) throw new Error('اسم الطبيب غير مسجل في شاشة الأطباء: ' + raw[k + 'n']); };
+const comboCheck = (v, list, label) => { if (v && !list.includes(v)) throw new Error(label + ' غير موجود — اختر من القائمة المقترحة'); };
 
 /* ---------- التنبؤ بالكتابة ---------- */
 let sgBox = null, sgIdx = -1, sgInput = null;
@@ -184,6 +199,10 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
+  clinicsx: () => [...clinicNames(), ...EXTRA_CLINICS],
+  vtypes: () => VTYPES,
+  alldocs: () => uniq(S.data.doctors.map(d => d.name)),
+  clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : ''; return uniq(S.data.doctors.filter(d => !cl || d.clinic === cl).map(d => d.name)); },
   custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
@@ -197,7 +216,7 @@ function sgOpen(inp) {
   const q = inp.value.trim().toLowerCase(); sgInput = inp;
   let list = sgList(inp.dataset.sg);
   if (q) list = [...list.filter(x => x.toLowerCase().startsWith(q)), ...list.filter(x => !x.toLowerCase().startsWith(q) && x.toLowerCase().includes(q))];
-  list = list.filter(x => x.toLowerCase() !== q).slice(0, 8);
+  list = list.filter(x => x.toLowerCase() !== q).slice(0, 12);
   sgClose(); if (!list.length) return;
   sgBox = document.createElement('div'); sgBox.className = 'sgbox';
   const r = inp.getBoundingClientRect(); sgBox.style.cssText = `top:${r.bottom + scrollY + 2}px;left:${r.left + scrollX}px;width:${r.width}px`;
@@ -294,6 +313,10 @@ const docPaid = (f, t) => S.data.expenses.filter(x => x.doctor && payDay(x) >= f
 const isCash = v => (v.category || 'cash') === 'cash';
 const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
 const patientShare = v => v.category === 'company' ? coShare(v) : 0;
+/* مديونية المريض: المستحق عليه = (كاش: القيمة | شركة: نصيب المريض | تأمين: الصافي بعد الخصم | لجنة: 0) — والمدفوع الفارغ = مسدد بالكامل */
+const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v);
+const owedOf = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, dueOf(v) - (+v.paid || 0));
+const paidOf = v => (v.paid === '' || v.paid == null) ? dueOf(v) : (+v.paid || 0);
 const discountAmt = v => v.category === 'insurance' ? (+v.value || 0) * (+v.discount || 0) / 100 : 0;
 
 /* ---------- شريط التاريخ المشترك ---------- */

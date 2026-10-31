@@ -74,11 +74,11 @@ SCREEN_RENDER.staff = crud({k: 'staff', ent: 'staff', t: 'العاملين', i: 
 
 /* ---------- الأطباء ---------- */
 SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء', i: '👨‍⚕️', c: 'violet', add: 'طبيب جديد',
-  fields: [{k: 'code', l: 'كود الطبيب (تلقائي)', t: 'ro'}, {k: 'name', l: 'اسم الطبيب', req: 1, sg: 'doctors.name'}, {k: 'clinic', l: 'العيادة', t: 'sel', req: 1, opts: () => ['', ...clinicNames()]}, {k: 'phone', l: 'رقم التليفون', num: 1}, {k: 'nationalId', l: 'رقم البطاقة', num: 1}, {k: 'idPhoto', l: 'صورة البطاقة', t: 'img'}, {k: 'syndicatePhoto', l: 'صورة الكارنية', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}, {k: 'hireDate', l: 'تاريخ التعيين', t: 'date'}, {k: 'percent', l: 'نسبة الطبيب %', t: 'num'}, {k: 'fixed', l: 'الثابت (الفكسيد) يومياً', t: 'num'}, {k: 'opPercent', l: 'نسبة العمليات %', t: 'num'}],
+  fields: [{k: 'code', l: 'كود الطبيب (تلقائي)', t: 'ro'}, {k: 'name', l: 'اسم الطبيب', req: 1, sg: 'doctors.name'}, {k: 'clinic', l: 'العيادة', t: 'combo', sg: 'clinics', req: 1}, {k: 'phone', l: 'رقم التليفون', num: 1}, {k: 'nationalId', l: 'رقم البطاقة', num: 1}, {k: 'idPhoto', l: 'صورة البطاقة', t: 'img'}, {k: 'syndicatePhoto', l: 'صورة الكارنية', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}, {k: 'hireDate', l: 'تاريخ التعيين', t: 'date'}, {k: 'percent', l: 'نسبة الطبيب %', t: 'num'}, {k: 'fixed', l: 'الثابت (الفكسيد) يومياً', t: 'num'}, {k: 'opPercent', l: 'نسبة العمليات %', t: 'num'}],
   cols: [{h: 'الكود', f: r => r.code}, {h: 'الطبيب', f: r => L.doctor(r.name)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'تاريخ التعيين', f: r => esc(r.hireDate)}, {h: 'النسبة %', f: r => fmtN(r.percent)}, {h: 'الثابت', f: r => fmtN(r.fixed)}, {h: 'آخر أجر مستحق (تلقائي)', f: r => { const d = lastDue(r); return d ? `<b>${fmtN(d.amount)}</b> <small>(${d.date})</small>` : '—'; }}, {h: 'البطاقة', f: r => thumb(r.idPhoto)}, {h: 'الكارنية', f: r => thumb(r.syndicatePhoto)}, {h: 'الصورة', f: r => thumb(r.photo)}],
   sort: (a, b) => (a.code || 0) - (b.code || 0),
   defaults: () => ({code: S.data.doctors.reduce((m, x) => Math.max(m, x.code || 0), 0) + 1, hireDate: today()}),
-  validate: (r, ed) => S.data.doctors.some(d => d.id !== ed && d.name === r.name && d.clinic === r.clinic) ? 'هذا الطبيب مسجل في نفس العيادة' : ''
+  validate: (r, ed) => !clinicNames().includes(r.clinic) ? 'العيادة غير موجودة — اختر من القائمة المقترحة' : (S.data.doctors.some(d => d.id !== ed && d.name === r.name && d.clinic === r.clinic) ? 'هذا الطبيب مسجل في نفس العيادة' : '')
 });
 
 /* ---------- الخدمات ---------- */
@@ -138,11 +138,11 @@ SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد وا�
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}${isOn(r.deductAnes) ? ' (مخصوم)' : ''}` : ''}, {h: 'نصيب الطبيب', f: r => fmtN(opCalc(r).surgeon), sum: r => opCalc(r).surgeon}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
-  collect: raw => { const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; const a = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = a ? a.id : ''; o.anesthetist = a ? a.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; return o; },
+  collect: raw => { docNameCheck(raw); const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; const a = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = a ? a.id : ''; o.anesthetist = a ? a.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; return o; },
   fill: r => Object.assign({}, r, {deductAnes: isOn(r.deductAnes), _anes: r.anesthetistId || (S.data.doctors.find(d => d.name === r.anesthetist) || {}).id || '', _doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
   onChange: (n, f) => { if (n === 'operation') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); } if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', 'anesthesia', 'deductAnes', '*'].includes(n)) opsShare(f); }
 });
@@ -162,7 +162,29 @@ function visitAuto(f, why) {
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
   const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
 }
+function visitBanner(f, ctx) {
+  const box = $('#vbanner', f); if (!box) return;
+  const name = getv(f, 'patient'), phone = getv(f, 'phone'); if (!name || ctx.editing) { box.dataset.h = ''; box.innerHTML = ''; return; }
+  const all = S.data.visits.filter(v => v.patient === name || (phone && v.phone === phone));
+  const lv = lastVisitOf(name, phone, null, ''); if (!lv) { box.dataset.h = ''; box.innerHTML = ''; return; }
+  const owed = all.reduce((s2, v) => s2 + owedOf(v), 0), cardv = all.slice().sort((a, b) => b.date.localeCompare(a.date)).find(v => v.cardNo) || lv;
+  const part = (l, v) => v === '' || v == null ? '' : `<span><b>${l}:</b> ${esc(v)}</span>`;
+  const html = `<div class="vbanner">${part('آخر تاريخ زيارة', lv.date)}${part('نوع الزيارة', lv.visitType || CAT[lv.category] || '')}${part('القيمة', fmtN(+lv.value || 0))}${part('المدفوع', fmtN(paidOf(lv)))}${part('عليه', fmtN(owed))}${part('رقم الكارنيه', cardv.cardNo)}${part('شركة التأمين', cardv.company)}${part('خصم الكارنيه %', (+cardv.discount || 0) || '')}${owed > 0 ? `<button type="button" class="btn sm c-red" data-act="settle" data-p="${esc(name)}" data-ph="${esc(phone)}">💰 تسديد المبلغ</button>` : ''}</div>`;
+  if (box.dataset.h !== html) { box.dataset.h = html; box.innerHTML = html; }
+}
+Acts.settle = el => {
+  const name = el.dataset.p, phone = el.dataset.ph, list = S.data.visits.filter(v => (v.patient === name || (phone && v.phone === phone)) && owedOf(v) > 0).sort((a, b) => a.date.localeCompare(b.date));
+  const owed = list.reduce((s2, v) => s2 + owedOf(v), 0);
+  const m = modal(`<h3>💰 تسديد مديونية ${esc(name)}</h3><p class="muted">إجمالي المتبقي: <b>${fmtN(owed)}</b> — يُوزَّع المبلغ على أقدم الزيارات أولاً.</p><table><thead><tr><th>التاريخ</th><th>القيمة</th><th>المستحق</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>${list.map(v => `<tr><td>${esc(v.date)}</td><td>${fmtN(+v.value || 0)}</td><td>${fmtN(dueOf(v))}</td><td>${fmtN(paidOf(v))}</td><td>${fmtN(owedOf(v))}</td></tr>`).join('')}</tbody></table><div class="fld"><label>المبلغ المسدد الآن</label><input type="number" id="spay" value="${owed}" min="0" max="${owed}" step="any"></div><div class="actions"><button class="btn c-lime" id="sok">✅ تسديد</button><button class="btn ghost" id="scl">إلغاء</button></div>`);
+  $('#scl', m).onclick = () => m.remove();
+  $('#sok', m).onclick = e => guard(e.target, async () => {
+    let amt = Math.min(+$('#spay', m).value || 0, owed); if (amt <= 0) throw new Error('اكتب مبلغاً صحيحاً');
+    for (const v of list) { if (amt <= 0) break; const pay = Math.min(amt, owedOf(v)); amt -= pay; await API.call('save', {entity: 'visits', record: Object.assign({}, v, {paid: String(+(paidOf(v) + pay).toFixed(2))})}); }
+    await loadAll(['visits']); m.remove(); toast('تم تسديد المبلغ'); if (S.screen === 'visits') { render(); } 
+  });
+};
 function visitLast(f, ctx) {
+  visitBanner(f, ctx);
   const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
@@ -171,10 +193,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
-    {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS]},
-    {k: '_doc', l: 'الطبيب المعالج', t: 'sel', opts: () => docOpts('')},
-    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
-    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة', t: 'ro'},
+    {k: '_banner', t: 'html', html: () => '<div class="fld full"><div id="vbanner"></div></div>'},
+    {k: 'clinic', l: 'العيادة / القسم', t: 'combo', sg: 'clinicsx', req: 1},
+    {k: '_doc', l: 'الطبيب المعالج', t: 'docpick', sg: 'clinicdocs'},
+    {k: 'visitType', l: 'الزيارة', t: 'combo', sg: 'vtypes'}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع (فارغ = مدفوع بالكامل)', t: 'num'}, {k: 'tax', l: 'الضريبة', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
     {k: 'payMethod', l: 'طريقة الدفع', t: 'seg', w: 'full', opts: [{v: 'cash', l: '💵 نقدي', c: 'lime'}, {v: 'visa', l: '💳 فيزا', c: 'blue'}, {v: 'master', l: '💳 ماستر كارد', c: 'orange'}]}, {k: 'payRef', l: 'رقم مرجع عملية POS / آخر 4 أرقام'},
     {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
@@ -188,6 +211,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', payMethod: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
+    docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
@@ -201,11 +225,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
   },
   onChange: (n, f, ctx) => {
-    if (n === '*') { if (ctx.reset) $('[name=_doc]', f).innerHTML = docSelectHTML('', ''); else { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); setv(f, '_doc', cur); } visitLast(f, ctx); visitAuto(f, '*'); return; }
+    if (n === '*') { visitLast(f, ctx); visitAuto(f, '*'); return; }
     if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
     if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
     if (n === 'phone') visitLast(f, ctx);
-    if (n === 'clinic') { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); const only = S.data.doctors.filter(d => d.clinic === getv(f, 'clinic')); setv(f, '_doc', only.some(d => d.id === cur) ? cur : (only.length === 1 ? only[0].id : '')); }
+    if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
     if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount'].includes(n) && !ctx.typing) visitAuto(f, n);
     if (n === 'value' || n === 'patientPct' || n === 'discount') visitAuto(f, n);
   }

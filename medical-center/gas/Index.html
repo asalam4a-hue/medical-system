@@ -63,6 +63,7 @@ a{color:#000}
 #app{min-height:100vh}
 .top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:10px 18px;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--teal),var(--blue),var(--violet),var(--pink),var(--orange),var(--gold)) 1}
 .top .brand{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:bold;font-size:1.15rem}
+.vbanner{background:#ffe9e9;border:1px solid #e53935;color:#c62828;font-size:.74rem;padding:4px 8px;border-radius:8px;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}.vbanner b{color:#8e0000}
 .top .brand svg,.top .brand img{width:42px;height:42px;object-fit:contain}
 .top .grow{flex:1}
 .top .who{font-size:.95rem;display:flex;align-items:center;gap:8px}
@@ -950,7 +951,7 @@ const FIELDS = {
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
-  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,birthDate',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,birthDate,paid',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
   custody:'date,person,kind,dir,amount,notes,docNo',
   execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
@@ -1253,6 +1254,8 @@ function fieldHTML(f, v) {
     case 'area': inner = `<textarea ${nm} rows="2">${esc(val)}</textarea>`; break;
     case 'ro': inner = `<input type="text" ${nm} value="${esc(val)}" readonly tabindex="-1">`; break;
     case 'img': inner = `<div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(val)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 إرفاق صورة</button><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
+    case 'combo': inner = `<input type="text" ${nm} value="${esc(val)}" data-sg="${f.sg}" autocomplete="off" placeholder="اكتب أو اختر…">`; break;
+    case 'docpick': inner = `<div class="docpick"><input type="text" name="${f.k}n" data-sg="${f.sg || 'alldocs'}" autocomplete="off" placeholder="اكتب اسم الطبيب…"><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
     case 'seg': inner = `<div class="seg" data-seg="${f.k}">${f.opts.map(o => `<button type="button" data-act="seg" data-v="${esc(o.v)}" class="c-${o.c || 'blue'} ${o.v === val ? 'on' : ''}">${esc(o.l)}</button>`).join('')}<input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
     case 'chk': inner = `<label style="display:flex;gap:8px;align-items:center"><input type="checkbox" style="width:auto" ${nm} ${val ? 'checked' : ''}> ${esc(f.l2 || 'نعم')}</label>`; break;
     default: inner = `<input type="${f.pw ? 'password' : 'text'}" ${nm} value="${esc(val)}" ${f.sg ? `data-sg="${f.sg}" autocomplete="off"` : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''} ${f.num ? 'inputmode="numeric"' : ''}>`;
@@ -1270,8 +1273,21 @@ function readForm(root) {
 }
 function setForm(root, vals) {
   for (const [k, v] of Object.entries(vals)) { const el = $(`[name="${k}"]`, root); if (!el) continue; if (el.type === 'checkbox') el.checked = !!v; else el.value = v == null ? '' : v; if (el.type === 'hidden' && el.closest('[data-seg]')) $$('button', el.closest('[data-seg]')).forEach(b => b.classList.toggle('on', b.dataset.v === v)); if (el.type === 'hidden' && el.closest('.imgfld')) { const th = $('.th', el.closest('.imgfld')); th.dataset.fid = v || ''; th.dataset.done = ''; th.innerHTML = '🖼️'; } }
-  hydrateImgs(root);
+  docSync(root); hydrateImgs(root);
 }
+/* مربعات الطبيب بالكتابة: النص الظاهر ↔ المعرّف المخفي */
+function docSync(root) { $$('.docpick', root).forEach(w => { const id = $('input[type=hidden]', w).value, d = S.data.doctors.find(x => x.id === id), t = $('input[type=text]', w); t.value = d ? d.name : ''; }); }
+function docResolve(name, clinic) {
+  name = String(name || '').trim(); if (!name) return null;
+  const same = S.data.doctors.filter(d => d.name === name); return same.find(d => clinic && d.clinic === clinic) || same[0] || null;
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.matches || !t.matches('.docpick input[type=text]')) return;
+  const form = t.closest('form'), cl = form ? ($('[name=clinic]', form) || {}).value : '', h = $('input[type=hidden]', t.closest('.docpick')), d = docResolve(t.value, cl);
+  h.value = d ? d.id : ''; h.dispatchEvent(new Event('change', {bubbles: true}));
+});
+const docNameCheck = raw => { for (const k of ['_doc', '_anes']) if (raw[k + 'n'] && !raw[k]) throw new Error('اسم الطبيب غير مسجل في شاشة الأطباء: ' + raw[k + 'n']); };
+const comboCheck = (v, list, label) => { if (v && !list.includes(v)) throw new Error(label + ' غير موجود — اختر من القائمة المقترحة'); };
 
 /* ---------- التنبؤ بالكتابة ---------- */
 let sgBox = null, sgIdx = -1, sgInput = null;
@@ -1280,6 +1296,10 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
+  clinicsx: () => [...clinicNames(), ...EXTRA_CLINICS],
+  vtypes: () => VTYPES,
+  alldocs: () => uniq(S.data.doctors.map(d => d.name)),
+  clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : ''; return uniq(S.data.doctors.filter(d => !cl || d.clinic === cl).map(d => d.name)); },
   custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
@@ -1293,7 +1313,7 @@ function sgOpen(inp) {
   const q = inp.value.trim().toLowerCase(); sgInput = inp;
   let list = sgList(inp.dataset.sg);
   if (q) list = [...list.filter(x => x.toLowerCase().startsWith(q)), ...list.filter(x => !x.toLowerCase().startsWith(q) && x.toLowerCase().includes(q))];
-  list = list.filter(x => x.toLowerCase() !== q).slice(0, 8);
+  list = list.filter(x => x.toLowerCase() !== q).slice(0, 12);
   sgClose(); if (!list.length) return;
   sgBox = document.createElement('div'); sgBox.className = 'sgbox';
   const r = inp.getBoundingClientRect(); sgBox.style.cssText = `top:${r.bottom + scrollY + 2}px;left:${r.left + scrollX}px;width:${r.width}px`;
@@ -1390,6 +1410,10 @@ const docPaid = (f, t) => S.data.expenses.filter(x => x.doctor && payDay(x) >= f
 const isCash = v => (v.category || 'cash') === 'cash';
 const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
 const patientShare = v => v.category === 'company' ? coShare(v) : 0;
+/* مديونية المريض: المستحق عليه = (كاش: القيمة | شركة: نصيب المريض | تأمين: الصافي بعد الخصم | لجنة: 0) — والمدفوع الفارغ = مسدد بالكامل */
+const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v);
+const owedOf = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, dueOf(v) - (+v.paid || 0));
+const paidOf = v => (v.paid === '' || v.paid == null) ? dueOf(v) : (+v.paid || 0);
 const discountAmt = v => v.category === 'insurance' ? (+v.value || 0) * (+v.discount || 0) / 100 : 0;
 
 /* ---------- شريط التاريخ المشترك ---------- */
@@ -1619,11 +1643,11 @@ SCREEN_RENDER.staff = crud({k: 'staff', ent: 'staff', t: 'العاملين', i: 
 
 /* ---------- الأطباء ---------- */
 SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء', i: '👨‍⚕️', c: 'violet', add: 'طبيب جديد',
-  fields: [{k: 'code', l: 'كود الطبيب (تلقائي)', t: 'ro'}, {k: 'name', l: 'اسم الطبيب', req: 1, sg: 'doctors.name'}, {k: 'clinic', l: 'العيادة', t: 'sel', req: 1, opts: () => ['', ...clinicNames()]}, {k: 'phone', l: 'رقم التليفون', num: 1}, {k: 'nationalId', l: 'رقم البطاقة', num: 1}, {k: 'idPhoto', l: 'صورة البطاقة', t: 'img'}, {k: 'syndicatePhoto', l: 'صورة الكارنية', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}, {k: 'hireDate', l: 'تاريخ التعيين', t: 'date'}, {k: 'percent', l: 'نسبة الطبيب %', t: 'num'}, {k: 'fixed', l: 'الثابت (الفكسيد) يومياً', t: 'num'}, {k: 'opPercent', l: 'نسبة العمليات %', t: 'num'}],
+  fields: [{k: 'code', l: 'كود الطبيب (تلقائي)', t: 'ro'}, {k: 'name', l: 'اسم الطبيب', req: 1, sg: 'doctors.name'}, {k: 'clinic', l: 'العيادة', t: 'combo', sg: 'clinics', req: 1}, {k: 'phone', l: 'رقم التليفون', num: 1}, {k: 'nationalId', l: 'رقم البطاقة', num: 1}, {k: 'idPhoto', l: 'صورة البطاقة', t: 'img'}, {k: 'syndicatePhoto', l: 'صورة الكارنية', t: 'img'}, {k: 'photo', l: 'الصورة الشخصية', t: 'img'}, {k: 'hireDate', l: 'تاريخ التعيين', t: 'date'}, {k: 'percent', l: 'نسبة الطبيب %', t: 'num'}, {k: 'fixed', l: 'الثابت (الفكسيد) يومياً', t: 'num'}, {k: 'opPercent', l: 'نسبة العمليات %', t: 'num'}],
   cols: [{h: 'الكود', f: r => r.code}, {h: 'الطبيب', f: r => L.doctor(r.name)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'تاريخ التعيين', f: r => esc(r.hireDate)}, {h: 'النسبة %', f: r => fmtN(r.percent)}, {h: 'الثابت', f: r => fmtN(r.fixed)}, {h: 'آخر أجر مستحق (تلقائي)', f: r => { const d = lastDue(r); return d ? `<b>${fmtN(d.amount)}</b> <small>(${d.date})</small>` : '—'; }}, {h: 'البطاقة', f: r => thumb(r.idPhoto)}, {h: 'الكارنية', f: r => thumb(r.syndicatePhoto)}, {h: 'الصورة', f: r => thumb(r.photo)}],
   sort: (a, b) => (a.code || 0) - (b.code || 0),
   defaults: () => ({code: S.data.doctors.reduce((m, x) => Math.max(m, x.code || 0), 0) + 1, hireDate: today()}),
-  validate: (r, ed) => S.data.doctors.some(d => d.id !== ed && d.name === r.name && d.clinic === r.clinic) ? 'هذا الطبيب مسجل في نفس العيادة' : ''
+  validate: (r, ed) => !clinicNames().includes(r.clinic) ? 'العيادة غير موجودة — اختر من القائمة المقترحة' : (S.data.doctors.some(d => d.id !== ed && d.name === r.name && d.clinic === r.clinic) ? 'هذا الطبيب مسجل في نفس العيادة' : '')
 });
 
 /* ---------- الخدمات ---------- */
@@ -1683,11 +1707,11 @@ SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد وا�
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'sel', opts: () => docOpts('')}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}${isOn(r.deductAnes) ? ' (مخصوم)' : ''}` : ''}, {h: 'نصيب الطبيب', f: r => fmtN(opCalc(r).surgeon), sum: r => opCalc(r).surgeon}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
-  collect: raw => { const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; const a = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = a ? a.id : ''; o.anesthetist = a ? a.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; return o; },
+  collect: raw => { docNameCheck(raw); const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; const a = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = a ? a.id : ''; o.anesthetist = a ? a.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; return o; },
   fill: r => Object.assign({}, r, {deductAnes: isOn(r.deductAnes), _anes: r.anesthetistId || (S.data.doctors.find(d => d.name === r.anesthetist) || {}).id || '', _doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
   onChange: (n, f) => { if (n === 'operation') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); } if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', 'anesthesia', 'deductAnes', '*'].includes(n)) opsShare(f); }
 });
@@ -1707,7 +1731,29 @@ function visitAuto(f, why) {
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
   const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
 }
+function visitBanner(f, ctx) {
+  const box = $('#vbanner', f); if (!box) return;
+  const name = getv(f, 'patient'), phone = getv(f, 'phone'); if (!name || ctx.editing) { box.dataset.h = ''; box.innerHTML = ''; return; }
+  const all = S.data.visits.filter(v => v.patient === name || (phone && v.phone === phone));
+  const lv = lastVisitOf(name, phone, null, ''); if (!lv) { box.dataset.h = ''; box.innerHTML = ''; return; }
+  const owed = all.reduce((s2, v) => s2 + owedOf(v), 0), cardv = all.slice().sort((a, b) => b.date.localeCompare(a.date)).find(v => v.cardNo) || lv;
+  const part = (l, v) => v === '' || v == null ? '' : `<span><b>${l}:</b> ${esc(v)}</span>`;
+  const html = `<div class="vbanner">${part('آخر تاريخ زيارة', lv.date)}${part('نوع الزيارة', lv.visitType || CAT[lv.category] || '')}${part('القيمة', fmtN(+lv.value || 0))}${part('المدفوع', fmtN(paidOf(lv)))}${part('عليه', fmtN(owed))}${part('رقم الكارنيه', cardv.cardNo)}${part('شركة التأمين', cardv.company)}${part('خصم الكارنيه %', (+cardv.discount || 0) || '')}${owed > 0 ? `<button type="button" class="btn sm c-red" data-act="settle" data-p="${esc(name)}" data-ph="${esc(phone)}">💰 تسديد المبلغ</button>` : ''}</div>`;
+  if (box.dataset.h !== html) { box.dataset.h = html; box.innerHTML = html; }
+}
+Acts.settle = el => {
+  const name = el.dataset.p, phone = el.dataset.ph, list = S.data.visits.filter(v => (v.patient === name || (phone && v.phone === phone)) && owedOf(v) > 0).sort((a, b) => a.date.localeCompare(b.date));
+  const owed = list.reduce((s2, v) => s2 + owedOf(v), 0);
+  const m = modal(`<h3>💰 تسديد مديونية ${esc(name)}</h3><p class="muted">إجمالي المتبقي: <b>${fmtN(owed)}</b> — يُوزَّع المبلغ على أقدم الزيارات أولاً.</p><table><thead><tr><th>التاريخ</th><th>القيمة</th><th>المستحق</th><th>المدفوع</th><th>المتبقي</th></tr></thead><tbody>${list.map(v => `<tr><td>${esc(v.date)}</td><td>${fmtN(+v.value || 0)}</td><td>${fmtN(dueOf(v))}</td><td>${fmtN(paidOf(v))}</td><td>${fmtN(owedOf(v))}</td></tr>`).join('')}</tbody></table><div class="fld"><label>المبلغ المسدد الآن</label><input type="number" id="spay" value="${owed}" min="0" max="${owed}" step="any"></div><div class="actions"><button class="btn c-lime" id="sok">✅ تسديد</button><button class="btn ghost" id="scl">إلغاء</button></div>`);
+  $('#scl', m).onclick = () => m.remove();
+  $('#sok', m).onclick = e => guard(e.target, async () => {
+    let amt = Math.min(+$('#spay', m).value || 0, owed); if (amt <= 0) throw new Error('اكتب مبلغاً صحيحاً');
+    for (const v of list) { if (amt <= 0) break; const pay = Math.min(amt, owedOf(v)); amt -= pay; await API.call('save', {entity: 'visits', record: Object.assign({}, v, {paid: String(+(paidOf(v) + pay).toFixed(2))})}); }
+    await loadAll(['visits']); m.remove(); toast('تم تسديد المبلغ'); if (S.screen === 'visits') { render(); } 
+  });
+};
 function visitLast(f, ctx) {
+  visitBanner(f, ctx);
   const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
@@ -1716,10 +1762,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
-    {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS]},
-    {k: '_doc', l: 'الطبيب المعالج', t: 'sel', opts: () => docOpts('')},
-    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
-    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة', t: 'ro'},
+    {k: '_banner', t: 'html', html: () => '<div class="fld full"><div id="vbanner"></div></div>'},
+    {k: 'clinic', l: 'العيادة / القسم', t: 'combo', sg: 'clinicsx', req: 1},
+    {k: '_doc', l: 'الطبيب المعالج', t: 'docpick', sg: 'clinicdocs'},
+    {k: 'visitType', l: 'الزيارة', t: 'combo', sg: 'vtypes'}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع (فارغ = مدفوع بالكامل)', t: 'num'}, {k: 'tax', l: 'الضريبة', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
     {k: 'payMethod', l: 'طريقة الدفع', t: 'seg', w: 'full', opts: [{v: 'cash', l: '💵 نقدي', c: 'lime'}, {v: 'visa', l: '💳 فيزا', c: 'blue'}, {v: 'master', l: '💳 ماستر كارد', c: 'orange'}]}, {k: 'payRef', l: 'رقم مرجع عملية POS / آخر 4 أرقام'},
     {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
@@ -1733,6 +1780,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', payMethod: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
+    docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
@@ -1746,11 +1794,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
   },
   onChange: (n, f, ctx) => {
-    if (n === '*') { if (ctx.reset) $('[name=_doc]', f).innerHTML = docSelectHTML('', ''); else { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); setv(f, '_doc', cur); } visitLast(f, ctx); visitAuto(f, '*'); return; }
+    if (n === '*') { visitLast(f, ctx); visitAuto(f, '*'); return; }
     if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
     if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
     if (n === 'phone') visitLast(f, ctx);
-    if (n === 'clinic') { const cur = getv(f, '_doc'); $('[name=_doc]', f).innerHTML = docSelectHTML(getv(f, 'clinic'), cur); const only = S.data.doctors.filter(d => d.clinic === getv(f, 'clinic')); setv(f, '_doc', only.some(d => d.id === cur) ? cur : (only.length === 1 ? only[0].id : '')); }
+    if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
     if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount'].includes(n) && !ctx.typing) visitAuto(f, n);
     if (n === 'value' || n === 'patientPct' || n === 'discount') visitAuto(f, n);
   }
