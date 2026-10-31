@@ -140,6 +140,7 @@ function route_(b) {
     if (!rec || rec.hash !== hashPw_(rec.salt, String(b.password || ''))) { cache.put(fkey, String(fails + 1), 600); throw new ApiError('اسم المستخدم أو كلمة السر غير صحيحة'); }
     if (!rec.active) throw new ApiError('حسابك بانتظار موافقة المدير', 'pending');
     cache.remove(fkey);
+    rec.lastLogin = new Date().toISOString(); rec.lastClient = String(b.client || '').slice(0, 20); put_('users', rec);
     var t = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
     cache.put('t_' + sha_(t), rec.id, TOKEN_TTL);
     return {token: t, user: pub_(rec)};
@@ -150,6 +151,12 @@ function route_(b) {
   if (!me) throw new ApiError('انتهت الجلسة، سجل الدخول من جديد', 'auth');
   me.perms = me.perms || [];
   if (A === 'me') return {user: pub_(me)};
+  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true}; }
+  if (A === 'presence') {
+    if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
+    var pl = []; getAll_('users').forEach(function (u) { var v = cache.get('p_' + u.id); if (v) { try { var o = JSON.parse(v); o.id = u.id; pl.push(o); } catch (x) {} } });
+    return {list: pl};
+  }
   if (A === 'logout') { cache.remove('t_' + sha_(tk)); return {ok: true}; }
 
   if (['settings_save', 'backup', 'restore', 'reset', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {

@@ -314,14 +314,21 @@ function logoutLocal() { API.setToken(null); S.user = null; S.stack = []; S.scre
 Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, el.dataset.arg); }, 260); };
 
 let syncSig = '';
+const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
+async function syncOnce() {
+  if (!S.user || document.hidden) return;
+  API.call('ping', {page: curTitle()}).catch(e => { if (e.code === 'auth') logoutLocal(); });
+  if (document.querySelector('.modal')) return;
+  const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
+  try {
+    const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
+  } catch (e) { if (e.code === 'auth') logoutLocal(); }
+}
+window.__syncNow = () => syncOnce();
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(async () => {
-    if (!S.user || document.hidden || document.querySelector('.modal')) return;
-    const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
-    try {
-      const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
-    } catch (e) { if (e.code === 'auth') logoutLocal(); }
-  }, 15000);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
+  window.addEventListener('online', () => syncOnce());
 }
 async function loadAll(ents) {
   if (!ents) loadSettings();

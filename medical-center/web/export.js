@@ -85,15 +85,16 @@
   };
   /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
   const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px}.hd h2{margin:0;font-size:18px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;position:relative;min-height:44px}.hd h2{margin:0 0 2px;font-size:19px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:90px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
 table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
-  function printDoc(title, sub, bodyHTML, land) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2><div>${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}</div><div>${esc(sub)}</div></div>`;
+  function printDoc(title, sub, bodyHTML, land, opt) {
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${opt && opt.css ? opt.css : PRINT_CSS(land)}</style></head><body>${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}</body></html>`;
     if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
-      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (opt && opt.css ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }
@@ -116,7 +117,10 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
   }
   Acts.pdf = () => {
     const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
-    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land);
+    let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
+    if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
+    if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
+    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land, {total});
   };
   /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
   Acts.prow = el => {
@@ -127,6 +131,15 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     }).join('');
     const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
     printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
+  };
+  /* إيصال كاشير صغير (80mm) لزيارة */
+  Acts.receipt = el => {
+    const r = S.data.visits.find(x => x.id === el.dataset.id); if (!r) return;
+    const css = `@page{size:80mm auto;margin:3mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000}html,body{margin:0;background:#fff;direction:rtl;font-size:13px;width:74mm}.c{text-align:center}.logo{max-height:46px;max-width:60px}.logo svg{width:46px;height:46px}.n{font-size:16px;font-weight:bold;margin:2px 0}hr{border:0;border-top:1px dashed #000;margin:6px 0}.r{display:flex;justify-content:space-between;margin:3px 0}.v{font-size:17px;font-weight:bold}.th{margin-top:8px;font-size:12px;line-height:1.5}img{max-height:46px}`;
+    const logo = CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO;
+    const head = `<div class="c"><div class="logo">${logo}</div><div class="n">${esc(CENTER)}</div>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<hr><div><b>إيصال استلام نقدية</b>${r.serial ? ' — رقم ' + esc(r.serial) : ''}</div><div>${esc(r.date)}</div></div>`;
+    const body = `<hr><div class="r"><span>اسم المريض</span><b>${esc(r.patient)}</b></div><div class="r"><span>نوع الزيارة</span><b>${esc(r.visitType || '')}</b></div><hr><div class="r v"><span>القيمة</span><span>${fmtN(+r.value || 0)}</span></div><hr><div class="c th">شكراً لزيارتكم<br>وندعو لكم بالشفاء العاجل</div>`;
+    printDoc('إيصال', '', body, false, {css, head});
   };
   Acts.print = Acts.pdf;
   window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';

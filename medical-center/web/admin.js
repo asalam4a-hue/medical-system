@@ -42,3 +42,17 @@ SCREEN_RENDER.admin = async function () {
     if (!await confirmBox('تحذير: سيتم حذف جميع بيانات البرنامج نهائياً. هل أنت متأكد؟')) return;
     guard(e.target, async () => { await API.call('reset', {confirm: 'حذف الكل'}); toast('تم حذف كل البيانات'); await reload(); }); };
 };
+
+/* ---------- متابعة المستخدمين (متصل / الصفحة الحالية) ---------- */
+const fmtDT = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+async function loadPres() { try { S.pres = {}; (await API.call('presence')).list.forEach(x => { S.pres[x.id] = x; }); } catch (e) {} }
+const _usersScreen = SCREEN_RENDER.users;
+SCREEN_RENDER.users = async function (a) {
+  await loadPres(); const r = _usersScreen(a); clearInterval(window.__pt);
+  window.__pt = setInterval(async () => {
+    if (S.screen !== 'users' || !S.user) { clearInterval(window.__pt); return; }
+    if (document.querySelector('.modal') || document.hidden) return; const ae = document.activeElement; if (ae && ae.closest && ae.closest('form')) return;
+    await loadPres(); if (S.view && S.view.refresh) S.view.refresh();
+  }, 10000);
+  return r;
+};

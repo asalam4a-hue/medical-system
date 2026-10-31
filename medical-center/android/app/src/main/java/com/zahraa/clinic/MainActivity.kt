@@ -89,6 +89,12 @@ class MainActivity : Activity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // عند العودة للتطبيق: مزامنة فورية لتظهر أي تغييرات حدثت من الويب أو السكريبت أو مستخدم آخر
+        if (::web.isInitialized) web.evaluateJavascript("window.__syncNow && window.__syncNow()", null)
+    }
+
     private fun retryDialog(msg: String) {
         AlertDialog.Builder(this).setTitle("لا يوجد اتصال").setMessage(msg).setCancelable(false)
             .setPositiveButton("إعادة المحاولة") { _, _ -> web.loadUrl(serverUrl) }

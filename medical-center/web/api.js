@@ -7,7 +7,7 @@ let token = null;
 try { token = sessionStorage.getItem('mc_token'); } catch(e){}
 
 async function call(action, payload){
-  const body = Object.assign({action, token}, payload||{});
+  const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
   if (MODE === 'gas') {
     const txt = await new Promise((ok, fail) => {
@@ -94,6 +94,7 @@ const Local = {
       if (!rec || rec.hash !== await sha(rec.salt + String(b.password || ''))) { db.fails[u] = {n: f.n + 1, t: Date.now()}; this.save(db); return fail('اسم المستخدم أو كلمة السر غير صحيحة'); }
       if (!rec.active) return fail('حسابك بانتظار موافقة المدير', 'pending');
       delete db.fails[u];
+      rec.lastLogin = new Date().toISOString(); rec.lastClient = String(b.client || '').slice(0, 20);
       const t = rid() + rid(); db.tokens[t] = {id: rec.id, exp: Date.now() + 12 * 3600e3}; this.save(db);
       return {token: t, user: this.pub(rec)};
     }
@@ -101,6 +102,8 @@ const Local = {
     const me = tk && tk.exp > Date.now() && (db.rec.users || []).find(x => x.id === tk.id && x.active);
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
+    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true}; }
+    if (A === 'presence') { if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); return {list: Object.entries(db.presence || {}).map(([id, v]) => Object.assign({id}, v))}; }
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
     if (['settings_save','backup','restore','reset','master_save','master_restore','master_info'].includes(A)) {
       if (!me.isAdmin) return fail('للمدير فقط', 'forbidden');

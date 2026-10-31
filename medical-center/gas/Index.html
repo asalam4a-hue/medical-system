@@ -914,7 +914,7 @@ let token = null;
 try { token = sessionStorage.getItem('mc_token'); } catch(e){}
 
 async function call(action, payload){
-  const body = Object.assign({action, token}, payload||{});
+  const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
   if (MODE === 'gas') {
     const txt = await new Promise((ok, fail) => {
@@ -1001,6 +1001,7 @@ const Local = {
       if (!rec || rec.hash !== await sha(rec.salt + String(b.password || ''))) { db.fails[u] = {n: f.n + 1, t: Date.now()}; this.save(db); return fail('اسم المستخدم أو كلمة السر غير صحيحة'); }
       if (!rec.active) return fail('حسابك بانتظار موافقة المدير', 'pending');
       delete db.fails[u];
+      rec.lastLogin = new Date().toISOString(); rec.lastClient = String(b.client || '').slice(0, 20);
       const t = rid() + rid(); db.tokens[t] = {id: rec.id, exp: Date.now() + 12 * 3600e3}; this.save(db);
       return {token: t, user: this.pub(rec)};
     }
@@ -1008,6 +1009,8 @@ const Local = {
     const me = tk && tk.exp > Date.now() && (db.rec.users || []).find(x => x.id === tk.id && x.active);
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
+    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true}; }
+    if (A === 'presence') { if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); return {list: Object.entries(db.presence || {}).map(([id, v]) => Object.assign({id}, v))}; }
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
     if (['settings_save','backup','restore','reset','master_save','master_restore','master_info'].includes(A)) {
       if (!me.isAdmin) return fail('للمدير فقط', 'forbidden');
@@ -1407,14 +1410,21 @@ function logoutLocal() { API.setToken(null); S.user = null; S.stack = []; S.scre
 Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, el.dataset.arg); }, 260); };
 
 let syncSig = '';
+const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
+async function syncOnce() {
+  if (!S.user || document.hidden) return;
+  API.call('ping', {page: curTitle()}).catch(e => { if (e.code === 'auth') logoutLocal(); });
+  if (document.querySelector('.modal')) return;
+  const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
+  try {
+    const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
+  } catch (e) { if (e.code === 'auth') logoutLocal(); }
+}
+window.__syncNow = () => syncOnce();
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(async () => {
-    if (!S.user || document.hidden || document.querySelector('.modal')) return;
-    const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
-    try {
-      const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
-    } catch (e) { if (e.code === 'auth') logoutLocal(); }
-  }, 15000);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
+  window.addEventListener('online', () => syncOnce());
 }
 async function loadAll(ents) {
   if (!ents) loadSettings();
@@ -1548,7 +1558,7 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -1744,7 +1754,8 @@ const PERM_ITEMS = [...SCREENS.filter(s => s.k !== 'admin').map(s => ({k: s.k, l
 SCREEN_RENDER.users = crud({k: 'users', ent: 'users', t: 'المستخدمين والصلاحيات', i: '🔐', c: 'pink', add: 'مستخدم جديد',
   fields: [{k: 'username', l: 'اسم المستخدم', req: 1}, {k: 'password', l: 'كلمة السر (اتركها فارغة للإبقاء)', pw: 1}, {k: 'nationalId', l: 'الرقم القومي', num: 1}, {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date'}, {k: 'isAdmin', l: 'مدير النظام (كل الصلاحيات)', t: 'chk', l2: 'مدير'}, {k: 'active', l: 'الحساب', t: 'chk', l2: 'مفعّل'},
     {k: '_perms', t: 'html', html: () => `<div class="fld full"><label>الصلاحيات — الشاشات والتقارير المسموح فتحها</label><div class="actions" style="margin:0 0 6px"><button type="button" class="btn sm c-lime" data-act="permall" data-v="1">تحديد الكل</button><button type="button" class="btn sm ghost" data-act="permall" data-v="0">إلغاء الكل</button></div><div class="perm-grid">${PERM_ITEMS.map(p => `<label><input type="checkbox" name="p_${p.k}"> ${esc(p.l)}</label>`).join('')}</div></div>`}],
-  cols: [{h: 'المستخدم', f: r => esc(r.username)}, {h: 'الرقم القومي', f: r => esc(r.nationalId)}, {h: 'تاريخ الميلاد', f: r => esc(r.birthDate)}, {h: 'الدور', f: r => r.isAdmin ? '<span class="tag c-gold">مدير</span>' : '<span class="tag c-blue">مستخدم</span>'}, {h: 'الحالة', f: r => r.active ? '<span class="tag c-lime">مفعّل</span>' : '<span class="tag c-red">بانتظار الموافقة</span>'}, {h: 'الصلاحيات', f: r => r.isAdmin ? 'الكل' : (r.perms || []).filter(p => p !== '*').map(p => (PERM_ITEMS.find(x => x.k === p) || {l: p}).l).join('، ')}],
+  cols: [{h: 'المستخدم', f: r => esc(r.username)}, {h: 'الرقم القومي', f: r => esc(r.nationalId)}, {h: 'تاريخ الميلاد', f: r => esc(r.birthDate)}, {h: 'الدور', f: r => r.isAdmin ? '<span class="tag c-gold">مدير</span>' : '<span class="tag c-blue">مستخدم</span>'}, {h: 'الحالة', f: r => r.active ? '<span class="tag c-lime">مفعّل</span>' : '<span class="tag c-red">بانتظار الموافقة</span>'}, {h: 'متصل الآن', f: r => { const p = (S.pres || {})[r.id]; return p && Date.now() - p.at < 40000 ? '<span class="tag c-lime">🟢 متصل</span>' : '<span class="tag c-red">⚪ غير متصل</span>'; }}, {h: 'الصفحة الحالية', f: r => { const p = (S.pres || {})[r.id]; return p && Date.now() - p.at < 40000 ? esc(p.page) : ''; }}, {h: 'الدخول من', f: r => esc(((S.pres || {})[r.id] || {}).client || r.lastClient || '')}, {h: 'آخر تسجيل دخول', f: r => r.lastLogin ? esc(fmtDT(r.lastLogin)) : ''},
+    {h: 'الصلاحيات', f: r => r.isAdmin ? 'الكل' : (r.perms || []).filter(p => p !== '*').map(p => (PERM_ITEMS.find(x => x.k === p) || {l: p}).l).join('، ')}],
   sort: (a, b) => a.username.localeCompare(b.username),
   defaults: () => ({active: true}),
   collect: raw => { const o = {username: raw.username, password: raw.password, nationalId: raw.nationalId, birthDate: raw.birthDate, isAdmin: raw.isAdmin, active: raw.active || raw.isAdmin}; o.perms = PERM_ITEMS.filter(p => raw['p_' + p.k]).map(p => p.k); return o; },
@@ -2370,6 +2381,20 @@ SCREEN_RENDER.admin = async function () {
     guard(e.target, async () => { await API.call('reset', {confirm: 'حذف الكل'}); toast('تم حذف كل البيانات'); await reload(); }); };
 };
 
+/* ---------- متابعة المستخدمين (متصل / الصفحة الحالية) ---------- */
+const fmtDT = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+async function loadPres() { try { S.pres = {}; (await API.call('presence')).list.forEach(x => { S.pres[x.id] = x; }); } catch (e) {} }
+const _usersScreen = SCREEN_RENDER.users;
+SCREEN_RENDER.users = async function (a) {
+  await loadPres(); const r = _usersScreen(a); clearInterval(window.__pt);
+  window.__pt = setInterval(async () => {
+    if (S.screen !== 'users' || !S.user) { clearInterval(window.__pt); return; }
+    if (document.querySelector('.modal') || document.hidden) return; const ae = document.activeElement; if (ae && ae.closest && ae.closest('form')) return;
+    await loadPres(); if (S.view && S.view.refresh) S.view.refresh();
+  }, 10000);
+  return r;
+};
+
 </script>
 <script>
 /* ============ التصدير: Excel (xlsx حقيقي بدون مكتبات) و PDF (عبر نافذة الطباعة: حفظ كـ PDF) ============ */
@@ -2459,15 +2484,16 @@ SCREEN_RENDER.admin = async function () {
   };
   /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
   const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px}.hd h2{margin:0;font-size:18px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;position:relative;min-height:44px}.hd h2{margin:0 0 2px;font-size:19px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:90px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
 table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
-  function printDoc(title, sub, bodyHTML, land) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${PRINT_CSS(land)}</style></head><body><div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}</body></html>`;
+  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2><div>${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}</div><div>${esc(sub)}</div></div>`;
+  function printDoc(title, sub, bodyHTML, land, opt) {
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${opt && opt.css ? opt.css : PRINT_CSS(land)}</style></head><body>${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}</body></html>`;
     if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
-      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = PRINT_CSS(land).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `<div class="hd"><h2>${esc(CENTER)}</h2>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<h3>${esc(title)}</h3><div>${esc(sub)}</div></div>${bodyHTML}`;
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (opt && opt.css ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }
@@ -2490,7 +2516,10 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
   }
   Acts.pdf = () => {
     const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
-    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land);
+    let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
+    if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
+    if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
+    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land, {total});
   };
   /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
   Acts.prow = el => {
@@ -2501,6 +2530,15 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     }).join('');
     const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
     printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
+  };
+  /* إيصال كاشير صغير (80mm) لزيارة */
+  Acts.receipt = el => {
+    const r = S.data.visits.find(x => x.id === el.dataset.id); if (!r) return;
+    const css = `@page{size:80mm auto;margin:3mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000}html,body{margin:0;background:#fff;direction:rtl;font-size:13px;width:74mm}.c{text-align:center}.logo{max-height:46px;max-width:60px}.logo svg{width:46px;height:46px}.n{font-size:16px;font-weight:bold;margin:2px 0}hr{border:0;border-top:1px dashed #000;margin:6px 0}.r{display:flex;justify-content:space-between;margin:3px 0}.v{font-size:17px;font-weight:bold}.th{margin-top:8px;font-size:12px;line-height:1.5}img{max-height:46px}`;
+    const logo = CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO;
+    const head = `<div class="c"><div class="logo">${logo}</div><div class="n">${esc(CENTER)}</div>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<hr><div><b>إيصال استلام نقدية</b>${r.serial ? ' — رقم ' + esc(r.serial) : ''}</div><div>${esc(r.date)}</div></div>`;
+    const body = `<hr><div class="r"><span>اسم المريض</span><b>${esc(r.patient)}</b></div><div class="r"><span>نوع الزيارة</span><b>${esc(r.visitType || '')}</b></div><hr><div class="r v"><span>القيمة</span><span>${fmtN(+r.value || 0)}</span></div><hr><div class="c th">شكراً لزيارتكم<br>وندعو لكم بالشفاء العاجل</div>`;
+    printDoc('إيصال', '', body, false, {css, head});
   };
   Acts.print = Acts.pdf;
   window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';
