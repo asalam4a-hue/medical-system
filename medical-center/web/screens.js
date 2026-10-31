@@ -176,6 +176,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     {k: 'visitType', l: 'الزيارة', t: 'sel', opts: VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
     {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
+    {k: 'payMethod', l: 'طريقة الدفع', t: 'seg', w: 'full', opts: [{v: 'cash', l: '💵 نقدي', c: 'lime'}, {v: 'visa', l: '💳 فيزا', c: 'blue'}, {v: 'master', l: '💳 ماستر كارد', c: 'orange'}]}, {k: 'payRef', l: 'رقم مرجع عملية POS / آخر 4 أرقام'},
     {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
     {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
@@ -183,9 +184,9 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
-  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'الدفع', f: r => r.payMethod === 'visa' ? '💳 فيزا' : r.payMethod === 'master' ? '💳 ماستر' : 'نقدي'}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', payMethod: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
@@ -194,7 +195,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     return o;
   },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date), _by: r.registeredBy || S.user.username}),
-  validate: r => r.category === 'company' && !r.company ? 'اختر اسم الشركة' : '',
+  validate: r => /\d{12,}/.test(String(r.payRef || '').replace(/[\s-]/g, '')) ? 'لا تُدخل رقم البطاقة كاملاً — اكتب آخر 4 أرقام أو رقم مرجع العملية فقط' : (r.category === 'company' && !r.company ? 'اختر اسم الشركة' : ''),
   after: async (rec, sent) => {
     const p = S.data.patients.find(x => x.name === sent.patient);
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}

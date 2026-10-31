@@ -132,14 +132,75 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
     printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
-  /* إيصال كاشير صغير (80mm) لزيارة */
-  Acts.receipt = el => {
+  /* ---- إيصال كاشير صغير: معاينة + طباعة عادية + طباعة بلوتوث (ESC/POS صورة) ---- */
+  const PAYL = {cash: 'نقدي', visa: 'فيزا', master: 'ماستر كارد'};
+  const receiptLines = r => {
+    const L = [['c', CENTER, 'b'], CPHONE ? ['c', '☎ ' + CPHONE] : null, ['hr'], ['c', 'إيصال استلام نقدية' + (r.serial ? ' — رقم ' + r.serial : ''), 'b'], ['c', r.date], ['hr'],
+      ['kv', 'اسم المريض', r.patient], ['kv', 'نوع الزيارة', r.visitType || ''], ['kv', 'طريقة الدفع', (PAYL[r.payMethod] || 'نقدي') + (r.payRef ? ' (' + r.payRef + ')' : '')], ['hr'],
+      ['kv', 'القيمة', fmtN(+r.value || 0), 'big'], ['hr'], ['c', 'شكراً لزيارتكم'], ['c', 'وندعو لكم بالشفاء العاجل']];
+    return L.filter(Boolean);
+  };
+  async function receiptCanvas(r, w) {
+    const c = document.createElement('canvas'), pad = 10, lh = 30; c.width = w; const lines = receiptLines(r);
+    let logoImg = null; const src = CLOGO; if (src) { logoImg = await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
+    c.height = lines.length * (lh + 6) + (logoImg ? 70 : 0) + 40;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#000'; x.direction = 'rtl'; x.textBaseline = 'middle';
+    let y = 8; if (logoImg) { const k = Math.min(60 / logoImg.height, 200 / logoImg.width); x.drawImage(logoImg, (w - logoImg.width * k) / 2, y, logoImg.width * k, logoImg.height * k); y += 66; }
+    lines.forEach(l => {
+      const t = l[0]; y += (lh + 6) / 2;
+      if (t === 'hr') { x.setLineDash([4, 3]); x.beginPath(); x.moveTo(pad, y); x.lineTo(w - pad, y); x.stroke(); x.setLineDash([]); }
+      else if (t === 'c') { x.font = (l[2] === 'b' ? 'bold ' : '') + '22px "Times New Roman",serif'; x.textAlign = 'center'; x.fillText(l[1], w / 2, y); }
+      else { x.font = (l[3] === 'big' ? 'bold 28px' : '22px') + ' "Times New Roman",serif'; x.textAlign = 'right'; x.fillText(l[1], w - pad, y); x.textAlign = 'left'; x.font = 'bold ' + (l[3] === 'big' ? 28 : 22) + 'px "Times New Roman",serif'; x.fillText(l[2], pad, y); }
+      y += (lh + 6) / 2;
+    });
+    return c;
+  }
+  /* تحويل الصورة إلى أوامر ESC/POS (GS v 0) */
+  function escposBytes(c) {
+    const w = c.width, h = c.height, d = c.getContext('2d').getImageData(0, 0, w, h).data, bw = Math.ceil(w / 8), out = [0x1B, 0x40, 0x1B, 0x61, 1];
+    for (let y0 = 0; y0 < h; y0 += 200) {
+      const hh = Math.min(200, h - y0); out.push(0x1D, 0x76, 0x30, 0, bw & 255, bw >> 8, hh & 255, hh >> 8);
+      for (let y = y0; y < y0 + hh; y++) for (let bx = 0; bx < bw; bx++) { let b = 0; for (let k = 0; k < 8; k++) { const px = bx * 8 + k; if (px < w) { const i = (y * w + px) * 4, g = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11); if (g < 140) b |= 0x80 >> k; } } out.push(b); }
+    }
+    out.push(0x0A, 0x0A, 0x0A, 0x1D, 0x56, 0x42, 0x00);
+    return new Uint8Array(out);
+  }
+  const BLE_SVC = ['000018f0-0000-1000-8000-00805f9b34fb', '49535343-fe7d-4ae5-8fa9-9fafd205e455', 'e7810a71-73ae-499d-8c15-faa9aef0c3f2', '0000ff00-0000-1000-8000-00805f9b34fb', '0000ffe0-0000-1000-8000-00805f9b34fb'];
+  let bleChar = null;
+  async function bleSend(bytes) {
+    if (!navigator.bluetooth) throw new Error('المتصفح لا يدعم البلوتوث — استخدم Chrome أو تطبيق الأندرويد');
+    if (!bleChar || !bleChar.service.device.gatt.connected) {
+      const dev = await navigator.bluetooth.requestDevice({acceptAllDevices: true, optionalServices: BLE_SVC});
+      const srv = await dev.gatt.connect(); let ch = null;
+      for (const sv of await srv.getPrimaryServices()) { for (const cc of await sv.getCharacteristics()) if (cc.properties.write || cc.properties.writeWithoutResponse) { ch = cc; break; } if (ch) break; }
+      if (!ch) throw new Error('لم أجد قناة طباعة في هذا الجهاز');
+      bleChar = ch;
+    }
+    for (let i = 0; i < bytes.length; i += 100) { const part = bytes.slice(i, i + 100); await (bleChar.properties.writeWithoutResponse ? bleChar.writeValueWithoutResponse(part) : bleChar.writeValue(part)); await new Promise(r => setTimeout(r, 25)); }
+  }
+  const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192)); return btoa(s); };
+  Acts.receipt = async el => {
     const r = S.data.visits.find(x => x.id === el.dataset.id); if (!r) return;
-    const css = `@page{size:80mm auto;margin:3mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000}html,body{margin:0;background:#fff;direction:rtl;font-size:13px;width:74mm}.c{text-align:center}.logo{max-height:46px;max-width:60px}.logo svg{width:46px;height:46px}.n{font-size:16px;font-weight:bold;margin:2px 0}hr{border:0;border-top:1px dashed #000;margin:6px 0}.r{display:flex;justify-content:space-between;margin:3px 0}.v{font-size:17px;font-weight:bold}.th{margin-top:8px;font-size:12px;line-height:1.5}img{max-height:46px}`;
-    const logo = CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO;
-    const head = `<div class="c"><div class="logo">${logo}</div><div class="n">${esc(CENTER)}</div>${CPHONE ? `<div>☎ ${esc(CPHONE)}</div>` : ''}<hr><div><b>إيصال استلام نقدية</b>${r.serial ? ' — رقم ' + esc(r.serial) : ''}</div><div>${esc(r.date)}</div></div>`;
-    const body = `<hr><div class="r"><span>اسم المريض</span><b>${esc(r.patient)}</b></div><div class="r"><span>نوع الزيارة</span><b>${esc(r.visitType || '')}</b></div><hr><div class="r v"><span>القيمة</span><span>${fmtN(+r.value || 0)}</span></div><hr><div class="c th">شكراً لزيارتكم<br>وندعو لكم بالشفاء العاجل</div>`;
-    printDoc('إيصال', '', body, false, {css, head});
+    let width = +(localStorage.getItem('mc_rw') || 384); if (width !== 576) width = 384;
+    const cv = await receiptCanvas(r, width);
+    let printers = []; if (window.AndroidBridge && AndroidBridge.btList) { try { printers = JSON.parse(AndroidBridge.btList()); } catch (e) {} }
+    const lastP = localStorage.getItem('mc_btp') || '';
+    const m = modal(`<h3>🧾 إيصال ${esc(r.patient)}</h3><div style="text-align:center;background:#fff;padding:6px;border-radius:8px;max-height:55vh;overflow:auto"><img id="rimg" src="${cv.toDataURL()}" style="max-width:100%;border:1px solid #ccc"></div>
+      <div class="fld"><label>عرض الورق</label><select id="rw"><option value="384" ${width === 384 ? 'selected' : ''}>58 مم</option><option value="576" ${width === 576 ? 'selected' : ''}>80 مم</option></select></div>
+      ${window.AndroidBridge && AndroidBridge.btList ? `<div class="fld"><label>طابعة البلوتوث (من الأجهزة المقترنة)</label><select id="bp">${printers.length ? printers.map(p => `<option value="${esc(p.address)}" ${p.address === lastP ? 'selected' : ''}>${esc(p.name)}</option>`).join('') : '<option value="">لا توجد طابعة مقترنة — اقترنها من إعدادات بلوتوث الجهاز</option>'}</select></div>` : ''}
+      <div class="actions"><button class="btn c-blue" id="rbt">🔵 طباعة بلوتوث</button><button class="btn c-gold" id="rpp">🖨️ طباعة عادية / PDF</button><button class="btn ghost" id="rcl">إغلاق</button></div>`);
+    $('#rcl', m).onclick = () => m.remove();
+    $('#rw', m).onchange = async e => { localStorage.setItem('mc_rw', e.target.value); const c2 = await receiptCanvas(r, +e.target.value); $('#rimg', m).src = c2.toDataURL(); };
+    $('#rbt', m).onclick = e => guard(e.target, async () => {
+      const bytes = escposBytes(await receiptCanvas(r, +$('#rw', m).value));
+      if (window.AndroidBridge && AndroidBridge.btPrint) { const a = ($('#bp', m) || {}).value; if (!a) throw new Error('اختر طابعة مقترنة أولاً'); localStorage.setItem('mc_btp', a); const res = AndroidBridge.btPrint(a, b64(bytes)); if (res !== 'ok') throw new Error(res); }
+      else await bleSend(bytes);
+      toast('تمت الطباعة');
+    });
+    $('#rpp', m).onclick = () => {
+      const css = `@page{size:80mm auto;margin:3mm}html,body{margin:0;background:#fff}img{width:74mm}`;
+      m.remove(); printDoc('إيصال', '', `<img src="${$('#rimg', m).src}">`, false, {css, head: ''});
+    };
   };
   Acts.print = Acts.pdf;
   window.exportButtons = '<button class="btn sm c-lime" data-act="xlsx">📗 Excel</button><button class="btn sm c-red" data-act="pdf">📄 PDF</button><button class="btn sm c-gold" data-act="pdf" title="الطباعة أو الحفظ كـ PDF">🖨️ طباعة</button>';

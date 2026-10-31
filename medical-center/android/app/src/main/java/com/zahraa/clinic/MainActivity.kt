@@ -15,6 +15,12 @@ import android.provider.MediaStore
 import android.util.Base64
 import android.view.View
 import android.view.ViewGroup
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.os.Build
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
 import android.webkit.*
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -60,6 +66,27 @@ class MainActivity : Activity() {
                 val pm = getSystemService(Context.PRINT_SERVICE) as PrintManager
                 pm.print("تقرير", web.createPrintDocumentAdapter("تقرير"), PrintAttributes.Builder().build())
             }
+            @JavascriptInterface fun btList(): String {
+                if (!btAllowed()) return "[]"
+                return try {
+                    val ad = (getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
+                    val arr = JSONArray(); ad?.bondedDevices?.forEach { arr.put(JSONObject().put("name", it.name ?: it.address).put("address", it.address)) }
+                    arr.toString()
+                } catch (e: Exception) { "[]" }
+            }
+            @JavascriptInterface fun btPrint(address: String, b64: String): String {
+                if (!btAllowed()) return "اسمح للتطبيق باستخدام البلوتوث ثم أعد المحاولة"
+                return try {
+                    val ad = (getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter ?: return "البلوتوث غير متاح"
+                    if (!ad.isEnabled) return "شغّل البلوتوث أولاً"
+                    val dev = ad.getRemoteDevice(address); ad.cancelDiscovery()
+                    val sock = dev.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"))
+                    sock.connect()
+                    val data = Base64.decode(b64, Base64.DEFAULT); val os = sock.outputStream
+                    var i = 0; while (i < data.size) { val n = minOf(512, data.size - i); os.write(data, i, n); os.flush(); i += n; Thread.sleep(20) }
+                    Thread.sleep(600); sock.close(); "ok"
+                } catch (e: Exception) { "تعذرت الطباعة: " + (e.message ?: "") }
+            }
             @JavascriptInterface fun saveFile(name: String, mime: String, b64: String) = runOnUiThread {
                 val dir = File(cacheDir, "exports").apply { mkdirs() }
                 val f = File(dir, name.replace(Regex("[^\\w.\\- \\u0600-\\u06FF]"), "_"))
@@ -87,6 +114,13 @@ class MainActivity : Activity() {
                 chooserCb?.onReceiveValue(null); chooserCb = cb; pickImage(); return true
             }
         }
+    }
+
+    private fun btAllowed(): Boolean {
+        if (Build.VERSION.SDK_INT < 31) return true
+        if (checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) return true
+        runOnUiThread { requestPermissions(arrayOf(Manifest.permission.BLUETOOTH_CONNECT), 43) }
+        return false
     }
 
     override fun onResume() {
