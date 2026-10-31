@@ -227,7 +227,7 @@ function route_(b) {
 
 /* ---------- الإعدادات والنسخ الاحتياطي ---------- */
 function settings_() {
-  var o = {appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''};
+  var o = {appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: ''};
   try { var v = JSON.parse(PropertiesService.getScriptProperties().getProperty('SETTINGS') || '{}'); for (var k in v) if (v[k] !== '' || k === 'logo' || k === 'phone') o[k] = v[k]; } catch (x) {}
   return o;
 }

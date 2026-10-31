@@ -1080,7 +1080,7 @@ const Local = {
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
     return fail('أمر غير معروف');
   },
-  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''}, db.settings || {}); },
+  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: ''}, db.settings || {}); },
   pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
   seed(db){
     const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };
@@ -1093,9 +1093,9 @@ const Local = {
 <script>
 /* ============ النواة: أدوات، حالة، واجهة عامة، دخول، شاشة رئيسية ============ */
 'use strict';
-let CENTER = 'عيادات الزهراء الطبية', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
+let CENTER = 'برنامج إدارة المركز الطبي', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
 function applySettings(s) {
-  if (!s) return; CENTER = s.centerName || CENTER; APPNAME = s.appName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
+  if (!s) return; APPNAME = s.appName || APPNAME; CENTER = s.centerName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
   if ((s.logo || '') !== CLOGOID) { CLOGOID = s.logo || ''; CLOGO = ''; if (CLOGOID && S.user) fileURL(CLOGOID).then(u => { CLOGO = u; if (S.user) { const b = $('.top .brand'); if (b) { const sv = $('svg,img', b); if (sv) sv.outerHTML = `<img src="${u}" alt="">`; } } }).catch(() => {}); }
 }
 async function loadSettings() { try { applySettings((await API.call('settings')).settings); } catch (e) {} }
@@ -1430,7 +1430,7 @@ function render() {
   clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
-  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(CENTER)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = '<div class="panel">الشاشة غير موجودة</div>';
@@ -1454,7 +1454,7 @@ async function renderLogin(app) {
   loadSettings();
   let hasUsers = true, connErr = ''; try { hasUsers = (await API.call('status')).hasUsers; } catch (e) { connErr = e.message || 'تعذر الاتصال بالخادم'; }
   const canServer = API.mode === 'php';
-  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${CENTER}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
+  app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${esc(APPNAME)}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو افتح api.php للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button></div>` : ''}
   <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
   <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">${hasUsers ? 'الدخول بعد موافقة المدير فقط' : 'لا يوجد مستخدمون بعد — اضغط أيقونة 👤＋ لإنشاء أول مستخدم (المدير)'}</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}

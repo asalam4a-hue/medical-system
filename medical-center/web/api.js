@@ -173,7 +173,7 @@ const Local = {
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
     return fail('أمر غير معروف');
   },
-  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: 'عيادات الزهراء الطبية', phone: '', logo: ''}, db.settings || {}); },
+  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: ''}, db.settings || {}); },
   pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
   seed(db){
     const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };

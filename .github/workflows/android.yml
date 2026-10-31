@@ -22,7 +22,7 @@ jobs:
       - name: Publish APK / log to branch "apk"
         run: |
           mkdir /tmp/out && cp build.log /tmp/out/build.log
-          cp medical-center/android/app/build/outputs/apk/debug/*.apk /tmp/out/zahraa-clinic.apk 2>/dev/null || true
+          cp medical-center/android/app/build/outputs/apk/debug/*.apk /tmp/out/Hospital.apk 2>/dev/null || true
           cd /tmp/out && git init -q && git checkout -q -b apk && git add -A
           git -c user.name=ci -c user.email=ci@example.com commit -qm "build output"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" apk
