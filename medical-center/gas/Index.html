@@ -950,7 +950,7 @@ const FIELDS = {
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
-  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,birthDate',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
   custody:'date,person,kind,dir,amount,notes,docNo',
   execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
@@ -1218,6 +1218,12 @@ document.addEventListener('change', async e => {
     imgCache.set(r.file, 'data:image/jpeg;base64,' + data);
     $('input[type=hidden]', box).value = r.file; const th = $('.th', box); th.dataset.fid = r.file; th.dataset.done = ''; hydrateImgs(box);
     toast('تم إرفاق الصورة');
+    const hn = ($('input[type=hidden]', box) || {}).name, form = box.closest('form');
+    if (form && (hn === 'cardPhoto' || hn === 'idPhoto') && window.OCR) {
+      toast('🔍 جاري قراءة بيانات الصورة…');
+      try { const done = await OCR.fillForm(form, 'data:image/jpeg;base64,' + data, hn === 'cardPhoto' ? 'card' : 'id'); toast(done.length ? '✅ تمت قراءة: ' + done.join('، ') + ' — راجع البيانات' : 'لم أتمكن من قراءة بيانات واضحة — أدخلها يدوياً'); }
+      catch (e) { toast(e.message || 'تعذرت قراءة الصورة', true); }
+    }
   });
   f.value = '';
 });
@@ -1719,7 +1725,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
     {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
-    {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
+    {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
@@ -1729,7 +1735,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   collect: raw => {
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
-    if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId'].forEach(k => o[k] = ''); o.patientPct = 0; }
+    if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
     return o;
   },
@@ -2395,6 +2401,55 @@ SCREEN_RENDER.users = async function (a) {
   }, 10000);
   return r;
 };
+
+</script>
+<script>
+/* ============ قراءة بيانات الكارنيه / البطاقة من الصورة (OCR داخل المتصفح — الصورة لا تُرسل لأي خدمة خارجية) ============ */
+'use strict';
+const OCR = (() => {
+  const AR_DIG = '٠١٢٣٤٥٦٧٨٩', FA_DIG = '۰۱۲۳۴۵۶۷۸۹';
+  const normDigits = s => String(s || '').replace(/[٠-٩]/g, c => AR_DIG.indexOf(c)).replace(/[۰-۹]/g, c => FA_DIG.indexOf(c));
+  const STOP = /جمهورية|مصر|العربية|بطاقة|تحقيق|شخصية|وزارة|الداخلية|تأمين|الرقم|القومي|كارنيه|كارنية|الصحي|هيئة|صالحة|حتى|تاريخ|الميلاد|محل|الإقامة|العنوان|المهنة|الحالة|الاجتماعية|الديانة|مسلم|مسيحي|اعزب|متزوج|ذكر|انثى|أنثى|شركة|رقم|بطاقه|المستفيد|الاسم/;
+  function birthFromNid(n) {
+    if (!/^[23]\d{13}$/.test(n)) return '';
+    const y = (n[0] === '2' ? 1900 : 2000) + (+n.slice(1, 3)), m = +n.slice(3, 5), d = +n.slice(5, 7);
+    const dt = new Date(y, m - 1, d); if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return '';
+    return `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+  }
+  /* تحليل النص المستخرج → {nationalId, birthDate, cardNo, name} */
+  function parse(text) {
+    const t = normDigits(text), out = {nationalId: '', birthDate: '', cardNo: '', name: ''};
+    const compact = t.replace(/[ \t]/g, '');
+    const m14 = compact.match(/[23]\d{13}/g); if (m14) { const v = m14.find(x => birthFromNid(x)); if (v) { out.nationalId = v; out.birthDate = birthFromNid(v); } }
+    const seqs = (t.match(/\d[\d\- ]{4,}\d/g) || []).map(x => x.replace(/[\s-]/g, '')).filter(x => x.length >= 5 && x.length <= 16 && x !== out.nationalId && !(out.nationalId && x.includes(out.nationalId)));
+    if (seqs.length) out.cardNo = seqs.sort((a, b) => b.length - a.length)[0];
+    const cands = t.split(/\r?\n/).map(l => l.replace(/[^؀-ۿ ]/g, ' ').replace(/\s+/g, ' ').trim()).filter(l => {
+      const w = l.split(' ').filter(x => x.length > 1); return w.length >= 2 && w.length <= 5 && l.length >= 6 && !STOP.test(l);
+    });
+    if (cands.length) { out.name = cands[0]; if (cands[1] && cands[1].split(' ').length <= 2) out.name += ' ' + cands[1]; }
+    return out;
+  }
+  let loading = null, worker = null;
+  const loadLib = () => loading || (loading = new Promise((ok, no) => {
+    if (window.Tesseract) return ok(); const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js'; s.onload = ok; s.onerror = () => { loading = null; no(new Error('تعذر تحميل أداة القراءة — تحقق من الإنترنت')); };
+    document.head.appendChild(s);
+  }));
+  async function read(dataUrl) {
+    await loadLib(); if (!worker) worker = await Tesseract.createWorker('ara+eng');
+    const r = await worker.recognize(dataUrl); return r.data.text || '';
+  }
+  /* تعبئة الحقول الفارغة فقط في نموذج الإدخال */
+  async function fillForm(form, dataUrl, kind) {
+    const text = await read(dataUrl), p = parse(text), done = [];
+    const put = (n, v, label) => { const el = $(`[name="${n}"]`, form); if (el && v && !el.value.trim()) { el.value = v; el.dispatchEvent(new Event('input', {bubbles: true})); el.dispatchEvent(new Event('change', {bubbles: true})); done.push(label); } };
+    put('nationalId', p.nationalId, 'الرقم القومي'); put('birthDate', p.birthDate, 'تاريخ الميلاد');
+    if (kind === 'card') put('cardNo', p.cardNo, 'رقم الكارنيه');
+    put($(`[name="patient"]`, form) ? 'patient' : 'name', p.name, 'الاسم');
+    return done;
+  }
+  return {parse, read, fillForm, birthFromNid};
+})();
 
 </script>
 <script>

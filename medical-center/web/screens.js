@@ -180,7 +180,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
     {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
-    {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
+    {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
@@ -190,7 +190,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
   collect: raw => {
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
-    if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId'].forEach(k => o[k] = ''); o.patientPct = 0; }
+    if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
     return o;
   },

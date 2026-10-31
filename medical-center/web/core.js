@@ -122,6 +122,12 @@ document.addEventListener('change', async e => {
     imgCache.set(r.file, 'data:image/jpeg;base64,' + data);
     $('input[type=hidden]', box).value = r.file; const th = $('.th', box); th.dataset.fid = r.file; th.dataset.done = ''; hydrateImgs(box);
     toast('تم إرفاق الصورة');
+    const hn = ($('input[type=hidden]', box) || {}).name, form = box.closest('form');
+    if (form && (hn === 'cardPhoto' || hn === 'idPhoto') && window.OCR) {
+      toast('🔍 جاري قراءة بيانات الصورة…');
+      try { const done = await OCR.fillForm(form, 'data:image/jpeg;base64,' + data, hn === 'cardPhoto' ? 'card' : 'id'); toast(done.length ? '✅ تمت قراءة: ' + done.join('، ') + ' — راجع البيانات' : 'لم أتمكن من قراءة بيانات واضحة — أدخلها يدوياً'); }
+      catch (e) { toast(e.message || 'تعذرت قراءة الصورة', true); }
+    }
   });
   f.value = '';
 });
