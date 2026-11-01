@@ -12,7 +12,7 @@ def build(mode, out, extra=""):
     html = html.replace("<!--CSS-->", css).replace("<!--SCRIPTS-->", js)
     p = root / out; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(html, encoding="utf-8")
     print(out, len(html) // 1024, "KB")
-GAS_URL = "https://script.google.com/macros/s/AKfycbyPMVle0-RkJTpE4dYdiLk2sftGt5OCRPpcByVlxJEGauSWalQag_8n0KB3RsP1X5TL/exec"
+GAS_URL = "https://script.google.com/macros/s/AKfycbwadbXZUm-8sJe1QxOQUV9xI3_lr5KmbVLEHgWjb41l4JNOMlHBC24kNbbHmKqRJlfQ/exec"
 build("php", "php/index.html", "window.API_URL=%s;" % json.dumps(GAS_URL))
 build("gas", "gas/Index.html")
 build("local", "demo/index.html")
