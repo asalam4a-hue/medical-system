@@ -45,7 +45,7 @@ async function call(action, payload){
         catch (e) { errs.push((rt === 'native' ? 'اتصال التطبيق بجوجل' : rt === 'direct' ? 'مباشر من جوجل' : 'عبر الاستضافة') + ': ' + (e.message || e)); }
       }
       if (!res) throw new Error('تعذر الاتصال بالخادم — ' + errs.join(' | '));
-      if (res.error && errs.length) res.error += ' (' + errs[0] + ')';
+      if (res.error && errs.length) res.error = /الاستضافة لا تستطيع الوصول/.test(res.error) ? 'الاستضافة المجانية تمنع الاتصال بجوجل، والاتصال المباشر من المتصفح فشل أيضاً (' + errs[0] + '). افتح رابط سكريبت جوجل مباشرة بدل رابط الاستضافة.' : res.error + ' (' + errs[0] + ')';
     }
   }
   if (res.error) { const e = new Error(res.error); e.code = res.code; throw e; }
