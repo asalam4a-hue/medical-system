@@ -34,7 +34,8 @@ class MainActivity : Activity() {
     private lateinit var bar: ProgressBar
     private var chooserCb: ValueCallback<Array<Uri>>? = null
     private var cameraUri: Uri? = null
-    private val DEFAULT_URL = "https://zahraaclinic.free.nf"
+    private val DEFAULT_URL = "https://clinic.wuaze.com"
+    private val BASE = "https://appassets.local/"
     private val reqFile = 41
     private val reqCam = 42
 
@@ -49,7 +50,15 @@ class MainActivity : Activity() {
         root.addView(bar, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 8))
         setContentView(root)
         setup()
-        web.loadUrl(serverUrl)
+        loadApp()
+    }
+
+    /** الصفحة مضمّنة داخل التطبيق (assets) فلا تعتمد على الاستضافة؛ البيانات من خادم جوجل شيت مباشرة. */
+    private fun loadApp() {
+        try {
+            val html = assets.open("index.html").bufferedReader(Charsets.UTF_8).use { it.readText() }
+            web.loadDataWithBaseURL(BASE, html, "text/html", "UTF-8", null)
+        } catch (e: Exception) { web.loadUrl(DEFAULT_URL) }
     }
 
     private fun setup() {
@@ -97,7 +106,7 @@ class MainActivity : Activity() {
         }, "AndroidBridge")
         web.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(v: WebView, r: WebResourceRequest): Boolean {
-                val host = Uri.parse(serverUrl).host
+                val host = Uri.parse(BASE).host
                 val ok = r.url.host == host || r.url.host?.endsWith("google.com") == true || r.url.host?.endsWith("googleusercontent.com") == true
                 if (!ok) { startActivity(Intent(Intent.ACTION_VIEW, r.url)); return true }
                 return false
@@ -105,7 +114,7 @@ class MainActivity : Activity() {
             override fun onPageStarted(v: WebView?, u: String?, f: Bitmap?) { bar.visibility = View.VISIBLE }
             override fun onPageFinished(v: WebView?, u: String?) { bar.visibility = View.GONE }
             override fun onReceivedError(v: WebView, r: WebResourceRequest, e: WebResourceError) {
-                if (r.isForMainFrame) retryDialog("تعذر الاتصال بالخادم: ${e.description}")
+                if (r.isForMainFrame && !r.url.toString().startsWith(BASE)) retryDialog("تعذر الاتصال بالخادم: ${e.description}")
             }
         }
         web.webChromeClient = object : WebChromeClient() {
@@ -131,7 +140,7 @@ class MainActivity : Activity() {
 
     private fun retryDialog(msg: String) {
         AlertDialog.Builder(this).setTitle("لا يوجد اتصال").setMessage(msg).setCancelable(false)
-            .setPositiveButton("إعادة المحاولة") { _, _ -> web.loadUrl(serverUrl) }
+            .setPositiveButton("إعادة المحاولة") { _, _ -> loadApp() }
             .setNegativeButton("إغلاق", null).show()
     }
 

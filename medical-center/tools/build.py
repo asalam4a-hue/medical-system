@@ -16,6 +16,7 @@ GAS_URL = "https://script.google.com/macros/s/AKfycbyPMVle0-RkJTpE4dYdiLk2sftGt5
 build("php", "php/index.html", "window.API_URL=%s;" % json.dumps(GAS_URL))
 build("gas", "gas/Index.html")
 build("local", "demo/index.html")
+import shutil; (root / "android/app/src/main/assets").mkdir(parents=True, exist_ok=True); shutil.copy(root / "php/index.html", root / "android/app/src/main/assets/index.html")
 (root / "gas/Seed.gs").write_text("var SEED = " + seed + ";\n", encoding="utf-8")
 (root / "gas/appsscript.json").write_text(json.dumps({
   "timeZone": "Africa/Cairo", "exceptionLogging": "STACKDRIVER", "runtimeVersion": "V8",
