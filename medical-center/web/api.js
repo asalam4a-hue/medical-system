@@ -6,6 +6,7 @@ const MODE = window.API_MODE || 'php';
 let token = null;
 try { token = sessionStorage.getItem('mc_token'); } catch(e){}
 
+const WRITES = new Set(['save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
 async function call(action, payload){
   const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
@@ -17,11 +18,27 @@ async function call(action, payload){
   } else if (MODE === 'local') {
     res = await Local.handle(JSON.parse(JSON.stringify(body)));
   } else {
-    const url = server();
-    const gasRemote = /^https:\/\/script\.google(usercontent)?\.com\//.test(url);
-    const r = await fetch(url, {method:'POST', redirect:'follow', headers:{'Content-Type': gasRemote ? 'text/plain;charset=utf-8' : 'application/json'}, body: JSON.stringify(body)});
-    const t = await r.text();
-    try { res = JSON.parse(t); } catch(e){ throw new Error('استجابة غير صالحة من الخادم'); }
+    const direct = server(), isGas = /^https:\/\/script\.google(usercontent)?\.com\//.test(direct);
+    const post = async (url, gas) => {
+      const r = await fetch(url, {method: 'POST', redirect: 'follow', headers: {'Content-Type': gas ? 'text/plain;charset=utf-8' : 'application/json'}, body: JSON.stringify(body)});
+      const t = await r.text(); let j; try { j = JSON.parse(t); } catch (e) { throw new Error('استجابة غير صالحة (' + (r.status || '') + ') — ' + (/<html|<!doctype/i.test(t) ? 'جوجل أعاد صفحة وليس بيانات: تأكد أن النشر "أي شخص" وأنه إصدار جديد' : t.slice(0, 80))); }
+      return j;
+    };
+    if (!isGas) res = await post(direct, false);
+    else {
+      /* مساران إلى نفس الخادم (جوجل شيت): مباشر من المتصفح، أو عبر api.php على الاستضافة. يُحفظ المسار الذي نجح. */
+      let good = ''; try { good = localStorage.getItem('mc_route') || ''; } catch (e) {}
+      const routes = good === 'proxy' ? ['proxy', 'direct'] : ['direct', 'proxy'];
+      const safeToRetry = !WRITES.has(action) || !good;
+      const errs = [];
+      for (const rt of routes) {
+        if (errs.length && !safeToRetry) break;
+        try { res = rt === 'direct' ? await post(direct, true) : await post('api.php', false); try { localStorage.setItem('mc_route', rt); } catch (e) {} break; }
+        catch (e) { errs.push((rt === 'direct' ? 'مباشر من جوجل' : 'عبر الاستضافة') + ': ' + (e.message || e)); }
+      }
+      if (!res) throw new Error('تعذر الاتصال بالخادم — ' + errs.join(' | '));
+      if (res.error && errs.length) res.error += ' (' + errs[0] + ')';
+    }
   }
   if (res.error) { const e = new Error(res.error); e.code = res.code; throw e; }
   return res;
@@ -29,7 +46,14 @@ async function call(action, payload){
 function server(){ if (window.API_URL) return window.API_URL; let u = ''; try { u = localStorage.getItem('mc_server') || ''; } catch(e){} return u || 'api.php'; }
 function setServer(u){ try { u ? localStorage.setItem('mc_server', u) : localStorage.removeItem('mc_server'); } catch(e){} setToken(null); }
 function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t) : sessionStorage.removeItem('mc_token'); } catch(e){} }
-window.API = {call, setToken, setServer, server, getToken: () => token, mode: MODE};
+async function diag() {
+  const out = [], body = JSON.stringify({action: 'status'}), g = window.API_URL || '';
+  const one = async (name, url, gas) => { const t0 = Date.now(); try { const r = await fetch(url, {method: 'POST', redirect: 'follow', headers: {'Content-Type': gas ? 'text/plain;charset=utf-8' : 'application/json'}, body}); const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch (e) {} out.push(`${j && !j.error ? '✅' : '❌'} ${name}: HTTP ${r.status} — ${j ? (j.error || 'يعمل') : (/<html|<!doctype/i.test(t) ? 'صفحة HTML (النشر غير عام أو إصدار قديم)' : t.slice(0, 60))} (${Date.now() - t0}ms)`); } catch (e) { out.push(`❌ ${name}: ${e.message}`); } };
+  if (g) await one('مباشر من المتصفح إلى جوجل', g, true);
+  await one('عبر الاستضافة (api.php)', 'api.php', false);
+  return out;
+}
+window.API = {diag, call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
 const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];

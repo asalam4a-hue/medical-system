@@ -11,6 +11,11 @@ $DATA = getenv('MC_DATA_DIR') ?: (__DIR__ . '/data');
 $TOKEN_TTL = 12 * 3600;
 
 /* صفحة تشخيص: افتح api.php في المتصفح لمعرفة حالة الاستضافة */
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && isset($_GET['test'])) {
+  $G = trim((string)(getenv('MC_GAS_URL') ?: 'https://script.google.com/macros/s/AKfycbyPMVle0-RkJTpE4dYdiLk2sftGt5OCRPpcByVlxJEGauSWalQag_8n0KB3RsP1X5TL/exec'));
+  list($o, $e, $c) = gas_call($G, '{"action":"status"}');
+  jout(['gas_http' => $c, 'curl_error' => $e, 'gas_json' => is_array(json_decode((string)$o, true)), 'sample' => substr((string)$o, 0, 200)]);
+}
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
   $okDir = (is_dir($DATA) || @mkdir($DATA, 0700, true)) && is_writable($DATA);
   jout(['app' => 'medical-center', 'php' => PHP_VERSION, 'pdo_sqlite' => extension_loaded('pdo_sqlite'), 'mbstring' => extension_loaded('mbstring'), 'curl' => extension_loaded('curl'), 'data_dir_writable' => $okDir, 'gas_proxy' => is_file(__DIR__ . '/gas_url.txt') && trim((string)file_get_contents(__DIR__ . '/gas_url.txt')) !== '', 'seed_json' => is_file(__DIR__ . '/seed.json'), 'ok' => extension_loaded('pdo_sqlite') && $okDir]);
@@ -18,12 +23,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
 
 /* ربط مع جوجل شيت: ضع رابط نشر Google Apps Script (ينتهي بـ /exec) في ملف gas_url.txt بجوار هذا الملف
    أو في المتغير MC_GAS_URL، فتعمل كل النسخ (ويب/أندرويد/جوجل) على نفس قاعدة البيانات. */
-$GAS = trim((string)(getenv('MC_GAS_URL') ?: (is_file(__DIR__ . '/gas_url.txt') ? file_get_contents(__DIR__ . '/gas_url.txt') : '')));
-if ($GAS !== '' && preg_match('#^https://script\.google\.com/#', $GAS) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+$GAS = trim((string)(getenv('MC_GAS_URL') ?: (is_file(__DIR__ . '/gas_url.txt') ? file_get_contents(__DIR__ . '/gas_url.txt') : 'https://script.google.com/macros/s/AKfycbyPMVle0-RkJTpE4dYdiLk2sftGt5OCRPpcByVlxJEGauSWalQag_8n0KB3RsP1X5TL/exec')));
+function gas_call($GAS, $payload) {
+  if (!function_exists('curl_init')) return [null, 'امتداد cURL غير مفعّل في الاستضافة', 0];
   $ch = curl_init($GAS);
-  curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => file_get_contents('php://input', false, null, 0, 9000000), CURLOPT_HTTPHEADER => ['Content-Type: text/plain;charset=utf-8'], CURLOPT_FOLLOWLOCATION => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60]);
-  $out = curl_exec($ch);
-  if ($out === false) { echo json_encode(['error' => 'تعذر الاتصال بجوجل شيت'], JSON_UNESCAPED_UNICODE); exit; }
+  curl_setopt_array($ch, [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $payload, CURLOPT_HTTPHEADER => ['Content-Type: text/plain;charset=utf-8'], CURLOPT_FOLLOWLOCATION => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60, CURLOPT_CONNECTTIMEOUT => 15]);
+  $out = curl_exec($ch); $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE); $err = curl_error($ch); curl_close($ch);
+  return [$out, $err, $code];
+}
+if ($GAS !== '' && preg_match('#^https://script\.google\.com/#', $GAS) && $_SERVER['REQUEST_METHOD'] === 'POST') {
+  list($out, $err, $code) = gas_call($GAS, file_get_contents('php://input', false, null, 0, 9000000));
+  if ($out === false || $out === null) { echo json_encode(['error' => 'الاستضافة لا تستطيع الوصول لجوجل: ' . $err], JSON_UNESCAPED_UNICODE); exit; }
+  if (!is_array(json_decode($out, true))) { echo json_encode(['error' => 'جوجل أعاد صفحة وليس بيانات (HTTP ' . $code . ') — اجعل نشر السكريبت "أي شخص" وانشر إصداراً جديداً'], JSON_UNESCAPED_UNICODE); exit; }
   echo $out; exit;
 }
 
