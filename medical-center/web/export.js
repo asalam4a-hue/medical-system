@@ -112,6 +112,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
       const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
     });
     m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
+    const kp = [...m.querySelectorAll('.kpis')]; if (kp.length && m.querySelector('table')) { kp.forEach(n => n.remove()); const w = document.createElement('div'); w.innerHTML = '<h2 class="s">ملخص</h2>' + kp.map(n => n.outerHTML).join(''); m.appendChild(w); } // العنوان ثم الجدول أولاً، والملخص بعده
     const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);
     return {html: m.innerHTML, land};
   }

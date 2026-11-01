@@ -1333,10 +1333,10 @@ const SG = {
   patients: () => uniq([...S.data.patients.map(p => p.name), ...S.data.visits.map(v => v.patient)]),
   doctors: () => uniq(S.data.doctors.map(d => d.name)),
   clinics: () => clinicNames(),
-  clinicsx: () => [...clinicNames(), ...EXTRA_CLINICS],
-  vtypes: () => VTYPES,
+  clinicsx: () => { const ok = [...clinicNames(), ...EXTRA_CLINICS]; return uniq([...S.data.visits.map(v => v.clinic), ...ok]).filter(x => ok.includes(x)); },
+  vtypes: () => uniq([...S.data.visits.map(v => v.visitType), ...VTYPES]),
   alldocs: () => uniq(S.data.doctors.map(d => d.name)),
-  clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : ''; return uniq(S.data.doctors.filter(d => !cl || d.clinic === cl).map(d => d.name)); },
+  clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : '', ds = S.data.doctors.filter(d => !cl || d.clinic === cl), names = ds.map(d => d.name); return uniq([...S.data.visits.filter(v => !cl || v.clinic === cl).map(v => v.doctor), ...names]).filter(x => names.includes(x)); },
   custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
@@ -2653,6 +2653,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
       const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
     });
     m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
+    const kp = [...m.querySelectorAll('.kpis')]; if (kp.length && m.querySelector('table')) { kp.forEach(n => n.remove()); const w = document.createElement('div'); w.innerHTML = '<h2 class="s">ملخص</h2>' + kp.map(n => n.outerHTML).join(''); m.appendChild(w); } // العنوان ثم الجدول أولاً، والملخص بعده
     const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);
     return {html: m.innerHTML, land};
   }
