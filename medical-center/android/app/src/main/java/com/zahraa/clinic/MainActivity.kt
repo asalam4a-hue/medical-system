@@ -21,6 +21,8 @@ import android.os.Build
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
+import java.net.HttpURLConnection
+import java.net.URL
 import android.webkit.*
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -74,6 +76,29 @@ class MainActivity : Activity() {
             @JavascriptInterface fun print() = runOnUiThread {
                 val pm = getSystemService(Context.PRINT_SERVICE) as PrintManager
                 pm.print("تقرير", web.createPrintDocumentAdapter("تقرير"), PrintAttributes.Builder().build())
+            }
+            /** اتصال شبكي أصلي بخادم جوجل (بدون قيود CORS في المتصفح): POST ثم متابعة التحويلات بـ GET كما يفعل Apps Script. */
+            @JavascriptInterface fun httpPost(id: String, url: String, body: String) {
+                Thread {
+                    var status = 0; var text = ""
+                    try {
+                        fun allowed(u: String) = Regex("^https://([a-z0-9-]+\\.)*(google\\.com|googleusercontent\\.com)/").containsMatchIn(u)
+                        if (!allowed(url)) throw Exception("عنوان غير مسموح")
+                        var cur = url; var post = true; var hops = 0
+                        while (true) {
+                            val c = URL(cur).openConnection() as HttpURLConnection
+                            c.instanceFollowRedirects = false; c.connectTimeout = 20000; c.readTimeout = 60000
+                            if (post) { c.requestMethod = "POST"; c.doOutput = true; c.setRequestProperty("Content-Type", "text/plain;charset=utf-8"); c.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) } }
+                            else c.requestMethod = "GET"
+                            status = c.responseCode
+                            if (status in 300..399 && hops < 6) { val loc = c.getHeaderField("Location") ?: break; cur = URL(URL(cur), loc).toString(); if (!allowed(cur)) throw Exception("تحويل غير مسموح"); post = false; hops++; c.disconnect(); continue }
+                            val st = if (status >= 400) c.errorStream else c.inputStream
+                            text = st?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: ""
+                            break
+                        }
+                    } catch (e: Exception) { status = 0; text = "خطأ شبكة: " + (e.message ?: e.javaClass.simpleName) }
+                    runOnUiThread { web.evaluateJavascript("window.__nativeCb && window.__nativeCb(" + JSONObject.quote(id) + "," + status + "," + JSONObject.quote(text) + ")", null) }
+                }.start()
             }
             @JavascriptInterface fun btList(): String {
                 if (!btAllowed()) return "[]"
