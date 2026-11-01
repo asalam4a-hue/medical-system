@@ -82,9 +82,9 @@ class MainActivity : Activity() {
                 Thread {
                     var status = 0; var text = ""
                     try {
-                        fun allowed(u: String) = Regex("^https://([a-z0-9-]+\\.)*(google\\.com|googleusercontent\\.com)/").containsMatchIn(u)
+                        fun allowed(u: String) = Regex("^https://([a-z0-9-]+\\.)*(google\\.com|googleusercontent\\.com|githubusercontent\\.com)/").containsMatchIn(u)
                         if (!allowed(url)) throw Exception("عنوان غير مسموح")
-                        var cur = url; var post = true; var hops = 0
+                        var cur = url; var post = body.isNotEmpty(); var hops = 0
                         while (true) {
                             val c = URL(cur).openConnection() as HttpURLConnection
                             c.instanceFollowRedirects = false; c.connectTimeout = 20000; c.readTimeout = 60000

@@ -12,7 +12,7 @@ $TOKEN_TTL = 12 * 3600;
 
 /* صفحة تشخيص: افتح api.php في المتصفح لمعرفة حالة الاستضافة */
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && isset($_GET['test'])) {
-  $G = trim((string)(getenv('MC_GAS_URL') ?: 'https://script.google.com/macros/s/AKfycbwadbXZUm-8sJe1QxOQUV9xI3_lr5KmbVLEHgWjb41l4JNOMlHBC24kNbbHmKqRJlfQ/exec'));
+  $G = trim((string)(getenv('MC_GAS_URL') ?: 'https://script.google.com/macros/s/AKfycbwUgTUpTIriWMnmCOKHtUX5nllXkyPcsNpm9BUHzb7EP-Yow380M5PV8Pad7bua9f-h/exec'));
   list($o, $e, $c) = gas_call($G, '{"action":"status"}');
   jout(['gas_http' => $c, 'curl_error' => $e, 'gas_json' => is_array(json_decode((string)$o, true)), 'sample' => substr((string)$o, 0, 200)]);
 }
@@ -23,7 +23,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
 
 /* ربط مع جوجل شيت: ضع رابط نشر Google Apps Script (ينتهي بـ /exec) في ملف gas_url.txt بجوار هذا الملف
    أو في المتغير MC_GAS_URL، فتعمل كل النسخ (ويب/أندرويد/جوجل) على نفس قاعدة البيانات. */
-$GAS = trim((string)(getenv('MC_GAS_URL') ?: (is_file(__DIR__ . '/gas_url.txt') ? file_get_contents(__DIR__ . '/gas_url.txt') : 'https://script.google.com/macros/s/AKfycbwadbXZUm-8sJe1QxOQUV9xI3_lr5KmbVLEHgWjb41l4JNOMlHBC24kNbbHmKqRJlfQ/exec')));
+$GAS = trim((string)(getenv('MC_GAS_URL') ?: (is_file(__DIR__ . '/gas_url.txt') ? file_get_contents(__DIR__ . '/gas_url.txt') : 'https://script.google.com/macros/s/AKfycbwUgTUpTIriWMnmCOKHtUX5nllXkyPcsNpm9BUHzb7EP-Yow380M5PV8Pad7bua9f-h/exec')));
 function gas_call($GAS, $payload) {
   if (!function_exists('curl_init')) return [null, 'امتداد cURL غير مفعّل في الاستضافة', 0];
   $ch = curl_init($GAS);

@@ -914,6 +914,28 @@ const MODE = window.API_MODE || 'php';
 let token = null;
 try { token = sessionStorage.getItem('mc_token'); } catch(e){}
 
+/* آخر رابط خادم: يُقرأ تلقائياً من ملف server.json في المستودع (فإذا تغيّر رابط النشر يكفي تعديل الملف دون إعادة بناء التطبيق) */
+const CFG_URL = 'https://raw.githubusercontent.com/asalam4a-hue/medical-system/main/medical-center/server.json';
+const GAS_RE = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/;
+let cfgDone = null;
+function ensureUrl() {
+  if (cfgDone) return cfgDone;
+  return cfgDone = (async () => {
+    if (!window.API_URL || MODE !== 'php') return;
+    try { const c = localStorage.getItem('mc_url'); if (c && GAS_RE.test(c)) window.API_URL = c; } catch (e) {}
+    try {
+      let txt;
+      if (window.AndroidBridge && window.AndroidBridge.httpPost) {
+        txt = await new Promise((ok, no) => { const id = rid(); window.__nat = window.__nat || {}; window.__nativeCb = (i, st, tx) => { const f = window.__nat[i]; if (f) { delete window.__nat[i]; f(st, tx); } }; window.__nat[id] = (st, tx) => ok(tx); setTimeout(() => no(new Error('t')), 5000); window.AndroidBridge.httpPost(id, CFG_URL + '?t=' + Date.now(), ''); });
+      } else {
+        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 4000);
+        txt = await (await fetch(CFG_URL + '?t=' + Date.now(), {signal: ctl.signal, cache: 'no-store'})).text(); clearTimeout(to);
+      }
+      const u = JSON.parse(txt).url;
+      if (GAS_RE.test(u)) { window.API_URL = u; try { localStorage.setItem('mc_url', u); } catch (e) {} }
+    } catch (e) {}
+  })();
+}
 const WRITES = new Set(['save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
 async function call(action, payload){
   const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
@@ -926,6 +948,7 @@ async function call(action, payload){
   } else if (MODE === 'local') {
     res = await Local.handle(JSON.parse(JSON.stringify(body)));
   } else {
+    await ensureUrl();
     const direct = server(), isGas = /^https:\/\/script\.google(usercontent)?\.com\//.test(direct);
     const post = async (url, gas) => {
       const r = await fetch(url, {method: 'POST', redirect: 'follow', headers: {'Content-Type': gas ? 'text/plain;charset=utf-8' : 'application/json'}, body: JSON.stringify(body)});
@@ -963,7 +986,7 @@ function server(){ if (window.API_URL) return window.API_URL; let u = ''; try { 
 function setServer(u){ try { u ? localStorage.setItem('mc_server', u) : localStorage.removeItem('mc_server'); } catch(e){} setToken(null); }
 function setToken(t){ token = t; try { t ? sessionStorage.setItem('mc_token', t) : sessionStorage.removeItem('mc_token'); } catch(e){} }
 async function diag() {
-  const out = [], body = JSON.stringify({action: 'status'}), g = window.API_URL || '';
+  await ensureUrl(); const out = [], body = JSON.stringify({action: 'status'}), g = window.API_URL || '';
   const one = async (name, url, gas) => { const t0 = Date.now(); try { const r = await fetch(url, {method: 'POST', redirect: 'follow', headers: {'Content-Type': gas ? 'text/plain;charset=utf-8' : 'application/json'}, body}); const t = await r.text(); let j = null; try { j = JSON.parse(t); } catch (e) {} out.push(`${j && !j.error ? '✅' : '❌'} ${name}: HTTP ${r.status} — ${j ? (j.error || 'يعمل') : (/<html|<!doctype/i.test(t) ? 'صفحة HTML (النشر غير عام أو إصدار قديم)' : t.slice(0, 60))} (${Date.now() - t0}ms)`); } catch (e) { out.push(`❌ ${name}: ${e.message}`); } };
   if (g && window.AndroidBridge && window.AndroidBridge.httpPost) {
     const t0 = Date.now(); try { const id = rid(); const r = await new Promise((ok, no) => { window.__nat = window.__nat || {}; window.__nativeCb = (i, st, tx) => { const f = window.__nat[i]; if (f) { delete window.__nat[i]; f(st, tx); } }; window.__nat[id] = (st, tx) => ok({st, tx}); setTimeout(() => no(new Error('انتهت المهلة')), 75000); window.AndroidBridge.httpPost(id, g, body); });
