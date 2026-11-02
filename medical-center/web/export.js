@@ -92,7 +92,12 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
   const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2><div>${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}</div><div>${esc(sub)}</div></div>`;
   function printDoc(title, sub, bodyHTML, land, opt) {
     const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${opt && opt.css ? opt.css : PRINT_CSS(land)}</style></head><body>${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}</body></html>`;
-    if (window.AndroidBridge) { // الأندرويد يطبع الـ WebView: نستبدل المحتوى مؤقتاً
+    if (window.AndroidBridge && window.AndroidBridge.printHtml) { window.AndroidBridge.printHtml(doc, title, !!land); return; }
+    if (!window.AndroidBridge) { // المتصفح: نافذة طباعة مستقلة (تعمل على الهاتف والكمبيوتر)، وإلا إطار مخفي
+      let w = null; try { w = window.open('', '_blank'); } catch (x) {}
+      if (w && w.document) { w.document.open(); w.document.write(doc); w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (x) {} }, 500); return; }
+    }
+    if (window.AndroidBridge) { // الأندرويد (نسخة قديمة): نستبدل المحتوى مؤقتاً
       const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (opt && opt.css ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
       root.innerHTML = `${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
@@ -134,7 +139,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
   /* ---- إيصال كاشير صغير: معاينة + طباعة عادية + طباعة بلوتوث (ESC/POS صورة) ---- */
-  const PAYL = {cash: 'نقدي', visa: 'فيزا', master: 'ماستر كارد'};
+  const PAYL = {cash: 'نقدي', visa: 'فيزا', master: 'ماستر كارد', transfer: 'تحويل كاش', credit: 'دفع آجل'};
   const receiptLines = r => {
     const L = [['c', CENTER, 'b'], CPHONE ? ['c', '☎ ' + CPHONE] : null, ['hr'], ['c', 'إيصال استلام نقدية' + (r.serial ? ' — رقم ' + r.serial : ''), 'b'], ['c', r.date], ['hr'],
       ['kv', 'اسم المريض', r.patient], ['kv', 'نوع الزيارة', r.visitType || ''], ['kv', 'طريقة الدفع', (PAYL[r.payMethod] || 'نقدي') + (r.payRef ? ' (' + r.payRef + ')' : '')], ['hr'],

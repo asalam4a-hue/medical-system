@@ -34,6 +34,7 @@ import java.io.File
 class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var bar: ProgressBar
+    private var printWeb: WebView? = null
     private var chooserCb: ValueCallback<Array<Uri>>? = null
     private var cameraUri: Uri? = null
     private val DEFAULT_URL = "https://clinic.wuaze.com"
@@ -99,6 +100,19 @@ class MainActivity : Activity() {
                     } catch (e: Exception) { status = 0; text = "خطأ شبكة: " + (e.message ?: e.javaClass.simpleName) }
                     runOnUiThread { web.evaluateJavascript("window.__nativeCb && window.__nativeCb(" + JSONObject.quote(id) + "," + status + "," + JSONObject.quote(text) + ")", null) }
                 }.start()
+            }
+            /** طباعة مستند HTML كامل (A4) عبر WebView مخفي — يعمل مع تقارير وشاشات البرنامج. */
+            @JavascriptInterface fun printHtml(html: String, title: String, landscape: Boolean) = runOnUiThread {
+                val w = WebView(this@MainActivity); printWeb = w
+                w.settings.javaScriptEnabled = false
+                w.webViewClient = object : WebViewClient() {
+                    override fun onPageFinished(v: WebView, u: String?) {
+                        val pm = getSystemService(Context.PRINT_SERVICE) as PrintManager
+                        val size = if (landscape) PrintAttributes.MediaSize.ISO_A4.asLandscape() else PrintAttributes.MediaSize.ISO_A4
+                        pm.print(title, v.createPrintDocumentAdapter(title), PrintAttributes.Builder().setMediaSize(size).build())
+                    }
+                }
+                w.loadDataWithBaseURL("https://appassets.local/print", html, "text/html", "UTF-8", null)
             }
             @JavascriptInterface fun btList(): String {
                 if (!btAllowed()) return "[]"

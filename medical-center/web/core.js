@@ -143,7 +143,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   const t = e.target; if (!t.matches || !t.matches('[data-dt]')) return;
-  let d = t.value.replace(/\D/g, '').slice(0, 8), o = d.slice(0, 4); if (d.length > 4) o += '/' + d.slice(4, 6); if (d.length > 6) o += '/' + d.slice(6, 8);
+  let d = t.value.replace(/[٠-٩]/g, x => '٠١٢٣٤٥٦٧٨٩'.indexOf(x)).replace(/[۰-۹]/g, x => '۰۱۲۳۴۵۶۷۸۹'.indexOf(x)).replace(/\D/g, '').slice(0, 8), o = d.slice(0, 4); if (d.length > 4) o += '/' + d.slice(4, 6); if (d.length > 6) o += '/' + d.slice(6, 8);
   if (t.value !== o) t.value = o;
 });
 
@@ -327,10 +327,12 @@ function rangeBar() {
   return `<div class="bar noprint" data-rangebar><div class="seg">${[['today','اليوم'],['day','تاريخ محدد'],['range','من – إلى'],['all','الكل']].map(([k, l]) => `<button class="c-teal ${r.mode === k ? 'on' : ''}" data-act="rmode" data-v="${k}">${l}</button>`).join('')}</div>${r.mode === 'day' || r.mode === 'range' ? `<span>${r.mode === 'range' ? 'من' : 'التاريخ'}</span>${dateFld('rA', r.a)}` : ''}${r.mode === 'range' ? `<span>إلى</span>${dateFld('rB', r.b)}` : ''}<b>${esc(rangeLabel())}</b></div>`;
 }
 Acts.rmode = el => { S.rng.mode = el.dataset.v; if (S.rng.mode !== 'today' && !validDate(S.rng.a)) S.rng.a = today(); if (!validDate(S.rng.b)) S.rng.b = today(); refreshView(); };
-document.addEventListener('change', e => {
-  const n = e.target.name; if ((n !== 'rA' && n !== 'rB') || !e.target.matches('[data-dt]')) return;
-  if (!validDate(e.target.value)) return; S.rng[n === 'rA' ? 'a' : 'b'] = e.target.value; refreshView(true);
-});
+const rangeSet = e => {
+  const n = e.target.name; if ((n !== 'rA' && n !== 'rB') || !e.target.matches || !e.target.matches('[data-dt]')) return;
+  const v = e.target.value; if (!validDate(v)) { if (e.type === 'change' && v) toast('التاريخ يجب أن يكون yyyy/mm/dd', true); return; }
+  const k = n === 'rA' ? 'a' : 'b'; if (S.rng[k] === v) return; S.rng[k] = v; refreshView(true);
+};
+document.addEventListener('change', rangeSet); document.addEventListener('input', rangeSet);
 function refreshView(keepFocus) { if (S.view && S.view.refresh) S.view.refresh(); else render(); }
 
 /* ---------- التنقل ---------- */
