@@ -48,7 +48,7 @@ function crud(cfg) {
       }); };
     };
     const refreshList = () => { const rb = $('[data-rangebar]'); if (rb) rb.outerHTML = rangeBar(); const l = $('#lst'); if (l) { l.innerHTML = listHTML(); hydrateImgs(l); } };
-    S.view = {refresh: refreshList,
+    S.view = {refresh: refreshList, total: () => { const c = cfg.cols.find(x => x.sum); if (!c) return ''; const l = rows(); return fmtN(l.reduce((t, r) => t + (+c.sum(r) || 0), 0)); },
       edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
       del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
       reset};
@@ -84,25 +84,55 @@ SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء',
 
 /* ---------- الخدمات ---------- */
 SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – عمليات – أشعة – تحاليل – خدمات)', i: '💉', c: 'orange', add: 'خدمة جديدة',
-  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
-  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
+  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'abbr', l: 'الاختصار (مثل CBC)'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
+  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'الاختصار', f: r => esc(r.abbr)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
   sort: (a, b) => Object.keys(SVTYPE).indexOf(a.type) - Object.keys(SVTYPE).indexOf(b.type) || a.name.localeCompare(b.name, 'ar'),
   validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : '',
   tools: () => can('services') ? '<button class="btn sm c-gold" data-act="importseed" title="يضيف الناقص فقط من بيانات الإكسيل ولا يعدّل ما عدّلته">📥 استيراد من الإكسيل</button>' : ''
 });
+/* استيراد البيانات الأساسية (من الإكسيل) وزيارات الإكسيل القديم إلى قاعدة البيانات (شيت جوجل) — يتخطى المكرر ولا يعدّل الموجود */
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+async function bulkSend(entity, records, key, onP) {
+  let added = 0, skipped = 0, done = 0;
+  for (const part of chunk(records, 100)) { const r = await API.call('bulk_save', {entity, records: part, key}); added += r.added || 0; skipped += r.skipped || 0; done += part.length; if (onP) onP(done); }
+  return {added, skipped};
+}
+async function seedBasics(onP) {
+  const SD = window.SEED || {}; let n = 0;
+  const jobs = [['services', SD.services, 'type,name'], ['doctors', SD.doctors, 'name,clinic'], ['companies', SD.companies, 'name'], ['staff', SD.staff, 'name']];
+  for (const [e, list, key] of jobs) { if (!list || !list.length) continue; if (onP) onP(e); const r = await bulkSend(e, list, key); n += r.added; }
+  await loadAll(['services', 'doctors', 'companies', 'staff']); return n;
+}
+async function seedHistory(onP) {
+  const H = window.HIST || []; if (!H.length) return {added: 0, skipped: 0};
+  const rs = H.map(r => { const d = S.data.doctors.find(x => x.name === r.doctor && x.clinic === r.clinic) || S.data.doctors.find(x => x.name === r.doctor); return Object.assign({}, r, {doctorId: d ? d.id : '', doctor: d ? d.name : r.doctor}); });
+  const pats = [...new Map(H.filter(r => r.patient).map(r => [r.patient, {name: r.patient, phone: r.phone || ''}])).values()];
+  const res = await bulkSend('visits', rs, 'date,patient,value,visitType,service,formNo,clinic', onP);
+  await bulkSend('patients', pats, 'name');
+  await loadAll(['visits', 'patients']); return res;
+}
 Acts.importseed = async el => {
-  const SD = window.SEED; if (!SD) return toast('لا توجد بيانات للاستيراد');
-  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل والخدمات والأطباء والشركات غير الموجودة فقط من ملف الإكسيل، دون تغيير ما عدّلته. متابعة؟')) return;
+  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل (بالاختصارات) والخدمات والأطباء والشركات غير الموجودة فقط، دون تغيير ما عدّلته. متابعة؟')) return;
+  await guard(el, async () => { const n = await seedBasics(); toast(n ? `تمت إضافة ${n} سجل ✔` : 'كل البيانات موجودة بالفعل'); refreshView(); });
+};
+Acts.importhist = async el => {
+  const H = window.HIST || []; if (!H.length) return toast('لا توجد بيانات قديمة للاستيراد', true);
+  if (!await confirmBox(`سيتم استيراد ${H.length} زيارة من الإكسيل السابق (${H[0].date} حتى ${H[H.length - 1].date}) إلى قاعدة البيانات وشيت جوجل، مع تخطي المكرر. متابعة؟`)) return;
   await guard(el, async () => {
-    const jobs = [];
-    (SD.services || []).forEach(x => { if (!S.data.services.some(s => s.type === x.type && s.name === x.name)) jobs.push(['services', x]); });
-    if (can('doctors')) (SD.doctors || []).forEach(x => { if (!S.data.doctors.some(d => d.name === x.name && d.clinic === x.clinic)) jobs.push(['doctors', x]); });
-    if (can('companies')) (SD.companies || []).forEach(x => { if (!S.data.companies.some(c => c.name === x.name)) jobs.push(['companies', x]); });
-    if (!jobs.length) return toast('كل البيانات موجودة بالفعل');
-    for (let i = 0; i < jobs.length; i += 5) await Promise.all(jobs.slice(i, i + 5).map(([entity, record]) => API.call('save', {entity, record})));
-    await loadAll(['services', 'doctors', 'companies']); toast(`تمت إضافة ${jobs.length} سجل ✔`); refreshView();
+    await seedBasics(); const r = await seedHistory(n => toast(`⏳ جاري الاستيراد… ${n}/${H.length}`));
+    try { await API.call('sync_sheets'); } catch (e) {}
+    toast(`تم استيراد ${r.added} زيارة (تخطي ${r.skipped} مكررة) ✔`); refreshView();
   });
 };
+Acts.syncsheets = async el => guard(el, async () => { await API.call('sync_sheets'); toast('تمت مزامنة أوراق جوجل ✔'); });
+async function autoSeedCheck() {
+  if (!S.user || !S.user.isAdmin || window.__seedAsked) return; window.__seedAsked = true;
+  try {
+    if (!S.data.services.length) { toast('⏳ جاري تعبئة البيانات الأساسية…'); await seedBasics(); toast('تمت تعبئة العيادات والأشعة والتحاليل والأطباء والشركات ✔'); render(); }
+    if (!S.data.visits.length && (window.HIST || []).length && await confirmBox(`لا توجد زيارات مسجلة. هل تريد استيراد ${window.HIST.length} زيارة من الإكسيل السابق الآن؟`)) { const r = await seedHistory(); try { await API.call('sync_sheets'); } catch (e) {} toast(`تم استيراد ${r.added} زيارة ✔`); render(); }
+  } catch (e) { toast(e.message || 'تعذر الاستيراد التلقائي', true); window.__seedAsked = false; }
+}
+window.autoSeedCheck = autoSeedCheck;
 
 /* ---------- المرضى ---------- */
 SCREEN_RENDER.patients = crud({k: 'patients', ent: 'patients', t: 'المرضى', i: '🧑‍🤝‍🧑', c: 'blue', add: 'مريض جديد',
@@ -152,7 +182,7 @@ SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'الع�
 function visitAuto(f, why) {
   const clinic = getv(f, 'clinic'), vt = getv(f, 'visitType'), cat = getv(f, 'category'), svc = getv(f, 'service');
   const c = clinicOf(clinic), sv = S.data.services.find(s => s.name === svc && s.type !== 'clinic');
-  if (why === 'clinic') { setv(f, 'tax', c ? c.tax || 0 : 0); }
+  if (why === 'clinic' || why === 'visitType') { setv(f, 'tax', vt === 'كشف' && c ? c.tax || 0 : 0); }
   if (['clinic', 'visitType', 'category', 'company', 'service'].includes(why)) {
     let val = null;
     if (sv && why === 'service') val = sv.price;
@@ -161,6 +191,7 @@ function visitAuto(f, why) {
   }
   const co = S.data.companies.find(x => x.name === getv(f, 'company')), fee = co && co.fee > 0 && vt === 'كشف' ? co.fee : (+getv(f, 'value') || 0);
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
+  { const pv = getv(f, 'paid'), due = dueOf({category: cat, value: getv(f, 'value'), patientPct: getv(f, 'patientPct'), discount: getv(f, 'discount'), company: getv(f, 'company'), visitType: vt}); setv(f, '_rem', pv === '' ? fmtN(0) : fmtN(Math.max(0, due - (+pv || 0)))); }
   const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
 }
 function visitBanner(f, ctx) {
@@ -190,40 +221,37 @@ function visitLast(f, ctx) {
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
 SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
-  groups: {pay: {title: '💳 بيانات الدفع', show: v => v.payMethod && v.payMethod !== 'cash'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
     {k: '_banner', t: 'html', html: () => '<div class="fld full"><div id="vbanner"></div></div>'},
-    {k: 'clinic', l: 'العيادة / القسم', t: 'combo', sg: 'clinicsx', req: 1},
+    {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS].map(x => ({v: x, l: x || '— اختر العيادة —'}))},
     {k: '_doc', l: 'الطبيب المعالج', t: 'docpick', sg: 'clinicdocs'},
-    {k: 'visitType', l: 'الزيارة', t: 'combo', sg: 'vtypes'}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
-    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع (فارغ = مدفوع بالكامل)', t: 'num'}, {k: 'tax', l: 'الضريبة', t: 'ro'},
+    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: () => VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع', t: 'num', ph: 'اتركه فارغاً = مدفوع بالكامل'}, {k: '_rem', l: 'المتبقي', t: 'ro'}, {k: 'tax', l: 'الضريبة (على الكشف فقط)', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
-    {k: 'payMethod', l: 'طريقة الدفع', t: 'seg', w: 'full', opts: [{v: 'cash', l: '💵 نقدي', c: 'lime'}, {v: 'visa', l: '💳 فيزا', c: 'blue'}, {v: 'master', l: '💳 ماستر كارد', c: 'orange'}, {v: 'transfer', l: '📲 تحويل كاش', c: 'violet'}, {v: 'credit', l: '⏳ دفع آجل', c: 'red'}]},
-    {k: 'payRef', l: 'الرقم المرجعي', grp: 'pay'}, {k: 'payPhone', l: 'رقم الهاتف', num: 1, grp: 'pay'},
-    {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
+    {k: 'notes', l: 'ملاحظات', t: 'area'},
     {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
     {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
-  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'الدفع', f: r => ({visa: '💳 فيزا', master: '💳 ماستر', transfer: '📲 تحويل كاش', credit: '⏳ آجل'})[r.payMethod] || 'نقدي'}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', payMethod: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
-    if (o.payMethod === 'cash') { o.payRef = ''; o.payPhone = ''; }
-    if (o.payMethod === 'credit' && (o.paid === '' || o.paid == null)) o.paid = '0';
+    o.payMethod = ''; o.payRef = ''; o.payPhone = '';
     return o;
   },
-  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date), _by: r.registeredBy || S.user.username}),
-  validate: r => (r.payMethod === 'visa' || r.payMethod === 'master') && /\d{12,}/.test(String(r.payRef || '').replace(/[\s-]/g, '')) ? 'لا تُدخل رقم البطاقة كاملاً — اكتب آخر 4 أرقام أو رقم مرجع العملية فقط' : (r.category === 'company' && !r.company ? 'اختر اسم الشركة' : ''),
+  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
+  validate: r => r.category === 'company' && !r.company ? 'اختر اسم الشركة' : '',
   after: async (rec, sent) => {
     const p = S.data.patients.find(x => x.name === sent.patient);
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
@@ -233,10 +261,9 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
     if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
     if (n === 'phone') visitLast(f, ctx);
-    if (n === 'payMethod') { const pd = $('[name=paid]', f); if (getv(f, 'payMethod') === 'credit') { if (!pd.value) pd.value = '0'; } else if (pd.value === '0' && !ctx.editing) pd.value = ''; }
     if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
-    if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount'].includes(n) && !ctx.typing) visitAuto(f, n);
-    if (n === 'value' || n === 'patientPct' || n === 'discount') visitAuto(f, n);
+    if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount', 'paid'].includes(n) && !ctx.typing) visitAuto(f, n);
+    if (n === 'value' || n === 'patientPct' || n === 'discount' || n === 'paid') visitAuto(f, n);
   }
 });
 

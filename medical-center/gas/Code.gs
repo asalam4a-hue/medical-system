@@ -10,7 +10,7 @@ var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
   doctors: 'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
-  services: 'type,name,price,tax',
+  services: 'type,name,price,tax,abbr',
   operations: 'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients: 'name,phone',
   companies: 'name,fee,contact',
@@ -89,11 +89,92 @@ function findRow_(sh, id) {
   for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === id) return i + 2;
   return -1;
 }
+
+/* ---------- أوراق مقروءة بأسماء الشاشات (تتحدث تلقائياً مع كل إدخال/تعديل/حذف) ---------- */
+var SHEETN = {staff: 'الموظفون', doctors: 'الأطباء', services: 'الخدمات', operations: 'العمليات', patients: 'المرضى', companies: 'الشركات', visits: 'الزيارات', expenses: 'المصروفات', custody: 'العهد والسلف', execs: 'تنفيذ الشركات', users: 'المستخدمون'};
+var LABELS = {code: 'الكود', name: 'الاسم', nationalId: 'الرقم القومي', idPhoto: 'صورة البطاقة', photo: 'الصورة', clinic: 'العيادة', phone: 'الهاتف', syndicatePhoto: 'صورة النقابة', hireDate: 'تاريخ التعيين', percent: 'النسبة %', fixed: 'ثابت', opPercent: 'نسبة العمليات %', type: 'النوع', price: 'القيمة', tax: 'الضريبة', abbr: 'الاختصار', date: 'التاريخ', patient: 'المريض', operation: 'العملية', doctor: 'الطبيب', doctorId: 'كود الطبيب', value: 'القيمة', doctorPercent: 'نسبة الطبيب %', notes: 'ملاحظات', anesthetist: 'طبيب التخدير', anesthetistId: 'كود التخدير', anesthesia: 'أجر التخدير', deductAnes: 'خصم التخدير', fee: 'قيمة الكشف', contact: 'جهة الاتصال', serial: 'م', visitType: 'الزيارة', service: 'البيان', category: 'النوع', company: 'الشركة', formNo: 'رقم النموذج', formPhoto: 'صورة النموذج', cardNo: 'رقم الكارنية', cardPhoto: 'صورة الكارنية', patientPct: 'تحمل المريض %', discount: 'الخصم %', payMethod: 'طريقة الدفع', payRef: 'مرجع', payPhone: 'هاتف الدفع', birthDate: 'تاريخ الميلاد', paid: 'المدفوع', amount: 'المبلغ', dueDate: 'تاريخ الاستحقاق', docNo: 'رقم المستند', person: 'الشخص', kind: 'النوع', dir: 'الاتجاه', approvalNo: 'رقم الموافقة', approvalProc: 'الإجراء', required: 'المطلوب', done: 'تم', execDate: 'تاريخ التنفيذ', username: 'المستخدم', isAdmin: 'مدير', active: 'فعّال', perms: 'الصلاحيات', lastLogin: 'آخر دخول', registeredBy: 'سجّله', createdAt: 'وقت الإنشاء'};
+var CATL = {cash: 'نقدي', company: 'شركة', insurance: 'تأمين', committee: 'لجنة'};
+var MIRROR_OFF = false;
+function mirrorKeys_(e) { var k = FIELDS[e].split(','); if (e === 'users') k = ['username', 'isAdmin', 'active', 'lastLogin']; var ex = (e === 'visits' || e === 'expenses' || e === 'custody') ? ['registeredBy', 'createdAt'] : (e === 'users' ? [] : ['createdAt']); return k.filter(function (x) { return x !== 'idPhoto' && x !== 'syndicatePhoto' && x !== 'photo' && x !== 'formPhoto' && x !== 'cardPhoto' && x !== 'payMethod' && x !== 'payRef' && x !== 'payPhone' && x !== 'doctorId' && x !== 'anesthetistId'; }).concat(ex); }
+function mirrorVal_(k, v) {
+  if (v === undefined || v === null) return '';
+  if (k === 'category') return CATL[v] || v;
+  if (k === 'isAdmin' || k === 'active' || k === 'done') return v ? 'نعم' : 'لا';
+  if (k === 'perms') return Array.isArray(v) ? v.join('، ') : v;
+  if (k === 'createdAt' || k === 'lastLogin') return String(v).slice(0, 16).replace('T', ' ');
+  if (typeof v === 'string' && /^[=+\-@]/.test(v)) return "'" + v;
+  return v;
+}
+function mirrorSheet_(e) {
+  var ss = ss_(), nm = SHEETN[e], sh = ss.getSheetByName(nm), keys = mirrorKeys_(e);
+  if (!sh) {
+    sh = ss.insertSheet(nm, 0); var head = ['المعرّف'].concat(keys.map(function (k) { return LABELS[k] || k; }));
+    sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold').setBackground('#e8f0fe').setHorizontalAlignment('center');
+    sh.setFrozenRows(1); sh.setRightToLeft(true); sh.hideColumns(1);
+  }
+  return sh;
+}
+function mirrorRow_(e, r) { return [r.id].concat(mirrorKeys_(e).map(function (k) { return mirrorVal_(k, r[k]); })); }
+function mirrorPut_(e, rec) {
+  if (MIRROR_OFF || !SHEETN[e]) return;
+  try {
+    var sh = mirrorSheet_(e), row = findRow_(sh, rec.id), vals = mirrorRow_(e, rec);
+    if (row > 0) sh.getRange(row, 1, 1, vals.length).setValues([vals]); else sh.getRange(sh.getLastRow() + 1, 1, 1, vals.length).setValues([vals]);
+  } catch (x) { console.error('mirror ' + e + ': ' + x); }
+}
+function mirrorDel_(e, id) { if (MIRROR_OFF || !SHEETN[e]) return; try { var sh = mirrorSheet_(e), row = findRow_(sh, id); if (row > 0) sh.deleteRow(row); } catch (x) {} }
+function mirrorRebuild_(e) {
+  if (!SHEETN[e]) return 0;
+  var sh = mirrorSheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1);
+  var items = getAll_(e).sort(function (a, b) { return String(a.date || a.createdAt || '').localeCompare(String(b.date || b.createdAt || '')); });
+  if (!items.length) return 0;
+  var rows = items.map(function (r) { return mirrorRow_(e, r); });
+  sh.getRange(2, 1, rows.length, rows[0].length).setValues(rows); return rows.length;
+}
+function mirrorAll_() { var o = {}; ENT.forEach(function (e) { o[e] = mirrorRebuild_(e); }); return o; }
+function syncSheets() { return mirrorAll_(); } /* يمكن تشغيلها يدوياً من محرر السكربت */
+
+function clean_(e, src) {
+  var out = {}, keys = FIELDS[e].split(',');
+  keys.forEach(function (k) {
+    if (!(k in src)) return; var v = src[k];
+    if (k === 'perms') v = Array.isArray(v) ? v.map(String).slice(0, 60) : [];
+    else if (k === 'isAdmin' || k === 'active') v = !!v;
+    else if (NUMS.indexOf(k) >= 0) v = isNaN(+v) || v === '' || v === null ? 0 : +v;
+    else {
+      v = String(v == null ? '' : v).trim().slice(0, 500);
+      if (DATES.indexOf(k) >= 0 && v && !validDate_(v)) throw new ApiError('صيغة التاريخ يجب أن تكون yyyy/mm/dd');
+    }
+    out[k] = v;
+  });
+  return out;
+}
+/* حفظ جماعي (للمدير): يتخطى المكرر حسب مفتاح، ويكتب دفعة واحدة */
+function bulk_(e, me, recs, keyFields) {
+  if (e === 'users' || ENT.indexOf(e) < 0) throw new ApiError('كيان غير مسموح');
+  var ex = getAll_(e), seen = {}, kf = (keyFields || '').split(',').filter(String);
+  var kk = function (r) { return kf.map(function (k) { return String(r[k] == null ? '' : r[k]); }).join('|'); };
+  if (kf.length) ex.forEach(function (r) { seen[kk(r)] = 1; });
+  var now = new Date().toISOString(), rows = [], added = 0, skipped = 0, ctr = AUTO[e] ? nextCounter_(e, AUTO[e]) - 1 : 0;
+  (recs || []).forEach(function (src) {
+    var out = clean_(e, src), nm = String(out.name || out.date || out.category || out.type || '').trim(); if (!nm) { skipped++; return; }
+    if (kf.length) { var key = kk(out); if (seen[key]) { skipped++; return; } seen[key] = 1; }
+    if (AUTO[e]) out[AUTO[e]] = ++ctr;
+    var rec = {id: rid_(), createdAt: now}; for (var k in out) rec[k] = out[k]; rec.registeredBy = me.username;
+    var copy = {}; for (var k2 in rec) if (k2 !== 'id') copy[k2] = rec[k2];
+    rows.push([rec.id, typeof copy.date === 'string' ? copy.date : '', JSON.stringify(copy), now]); added++;
+  });
+  if (rows.length) { var sh = sheet_(e); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows); }
+  if (AUTO[e]) PropertiesService.getScriptProperties().setProperty('ctr_' + e, String(ctr));
+  if (rows.length) mirrorRebuild_(e);
+  return {added: added, skipped: skipped};
+}
 function put_(e, rec) {
   var sh = sheet_(e), id = rec.id, copy = {}; for (var k in rec) if (k !== 'id') copy[k] = rec[k];
   var dt = typeof copy.date === 'string' ? copy.date : '', row = findRow_(sh, id);
   if (row > 0) sh.getRange(row, 2, 1, 2).setValues([[dt, JSON.stringify(copy)]]);
   else sh.appendRow([id, dt, JSON.stringify(copy), new Date().toISOString()]);
+  mirrorPut_(e, rec);
 }
 function pub_(u) { var o = {}; for (var k in u) if (k !== 'hash' && k !== 'salt') o[k] = u[k]; return o; }
 function nextCounter_(e, f) {
@@ -102,10 +183,12 @@ function nextCounter_(e, f) {
   v = (+v) + 1; p.setProperty(key, String(v)); return v;
 }
 function seed_() {
+  MIRROR_OFF = true;
   var now = new Date().toISOString();
   ['services', 'doctors', 'companies', 'staff'].forEach(function (e) {
     (SEED[e] || []).forEach(function (r) { var o = {}; for (var k in r) o[k] = r[k]; o.id = rid_(); o.createdAt = now; if (AUTO[e]) o[AUTO[e]] = nextCounter_(e, AUTO[e]); put_(e, o); });
   });
+  MIRROR_OFF = false; mirrorAll_();
 }
 function withLock_(fn) {
   var lock = LockService.getScriptLock(); lock.waitLock(25000);
@@ -140,6 +223,7 @@ function route_(b) {
     if (!rec || rec.hash !== hashPw_(rec.salt, String(b.password || ''))) { cache.put(fkey, String(fails + 1), 600); throw new ApiError('اسم المستخدم أو كلمة السر غير صحيحة'); }
     if (!rec.active) throw new ApiError('حسابك بانتظار موافقة المدير', 'pending');
     cache.remove(fkey);
+    if (rec.isAdmin) { try { var pp = PropertiesService.getScriptProperties(); if (pp.getProperty('MIRROR_V') !== '2') { withLock_(function () { mirrorAll_(); }); pp.setProperty('MIRROR_V', '2'); } } catch (x) { console.error(x); } }
     rec.lastLogin = new Date().toISOString(); rec.lastClient = String(b.client || '').slice(0, 20); put_('users', rec);
     var t = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
     cache.put('t_' + sha_(t), rec.id, TOKEN_TTL);
@@ -190,7 +274,7 @@ function route_(b) {
   }
 
   var e = String(b.entity || '');
-  if (['list', 'save', 'delete'].indexOf(A) >= 0 && ENT.indexOf(e) < 0) throw new ApiError('كيان غير معروف');
+  if (['list', 'save', 'delete', 'bulk_save'].indexOf(A) >= 0 && ENT.indexOf(e) < 0) throw new ApiError('كيان غير معروف');
 
   if (A === 'list') {
     var reps = me.perms.some(function (x) { return x.indexOf('rep_') === 0; });
@@ -198,6 +282,15 @@ function route_(b) {
     if (!ok) throw new ApiError('غير مصرح', 'forbidden');
     var items = getAll_(e, b.from || null, b.to || null);
     return {items: e === 'users' ? items.map(pub_) : items};
+  }
+
+  if (A === 'bulk_save') {
+    if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
+    return withLock_(function () { return bulk_(e, me, b.records || [], String(b.key || '')); });
+  }
+  if (A === 'sync_sheets') {
+    if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
+    return withLock_(function () { return {ok: true, counts: mirrorAll_()}; });
   }
 
   if (A === 'save' || A === 'delete') {
@@ -246,7 +339,7 @@ function masterInfo_() {
   var at = PropertiesService.getScriptProperties().getProperty('MASTER_AT') || '', sh = ss_().getSheetByName('master');
   return {at: sh && sh.getLastRow() > 0 ? at : ''};
 }
-function wipe_(e) { var sh = sheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); }
+function wipe_(e) { var sh = sheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); if (SHEETN[e]) { var m = ss_().getSheetByName(SHEETN[e]); if (m && m.getLastRow() > 1) m.deleteRows(2, m.getLastRow() - 1); } }
 function restoreSnapshot_(bk) {
   if (!bk || bk.app !== 'medical-center' || !bk.data) throw new ApiError('ملف النسخة الاحتياطية غير صالح');
   var us = bk.data.users || [];
@@ -262,6 +355,7 @@ function restoreSnapshot_(bk) {
   });
   var pr = PropertiesService.getScriptProperties(); ['staff', 'doctors', 'visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
   if (bk.settings) pr.setProperty('SETTINGS', JSON.stringify(bk.settings));
+  try { mirrorAll_(); } catch (x) {}
 }
 
 function folder_() {
@@ -278,22 +372,12 @@ function doDelete_(e, me, id) {
     if (r.id === me.id || (r.isAdmin && admins < 2)) throw new ApiError('لا يمكن حذف هذا المستخدم');
   }
   var sh = sheet_(e), row = findRow_(sh, id); if (row > 0) sh.deleteRow(row);
+  mirrorDel_(e, id);
   return {ok: true};
 }
 
 function doSave_(e, me, src) {
-  var out = {}, keys = FIELDS[e].split(',');
-  keys.forEach(function (k) {
-    if (!(k in src)) return; var v = src[k];
-    if (k === 'perms') v = Array.isArray(v) ? v.map(String).slice(0, 60) : [];
-    else if (k === 'isAdmin' || k === 'active') v = !!v;
-    else if (NUMS.indexOf(k) >= 0) v = isNaN(+v) || v === '' || v === null ? 0 : +v;
-    else {
-      v = String(v == null ? '' : v).trim().slice(0, 500);
-      if (DATES.indexOf(k) >= 0 && v && !validDate_(v)) throw new ApiError('صيغة التاريخ يجب أن تكون yyyy/mm/dd');
-    }
-    out[k] = v;
-  });
+  var out = clean_(e, src);
   var all = getAll_(e), id = src.id ? String(src.id) : '', rec = null; all.forEach(function (x) { if (x.id === id) rec = x; });
   if (e === 'users') {
     var nm = String(out.username || '').trim(); if (nm.length < 3) throw new ApiError('اسم المستخدم قصير');

@@ -28,7 +28,7 @@ function ensureUrl() {
     } catch (e) {}
   })();
 }
-const WRITES = new Set(['save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
+const WRITES = new Set(['bulk_save','sync_sheets','save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
 async function call(action, payload){
   const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
@@ -99,7 +99,7 @@ const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
   doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
-  services:'type,name,price,tax',
+  services:'type,name,price,tax,abbr',
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
@@ -183,6 +183,14 @@ const Local = {
       if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
+    if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
+    if (A === 'bulk_save') {
+      if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); if (e === 'users' || !ENT.includes(e)) return fail('كيان غير مسموح');
+      const list = db.rec[e] || (db.rec[e] = []), kf = String(b.key || '').split(',').filter(Boolean), kk = r => kf.map(k => String(r[k] == null ? '' : r[k])).join('|'), seen = new Set(kf.length ? list.map(kk) : []); let added = 0, skipped = 0, ctr = AUTO[e] ? list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0) : 0;
+      for (const src of (b.records || [])) { const out = {}; for (const k of FIELDS[e].split(',')) { if (!(k in src)) continue; let v = src[k]; if (NUMS.has(k)) v = Number(v) || 0; else v = String(v == null ? '' : v).trim().slice(0, 500); out[k] = v; }
+        if (!String(out.name || out.date || out.category || out.type || '').trim()) { skipped++; continue; } if (kf.length) { const key = kk(out); if (seen.has(key)) { skipped++; continue; } seen.add(key); } if (AUTO[e]) out[AUTO[e]] = ++ctr; list.push(Object.assign({id: rid(), createdAt: new Date().toISOString(), registeredBy: me.username}, out)); added++; }
+      this.save(db); return {added, skipped};
+    }
     if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
     if (A === 'list') {
       const readable = me.isAdmin || (e !== 'users' && (e === 'staff' ? has(me, 'staff') : (LOOKUP.includes(e) || has(me, e) || has(me, 'dashboard') || has(me, 'dues') || me.perms.some(p => p.startsWith('rep_')))));

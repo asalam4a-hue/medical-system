@@ -2,7 +2,8 @@ const fs=require('fs'),vm=require('vm'),crypto=require('crypto');
 const props={},cache={};
 function mkSheet(){const rows=[];const sh={rows,
  appendRow(r){rows.push(r.slice())},getLastRow(){return rows.length},setFrozenRows(){},
- getRange(r,c,nr=1,nc=1){return{setNumberFormat(){},getValues(){return rows.slice(r-1,r-1+nr).map(x=>{const o=[];for(let i=0;i<nc;i++)o.push(x[c-1+i]===undefined?'':x[c-1+i]);return o})},setValues(v){v.forEach((row,i)=>row.forEach((x,j)=>{rows[r-1+i][c-1+j]=x}))}}},
+ getRange(r,c,nr=1,nc=1){return{setNumberFormat(){},getValues(){return rows.slice(r-1,r-1+nr).map(x=>{const o=[];for(let i=0;i<nc;i++)o.push(x[c-1+i]===undefined?'':x[c-1+i]);return o})},setValues(v){v.forEach((row,i)=>{while(rows.length<r+i)rows.push([]);row.forEach((x,j)=>{rows[r-1+i][c-1+j]=x})});return this},setFontWeight(){return this},setBackground(){return this},setHorizontalAlignment(){return this}}},
+ setRightToLeft(){},hideColumns(){},deleteRows(a,n){rows.splice(a-1,n)},
  deleteRow(n){rows.splice(n-1,1)}};return sh}
 const sheets={};const ss={getId:()=>'SS',getSheetByName:n=>sheets[n]||null,insertSheet:n=>sheets[n]=mkSheet()};
 const files={};
@@ -43,3 +44,13 @@ assert(call({action:'upload',token:T,mime:'image/png',data:Buffer.from('hello wo
 assert(call({action:'delete',entity:'users',token:T,id:call({action:'me',token:T}).user.id}).error,'cannot delete self');
 assert(call({action:'delete',entity:'visits',token:T,id:v2.id}).ok,'delete visit');
 assert(call({action:'list',entity:'visits',token:'bad'}).code==='auth','bad token');
+const mv=sheets['الزيارات'];assert(mv&&mv.rows.length>=2&&mv.rows[0][0]==='المعرّف'&&mv.rows[0].includes('المريض'),'visits mirror sheet has Arabic headers');
+assert(sheets['الأطباء']&&sheets['الأطباء'].rows.length>30,'doctors mirror from seed');
+const bl=call({action:'bulk_save',entity:'visits',token:T,key:'date,patient,value',records:[{date:'2025/05/02',patient:'أ',value:10,clinic:'عظام'},{date:'2025/05/02',patient:'أ',value:10},{date:'2025/05/03',patient:'ب',value:20}]});
+assert(bl.added===2&&bl.skipped===1,'bulk added 2 skipped dup');
+assert(call({action:'bulk_save',entity:'visits',token:T,key:'date,patient,value',records:[{date:'2025/05/03',patient:'ب',value:20}]}).added===0,'bulk idempotent');
+assert(call({action:'bulk_save',entity:'visits',token:NT,records:[]}).code==='forbidden','bulk admin only');
+assert(call({action:'sync_sheets',token:T}).ok,'sync sheets');
+const ml=mv.rows.length;const sv=call({action:'save',entity:'visits',token:T,record:{date:'2025/06/01',patient:'جديد',value:5}});assert(mv.rows.length===ml+1,'mirror append on save');
+call({action:'delete',entity:'visits',token:T,id:sv.record.id});assert(mv.rows.length===ml,'mirror delete');
+console.log('mirror ok');

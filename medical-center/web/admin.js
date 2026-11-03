@@ -12,6 +12,9 @@ SCREEN_RENDER.admin = async function () {
     <div class="fld"><label>رقم الهاتف</label><input name="phone" value="${esc(st.phone)}" dir="ltr"></div>
     <div class="fld"><label>اللوجو</label><div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(st.logo)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 اختيار اللوجو</button><button type="button" class="btn sm ghost" id="nologo">إزالة</button><input type="hidden" name="logo" value="${esc(st.logo)}"></div></div>
     <div class="actions"><button class="btn c-teal" type="submit">💾 حفظ الإعدادات</button></div></form></div>
+  <div class="panel accent c-gold"><h3>📥 استيراد البيانات وأوراق جوجل</h3>
+    <p class="muted">استيراد البيانات الأساسية (عيادات، أطباء، شركات، أشعة وتحاليل باختصاراتها) وزيارات الإكسيل السابق. المكرر يُتخطى. بعدها تظهر البيانات في أوراق جوجل بأسماء الشاشات وتتحدث تلقائياً مع كل إدخال.</p>
+    <div class="actions"><button class="btn c-gold" data-act="importseed">📥 البيانات الأساسية</button><button class="btn c-orange" data-act="importhist">📥 زيارات الإكسيل السابق</button><button class="btn c-teal" data-act="syncsheets">🔄 مزامنة أوراق جوجل</button></div></div>
   <div class="panel accent c-blue"><h3>💾 النسخ الاحتياطي والاسترجاع</h3>
     <p class="muted">النسخة تشمل كل بيانات البرنامج والمستخدمين والإعدادات (الصور لا تدخل في الملف).</p>
     <div class="actions"><button class="btn c-blue" id="bk">⬇️ تنزيل نسخة احتياطية</button><button class="btn c-orange" id="rs">⬆️ استرجاع من ملف</button><input type="file" id="rsf" accept=".json,application/json" class="hid"></div></div>

@@ -83,30 +83,39 @@
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
-  /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
-  const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;position:relative;min-height:44px}.hd h2{margin:0 0 2px;font-size:19px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:90px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
-table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
+  /* ---- الطباعة: التقرير المطلوب فقط على A4 — العنوان أعلى الصفحة، مربع الإجمالي على اليسار، ثم مربع التفاصيل (يتوسّط الصفحة ويتقلّص ليحتوي كل البيانات) ---- */
+  const PRINT_CSS = (land) => { const W = land ? 281 : 194; return `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:8mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.page{width:${W}mm;margin:0 auto;padding:0}
+.hd{position:relative;text-align:center;border-bottom:2px solid #000;padding:2px 0 6px;margin-bottom:8px;min-height:46px}.hd h2{margin:0;padding:6px 110px 0;font-size:20px;line-height:1.35}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:100px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
+.box{border:1.5px solid #000;border-radius:3px;padding:6px;overflow:hidden}.foot{margin-top:6px;text-align:center;font-size:10px;color:#333}
+table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto;table-layout:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle;white-space:nowrap}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
-img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
-  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2><div>${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}</div><div>${esc(sub)}</div></div>`;
+img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}
+@media screen{body{background:#8a8a8a}.page{background:#fff;margin:8px auto;padding:8mm;width:${W + 16}mm;box-shadow:0 0 6px #000}}`; };
+  const FIT_JS = `<script>(function(){function fit(){var t=document.getElementById('fit'),b=t&&t.parentNode;if(!t||!b)return;t.style.zoom=1;var w=b.clientWidth-14,sw=t.scrollWidth;if(sw>w+1)t.style.zoom=Math.max(.3,w/sw*.985)}window.addEventListener('load',fit);window.addEventListener('beforeprint',fit);setTimeout(fit,150)})()<\/script>`;
+  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2></div>`;
+  function previewPrint(doc, title) {
+    const old = document.getElementById('pvov'); if (old) old.remove();
+    const ov = document.createElement('div'); ov.id = 'pvov'; ov.className = 'noprint';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#555;display:flex;flex-direction:column;direction:rtl';
+    ov.innerHTML = `<div style="display:flex;gap:8px;align-items:center;padding:8px;background:#fff;border-bottom:1px solid #999;flex-wrap:wrap"><b style="flex:1;min-width:120px;font-size:14px">${esc(title)}</b><button class="btn c-teal" id="pvp">🖨️ طباعة / PDF</button><button class="btn c-red" id="pvc">✖ إغلاق</button></div><iframe id="pvf" style="flex:1;border:0;width:100%;background:#8a8a8a"></iframe>`;
+    document.body.appendChild(ov);
+    const fr = ov.querySelector('#pvf'), go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة من هنا — جرّب من متصفح الهاتف/الكمبيوتر مباشرة', true); } };
+    ov.querySelector('#pvp').onclick = go; ov.querySelector('#pvc').onclick = () => ov.remove();
+    fr.srcdoc = doc; fr.onload = () => setTimeout(go, 400);
+  }
   function printDoc(title, sub, bodyHTML, land, opt) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${opt && opt.css ? opt.css : PRINT_CSS(land)}</style></head><body>${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}</body></html>`;
+    const custom = !!(opt && opt.css), foot = custom ? '' : `<div class="foot">${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}${sub ? ' — ' + esc(sub) : ''}</div>`;
+    const inner = custom ? bodyHTML : `<div class="box"><div id="fit">${bodyHTML}</div></div>${foot}`;
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${custom ? opt.css : PRINT_CSS(land)}</style></head><body><div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>${custom ? '' : FIT_JS}</body></html>`;
     if (window.AndroidBridge && window.AndroidBridge.printHtml) { window.AndroidBridge.printHtml(doc, title, !!land); return; }
-    if (!window.AndroidBridge) { // المتصفح: نافذة طباعة مستقلة (تعمل على الهاتف والكمبيوتر)، وإلا إطار مخفي
-      let w = null; try { w = window.open('', '_blank'); } catch (x) {}
-      if (w && w.document) { w.document.open(); w.document.write(doc); w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (x) {} }, 500); return; }
-    }
     if (window.AndroidBridge) { // الأندرويد (نسخة قديمة): نستبدل المحتوى مؤقتاً
-      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (opt && opt.css ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}`;
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (custom ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `<div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }
-    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0'; document.body.appendChild(fr);
-    const d = fr.contentDocument; d.open(); d.write(doc); d.close();
-    const go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة', true); } setTimeout(() => fr.remove(), 60000); };
-    setTimeout(go, 350);
+    previewPrint(doc, title);
   }
   function cleanContent() {
     const m = $('#main').cloneNode(true);
@@ -116,6 +125,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     m.querySelectorAll('table').forEach(t => { // حذف عمود الأزرار (رأس فارغ)
       const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
     });
+    m.querySelectorAll('table').forEach(t => { const ths = [...t.querySelectorAll('thead th')]; for (let i = ths.length - 1; i >= 0; i--) if (/^\s*صور[ةه]/.test(ths[i].textContent)) t.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach(r => { if (r.children[i] && r.children[i].colSpan <= 1) r.children[i].remove(); }); });
     m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
     const kp = [...m.querySelectorAll('.kpis')]; if (kp.length && m.querySelector('table')) { kp.forEach(n => n.remove()); const w = document.createElement('div'); w.innerHTML = '<h2 class="s">ملخص</h2>' + kp.map(n => n.outerHTML).join(''); m.appendChild(w); } // العنوان ثم الجدول أولاً، والملخص بعده
     const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);

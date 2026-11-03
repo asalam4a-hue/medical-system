@@ -94,7 +94,7 @@ h1,h2,h3{margin:.2em 0}
 .fld input,.fld select,.fld textarea,.bar input,.bar select{border:2px solid #dfe3ee;border-radius:12px;padding:9px 12px;background:#fff;width:100%;outline:0;transition:border-color .2s,box-shadow .2s}
 .fld input:focus,.fld select:focus,.fld textarea:focus,.bar input:focus,.bar select:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(47,155,255,.18)}
 .fld input[readonly]{background:var(--soft);font-weight:bold}
-.dt{display:flex;gap:6px}.dt button{border:0;border-radius:12px;padding:0 12px;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--blue));font-size:1.1rem}
+.dt{display:flex;gap:6px}.dtb{position:relative;display:inline-flex}.dtb button{height:100%;min-width:40px}.dtb .dpk{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}.dtb .dpk::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;cursor:pointer}.dt button{border:0;border-radius:12px;padding:0 12px;cursor:pointer;background:linear-gradient(135deg,var(--blue2),var(--blue));font-size:1.1rem}
 .seg{display:flex;flex-wrap:wrap;gap:8px}
 .seg button{border:2px solid #dfe3ee;background:#fff;border-radius:12px;padding:8px 16px;cursor:pointer;font-weight:bold;transition:all .2s}
 .seg button.on{border-color:transparent;background:linear-gradient(135deg,var(--a),var(--b));box-shadow:0 8px 18px -8px var(--g);transform:scale(1.05)}
@@ -212,699 +212,7 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 </head>
 <body>
 <div id="app"></div>
-<script>window.API_MODE='gas';window.SEED={
- "services": [
-  {
-   "type": "clinic",
-   "name": "عظام",
-   "price": 100.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "رمد",
-   "price": 100.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "باطنه وطوارئ",
-   "price": 60.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "كلى والكلى الصناعية",
-   "price": 100.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "جلديه",
-   "price": 90.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "انف واذن",
-   "price": 80.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "جهاز هضمي وكبد",
-   "price": 110.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "مخ وأعصاب",
-   "price": 130.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "نساء",
-   "price": 100.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "تخاطب وتنمية مهارات",
-   "price": 50.0,
-   "tax": 5.0
-  },
-  {
-   "type": "clinic",
-   "name": "صدر",
-   "price": 90.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "جراحة عامه",
-   "price": 70.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "علاج طبيعى",
-   "price": 50.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "مسالك بوليه",
-   "price": 110.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "اسنان",
-   "price": 40.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "تركيبات الاسنان",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "clinic",
-   "name": "عمليات جراحية",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "clinic",
-   "name": "تحاليل",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "clinic",
-   "name": "معمل شركات",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "clinic",
-   "name": "الحجامه",
-   "price": 200.0,
-   "tax": 10.0
-  },
-  {
-   "type": "clinic",
-   "name": "تخدير",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "clinic",
-   "name": "طبيب اطفال",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "radiology",
-   "name": "أشعة أسنان (فيلم)",
-   "price": 40,
-   "tax": 0
-  },
-  {
-   "type": "radiology",
-   "name": "أشعة أسنان (2 فيلم)",
-   "price": 80,
-   "tax": 0
-  },
-  {
-   "type": "radiology",
-   "name": "أشعة أسنان (4 أفلام)",
-   "price": 160,
-   "tax": 0
-  },
-  {
-   "type": "radiology",
-   "name": "أشعة عادية",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "radiology",
-   "name": "موجات صوتية",
-   "price": 250,
-   "tax": 0
-  },
-  {
-   "type": "lab",
-   "name": "تحاليل",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "lab",
-   "name": "تحاليل شركات",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "lab",
-   "name": "معمل لاب تولاب",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "عمليات جراحية",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "فتح خراج",
-   "price": 400,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "استئصال كيس شمعي",
-   "price": 450,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "استئصال بواسير وشرخ شرجي",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "خياطة جرح تحت مخدر موضعي",
-   "price": 77,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "تركيب جبيرة تحت الركبة",
-   "price": 110,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "جبس تحت الركبة",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "طوارئ جراحة",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "operation",
-   "name": "طوارئ عظام",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "كشف",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "استشارة",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "غيار",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "خياطة",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "نسبة شركات",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "خلع أسنان عادي (ضرس)",
-   "price": 200,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "خلع جراحي",
-   "price": 350,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "حشو أسنان",
-   "price": 0,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "حشو كمبوزيت (ضرس)",
-   "price": 400,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "حشو ليزر (ضرس)",
-   "price": 400,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "حشو عصب (ضرس)",
-   "price": 750,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "إزالة رواسب",
-   "price": 300,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "طربوش بورسلين",
-   "price": 1000,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "دعامة فايبر جلاس",
-   "price": 600,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "علاج طبيعي (جلسة)",
-   "price": 50,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "جلسات علاج طبيعي (6)",
-   "price": 300,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "جلسات علاج طبيعي (12)",
-   "price": 600,
-   "tax": 0
-  },
-  {
-   "type": "service",
-   "name": "حجامة",
-   "price": 200,
-   "tax": 0
-  }
- ],
- "doctors": [
-  {
-   "name": "عبدالغنى احمد",
-   "clinic": "جراحة عامه",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "ياسر طه",
-   "clinic": "تخدير",
-   "percent": 100.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "ايه رأفت",
-   "clinic": "اسنان",
-   "percent": 40.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "كامل ربيع",
-   "clinic": "تحاليل",
-   "percent": 0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "عمر محمود",
-   "clinic": "اسنان",
-   "percent": 40.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "اسماء محمد",
-   "clinic": "نساء",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "احمد عبدالحميد",
-   "clinic": "عظام",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "اسلام السيد",
-   "clinic": "باطنه وطوارئ",
-   "percent": 50.0,
-   "fixed": 500.0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد صلاح",
-   "clinic": "علاج طبيعى",
-   "percent": 50.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "كريم مشالى",
-   "clinic": "اسنان",
-   "percent": 50.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "حسنى جمال",
-   "clinic": "طبيب اطفال",
-   "percent": 100.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد الجمل",
-   "clinic": "عظام",
-   "percent": 70.0,
-   "fixed": 100.0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد شاكر",
-   "clinic": "اسنان",
-   "percent": 40.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد طه",
-   "clinic": "جهاز هضمي وكبد",
-   "percent": 50.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "ندى عادل",
-   "clinic": "اسنان",
-   "percent": 40.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "اشرف الالفى",
-   "clinic": "باطنه وطوارئ",
-   "percent": 50.0,
-   "fixed": 500.0,
-   "opPercent": 0
-  },
-  {
-   "name": "جمال الخولى",
-   "clinic": "مسالك بوليه",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد عباس",
-   "clinic": "رمد",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "منصور مهدى",
-   "clinic": "صدر",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "احمد اشرف",
-   "clinic": "باطنه وطوارئ",
-   "percent": 50.0,
-   "fixed": 500.0,
-   "opPercent": 0
-  },
-  {
-   "name": "عاطف حسن",
-   "clinic": "كلى والكلى الصناعية",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "هانم عبدالفتاح الدموكي",
-   "clinic": "تخاطب وتنمية مهارات",
-   "percent": 50.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "اسماء محمد",
-   "clinic": "عمليات جراحية",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "يارا بهاء",
-   "clinic": "جلديه",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "جمال هنداوى",
-   "clinic": "اسنان",
-   "percent": 40.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "على محجوب",
-   "clinic": "انف واذن",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "علاء الدين محمود",
-   "clinic": "مخ وأعصاب",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد ايمن",
-   "clinic": "باطنه وطوارئ",
-   "percent": 50.0,
-   "fixed": 500.0,
-   "opPercent": 0
-  },
-  {
-   "name": "على محجوب",
-   "clinic": "عمليات جراحية",
-   "percent": 45.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "عبدالغنى احمد",
-   "clinic": "عمليات جراحية",
-   "percent": 60.0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "محمد صلاح",
-   "clinic": "الحجامه",
-   "percent": 0,
-   "fixed": 0,
-   "opPercent": 0
-  },
-  {
-   "name": "اميره بهاء",
-   "clinic": "رمد",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "عبدالرحمن على",
-   "clinic": "جلديه",
-   "percent": 60.0,
-   "fixed": 200.0,
-   "opPercent": 0
-  },
-  {
-   "name": "سوسن محمود",
-   "clinic": "نساء",
-   "percent": 50.0,
-   "fixed": 0,
-   "opPercent": 0
-  }
- ],
- "companies": [
-  {
-   "name": "AXA",
-   "fee": 160.0
-  },
-  {
-   "name": "الاهلى للخدمات الطبية",
-   "fee": 100.0
-  },
-  {
-   "name": "DMS",
-   "fee": 175.0
-  },
-  {
-   "name": "Careplus",
-   "fee": 180.0
-  },
-  {
-   "name": "المشرق",
-   "fee": 150.0
-  },
-  {
-   "name": "EGYMED",
-   "fee": 200.0
-  },
-  {
-   "name": "SMART",
-   "fee": 160.0
-  },
-  {
-   "name": "Nextcare",
-   "fee": 140.0
-  }
- ],
- "staff": [
-  {
-   "name": "حماده حسن محمود"
-  },
-  {
-   "name": "سعد سعيد ناجي"
-  },
-  {
-   "name": "احمد عبدالسلام"
-  },
-  {
-   "name": "منى عبدالعزيز عبد الوهاب"
-  },
-  {
-   "name": "عواطف علي عبدالعظيم"
-  },
-  {
-   "name": "ايمان فؤاد علي"
-  },
-  {
-   "name": "هبه محمود رمضان"
-  },
-  {
-   "name": "فاطمه فتحي عبد الوارث"
-  }
- ],
- "expenseCats": [
-  "مصاريف متنوعة",
-  "زيت",
-  "مصاريف تشغيل",
-  "مصاريف نقل",
-  "تجهيزات طبيه وأخرى",
-  "بنزين",
-  "مكأفات",
-  "مكأفات عمليات",
-  "بوفية",
-  "مصروفات محطة المياه",
-  "صيانه",
-  "تراخيص ورسوم وكارتات وجراج",
-  "جاز",
-  "مصروفات المصعد",
-  "رسوم تراخيص طبيه",
-  "انتقالات",
-  "مصروفات نقل",
-  "اتصالات وتليفون وانترنت",
-  "دعايا",
-  "مطبوعات",
-  "أدوات كتابيه",
-  "سباكه",
-  "نثريات وإكراميات ومصروفات أخرى",
-  "بوفيه",
-  "بدل ضيافه",
-  "مصروفات نظافه",
-  "كهرباء",
-  "نجاره ودهانات",
-  "اجهزة كهربائيه",
-  "إيصالات كهرباء",
-  "إيصال مياه",
-  "إيصال ضرائب",
-  "صيانة أجهزه طبيه",
-  "معمل لاب تولاب",
-  "مستلزمات معمل",
-  "تركيبات أسنان",
-  "مستلزمات أسنان",
-  "مستلزمات طبيه وأدويه",
-  "مرتبات الموظفين والعمال",
-  "اجور الأطباء والتمريض",
-  "مكافآت",
-  "بدلات",
-  "حوافز",
-  "مصروفات التأمين الصحي",
-  "الرد النقدي"
- ]
-};</script>
+<script>window.API_MODE='gas';window.SEED={"services":[{"type":"clinic","name":"عظام","price":100.0,"tax":10.0},{"type":"clinic","name":"رمد","price":100.0,"tax":10.0},{"type":"clinic","name":"باطنه وطوارئ","price":60.0,"tax":10.0},{"type":"clinic","name":"كلى والكلى الصناعية","price":100.0,"tax":10.0},{"type":"clinic","name":"جلديه","price":90.0,"tax":10.0},{"type":"clinic","name":"انف واذن","price":80.0,"tax":10.0},{"type":"clinic","name":"جهاز هضمي وكبد","price":110.0,"tax":10.0},{"type":"clinic","name":"مخ وأعصاب","price":130.0,"tax":10.0},{"type":"clinic","name":"نساء","price":100.0,"tax":10.0},{"type":"clinic","name":"تخاطب وتنمية مهارات","price":50.0,"tax":5.0},{"type":"clinic","name":"صدر","price":90.0,"tax":10.0},{"type":"clinic","name":"جراحة عامه","price":70.0,"tax":10.0},{"type":"clinic","name":"علاج طبيعى","price":50.0,"tax":10.0},{"type":"clinic","name":"مسالك بوليه","price":110.0,"tax":10.0},{"type":"clinic","name":"اسنان","price":40.0,"tax":10.0},{"type":"clinic","name":"تركيبات الاسنان","price":0,"tax":0},{"type":"clinic","name":"عمليات جراحية","price":0,"tax":0},{"type":"clinic","name":"تحاليل","price":0,"tax":0},{"type":"clinic","name":"معمل شركات","price":0,"tax":0},{"type":"clinic","name":"الحجامه","price":200.0,"tax":10.0},{"type":"clinic","name":"تخدير","price":0,"tax":0},{"type":"clinic","name":"طبيب اطفال","price":0,"tax":0},{"type":"radiology","name":"أشعة أسنان (فيلم)","price":40,"tax":0},{"type":"radiology","name":"أشعة أسنان (2 فيلم)","price":80,"tax":0},{"type":"radiology","name":"أشعة أسنان (4 أفلام)","price":160,"tax":0},{"type":"radiology","name":"أشعة عادية","price":0,"tax":0},{"type":"radiology","name":"موجات صوتية","price":250,"tax":0},{"type":"lab","name":"تحاليل","price":0,"tax":0},{"type":"lab","name":"تحاليل شركات","price":0,"tax":0},{"type":"lab","name":"معمل لاب تولاب","price":0,"tax":0},{"type":"operation","name":"عمليات جراحية","price":0,"tax":0},{"type":"operation","name":"فتح خراج","price":400,"tax":0},{"type":"operation","name":"استئصال كيس شمعي","price":450,"tax":0},{"type":"operation","name":"استئصال بواسير وشرخ شرجي","price":0,"tax":0},{"type":"operation","name":"خياطة جرح تحت مخدر موضعي","price":77,"tax":0},{"type":"operation","name":"تركيب جبيرة تحت الركبة","price":110,"tax":0},{"type":"operation","name":"جبس تحت الركبة","price":0,"tax":0},{"type":"operation","name":"طوارئ جراحة","price":0,"tax":0},{"type":"operation","name":"طوارئ عظام","price":0,"tax":0},{"type":"service","name":"كشف","price":0,"tax":0},{"type":"service","name":"استشارة","price":0,"tax":0},{"type":"service","name":"غيار","price":0,"tax":0},{"type":"service","name":"خياطة","price":0,"tax":0},{"type":"service","name":"نسبة شركات","price":0,"tax":0},{"type":"service","name":"خلع أسنان عادي (ضرس)","price":200,"tax":0},{"type":"service","name":"خلع جراحي","price":350,"tax":0},{"type":"service","name":"حشو أسنان","price":0,"tax":0},{"type":"service","name":"حشو كمبوزيت (ضرس)","price":400,"tax":0},{"type":"service","name":"حشو ليزر (ضرس)","price":400,"tax":0},{"type":"service","name":"حشو عصب (ضرس)","price":750,"tax":0},{"type":"service","name":"إزالة رواسب","price":300,"tax":0},{"type":"service","name":"طربوش بورسلين","price":1000,"tax":0},{"type":"service","name":"دعامة فايبر جلاس","price":600,"tax":0},{"type":"service","name":"علاج طبيعي (جلسة)","price":50,"tax":0},{"type":"service","name":"جلسات علاج طبيعي (6)","price":300,"tax":0},{"type":"service","name":"جلسات علاج طبيعي (12)","price":600,"tax":0},{"type":"service","name":"حجامة","price":200,"tax":0},{"type":"lab","name":"صورة دم كاملة (CBC)","price":0,"tax":0,"abbr":"CBC"},{"type":"lab","name":"سرعة الترسيب (ESR)","price":0,"tax":0,"abbr":"ESR"},{"type":"lab","name":"بروتين سي التفاعلي (CRP)","price":0,"tax":0,"abbr":"CRP"},{"type":"lab","name":"هيموجلوبين (HB)","price":0,"tax":0,"abbr":"HB"},{"type":"lab","name":"زمرة الدم وعامل ريسس (ABO/Rh)","price":0,"tax":0,"abbr":"ABO/Rh"},{"type":"lab","name":"زمن البروثرومبين (PT)","price":0,"tax":0,"abbr":"PT"},{"type":"lab","name":"زمن الثرومبوبلاستين الجزئي (PTT)","price":0,"tax":0,"abbr":"PTT"},{"type":"lab","name":"نسبة التجلط الدولية (INR)","price":0,"tax":0,"abbr":"INR"},{"type":"lab","name":"سكر صائم (FBS)","price":0,"tax":0,"abbr":"FBS"},{"type":"lab","name":"سكر فطار (2hPP)","price":0,"tax":0,"abbr":"2hPP"},{"type":"lab","name":"سكر عشوائي (RBS)","price":0,"tax":0,"abbr":"RBS"},{"type":"lab","name":"سكر تراكمي (HbA1c)","price":0,"tax":0,"abbr":"HbA1c"},{"type":"lab","name":"منحنى السكر (GTT)","price":0,"tax":0,"abbr":"GTT"},{"type":"lab","name":"وظائف كبد (LFT)","price":0,"tax":0,"abbr":"LFT"},{"type":"lab","name":"انزيم ALT (SGPT/ALT)","price":0,"tax":0,"abbr":"SGPT/ALT"},{"type":"lab","name":"انزيم AST (SGOT/AST)","price":0,"tax":0,"abbr":"SGOT/AST"},{"type":"lab","name":"فوسفاتيز قلوي (ALP)","price":0,"tax":0,"abbr":"ALP"},{"type":"lab","name":"جاما جي تي (GGT)","price":0,"tax":0,"abbr":"GGT"},{"type":"lab","name":"بيليروبين كلي ومباشر (Bil)","price":0,"tax":0,"abbr":"Bil"},{"type":"lab","name":"ألبومين (Alb)","price":0,"tax":0,"abbr":"Alb"},{"type":"lab","name":"بروتين كلي (TP)","price":0,"tax":0,"abbr":"TP"},{"type":"lab","name":"وظائف كلى (KFT)","price":0,"tax":0,"abbr":"KFT"},{"type":"lab","name":"يوريا (Urea)","price":0,"tax":0,"abbr":"Urea"},{"type":"lab","name":"كرياتينين (Creat)","price":0,"tax":0,"abbr":"Creat"},{"type":"lab","name":"حمض اليوريك (UA)","price":0,"tax":0,"abbr":"UA"},{"type":"lab","name":"صوديوم (Na)","price":0,"tax":0,"abbr":"Na"},{"type":"lab","name":"بوتاسيوم (K)","price":0,"tax":0,"abbr":"K"},{"type":"lab","name":"كالسيوم (Ca)","price":0,"tax":0,"abbr":"Ca"},{"type":"lab","name":"فوسفور (P)","price":0,"tax":0,"abbr":"P"},{"type":"lab","name":"مغنيسيوم (Mg)","price":0,"tax":0,"abbr":"Mg"},{"type":"lab","name":"حديد (Fe)","price":0,"tax":0,"abbr":"Fe"},{"type":"lab","name":"سعة ارتباط الحديد (TIBC)","price":0,"tax":0,"abbr":"TIBC"},{"type":"lab","name":"فيريتين (Ferritin)","price":0,"tax":0,"abbr":"Ferritin"},{"type":"lab","name":"دهون ثلاثية (TG)","price":0,"tax":0,"abbr":"TG"},{"type":"lab","name":"كوليسترول كلي (Chol)","price":0,"tax":0,"abbr":"Chol"},{"type":"lab","name":"كوليسترول HDL (HDL)","price":0,"tax":0,"abbr":"HDL"},{"type":"lab","name":"كوليسترول LDL (LDL)","price":0,"tax":0,"abbr":"LDL"},{"type":"lab","name":"ملف دهون كامل (Lipid Profile)","price":0,"tax":0,"abbr":"Lipid Profile"},{"type":"lab","name":"الغدة الدرقية TSH (TSH)","price":0,"tax":0,"abbr":"TSH"},{"type":"lab","name":"هرمون T3 الحر (FT3)","price":0,"tax":0,"abbr":"FT3"},{"type":"lab","name":"هرمون T4 الحر (FT4)","price":0,"tax":0,"abbr":"FT4"},{"type":"lab","name":"فيتامين د (Vit D)","price":0,"tax":0,"abbr":"Vit D"},{"type":"lab","name":"فيتامين ب12 (Vit B12)","price":0,"tax":0,"abbr":"Vit B12"},{"type":"lab","name":"حمض الفوليك (Folic)","price":0,"tax":0,"abbr":"Folic"},{"type":"lab","name":"هرمون الحليب (PRL)","price":0,"tax":0,"abbr":"PRL"},{"type":"lab","name":"هرمون FSH (FSH)","price":0,"tax":0,"abbr":"FSH"},{"type":"lab","name":"هرمون LH (LH)","price":0,"tax":0,"abbr":"LH"},{"type":"lab","name":"استراديول (E2)","price":0,"tax":0,"abbr":"E2"},{"type":"lab","name":"بروجيستيرون (PROG)","price":0,"tax":0,"abbr":"PROG"},{"type":"lab","name":"تستوستيرون (TESTO)","price":0,"tax":0,"abbr":"TESTO"},{"type":"lab","name":"هرمون الحمل الكمي (B-hCG)","price":0,"tax":0,"abbr":"B-hCG"},{"type":"lab","name":"اختبار حمل في البول (UPT)","price":0,"tax":0,"abbr":"UPT"},{"type":"lab","name":"تحليل بول كامل (Urine Analysis)","price":0,"tax":0,"abbr":"Urine Analysis"},{"type":"lab","name":"مزرعة بول (Urine C/S)","price":0,"tax":0,"abbr":"Urine C/S"},{"type":"lab","name":"تحليل براز (Stool Analysis)","price":0,"tax":0,"abbr":"Stool Analysis"},{"type":"lab","name":"مزرعة براز (Stool C/S)","price":0,"tax":0,"abbr":"Stool C/S"},{"type":"lab","name":"مسحة حلق مزرعة (Throat C/S)","price":0,"tax":0,"abbr":"Throat C/S"},{"type":"lab","name":"مزرعة دم (Blood C/S)","price":0,"tax":0,"abbr":"Blood C/S"},{"type":"lab","name":"أمصال الروماتيزم (RF)","price":0,"tax":0,"abbr":"RF"},{"type":"lab","name":"ASO (ASO)","price":0,"tax":0,"abbr":"ASO"},{"type":"lab","name":"أجسام مضادة نووية (ANA)","price":0,"tax":0,"abbr":"ANA"},{"type":"lab","name":"فيروس الكبد سي (HCV Ab)","price":0,"tax":0,"abbr":"HCV Ab"},{"type":"lab","name":"فيروس الكبد بي (HBsAg)","price":0,"tax":0,"abbr":"HBsAg"},{"type":"lab","name":"فيروس نقص المناعة (HIV)","price":0,"tax":0,"abbr":"HIV"},{"type":"lab","name":"فحص الزهري (VDRL)","price":0,"tax":0,"abbr":"VDRL"},{"type":"lab","name":"اختبار هيليكوباكتر بيلوري (H. pylori)","price":0,"tax":0,"abbr":"H. pylori"},{"type":"lab","name":"مستضد البروستاتا (PSA)","price":0,"tax":0,"abbr":"PSA"},{"type":"lab","name":"مؤشر أورام CEA (CEA)","price":0,"tax":0,"abbr":"CEA"},{"type":"lab","name":"مؤشر أورام AFP (AFP)","price":0,"tax":0,"abbr":"AFP"},{"type":"lab","name":"انزيم القلب CK-MB (CK-MB)","price":0,"tax":0,"abbr":"CK-MB"},{"type":"lab","name":"تروبونين (Troponin)","price":0,"tax":0,"abbr":"Troponin"},{"type":"lab","name":"انزيمات الباكرياس أميليز (Amylase)","price":0,"tax":0,"abbr":"Amylase"},{"type":"lab","name":"ليباز (Lipase)","price":0,"tax":0,"abbr":"Lipase"},{"type":"lab","name":"LDH (LDH)","price":0,"tax":0,"abbr":"LDH"},{"type":"lab","name":"D-Dimer (D-Dimer)","price":0,"tax":0,"abbr":"D-Dimer"},{"type":"lab","name":"تعداد الشبكيات (Retics)","price":0,"tax":0,"abbr":"Retics"},{"type":"lab","name":"عدد الصفائح (PLT)","price":0,"tax":0,"abbr":"PLT"},{"type":"lab","name":"صورة دم بالمجهر (Blood Film)","price":0,"tax":0,"abbr":"Blood Film"},{"type":"lab","name":"نسبة الأنسولين (Insulin)","price":0,"tax":0,"abbr":"Insulin"},{"type":"lab","name":"كورتيزول (Cortisol)","price":0,"tax":0,"abbr":"Cortisol"},{"type":"lab","name":"بول 24 ساعة بروتين (24h Urine Protein)","price":0,"tax":0,"abbr":"24h Urine Protein"},{"type":"lab","name":"نسبة الألبومين للكرياتينين في البول (ACR)","price":0,"tax":0,"abbr":"ACR"},{"type":"radiology","name":"أشعة صدر (Chest X-Ray)","price":0,"tax":0,"abbr":"Chest X-Ray"},{"type":"radiology","name":"أشعة بطن (Abdomen X-Ray)","price":0,"tax":0,"abbr":"Abdomen X-Ray"},{"type":"radiology","name":"أشعة عمود فقري عنقي (C-Spine X-Ray)","price":0,"tax":0,"abbr":"C-Spine X-Ray"},{"type":"radiology","name":"أشعة عمود فقري قطني (L-Spine X-Ray)","price":0,"tax":0,"abbr":"L-Spine X-Ray"},{"type":"radiology","name":"أشعة عمود فقري ظهري (D-Spine X-Ray)","price":0,"tax":0,"abbr":"D-Spine X-Ray"},{"type":"radiology","name":"أشعة حوض (Pelvis X-Ray)","price":0,"tax":0,"abbr":"Pelvis X-Ray"},{"type":"radiology","name":"أشعة ركبة (Knee X-Ray)","price":0,"tax":0,"abbr":"Knee X-Ray"},{"type":"radiology","name":"أشعة كتف (Shoulder X-Ray)","price":0,"tax":0,"abbr":"Shoulder X-Ray"},{"type":"radiology","name":"أشعة قدم (Foot X-Ray)","price":0,"tax":0,"abbr":"Foot X-Ray"},{"type":"radiology","name":"أشعة كف اليد (Hand X-Ray)","price":0,"tax":0,"abbr":"Hand X-Ray"},{"type":"radiology","name":"أشعة جيوب أنفية (PNS X-Ray)","price":0,"tax":0,"abbr":"PNS X-Ray"},{"type":"radiology","name":"أشعة أسنان بانوراما (OPG)","price":0,"tax":0,"abbr":"OPG"},{"type":"radiology","name":"موجات صوتية على البطن والحوض (US Abd & Pelvis)","price":0,"tax":0,"abbr":"US Abd & Pelvis"},{"type":"radiology","name":"موجات صوتية على الكلى والمسالك (US KUB)","price":0,"tax":0,"abbr":"US KUB"},{"type":"radiology","name":"موجات صوتية على الغدة الدرقية (US Thyroid)","price":0,"tax":0,"abbr":"US Thyroid"},{"type":"radiology","name":"موجات صوتية على الثدي (US Breast)","price":0,"tax":0,"abbr":"US Breast"},{"type":"radiology","name":"موجات صوتية على الحوض (US Pelvis)","price":0,"tax":0,"abbr":"US Pelvis"},{"type":"radiology","name":"موجات صوتية على البروستاتا (US Prostate)","price":0,"tax":0,"abbr":"US Prostate"},{"type":"radiology","name":"موجات صوتية على الرقبة (US Neck)","price":0,"tax":0,"abbr":"US Neck"},{"type":"radiology","name":"موجات صوتية دوبلر على الأوردة (Venous Doppler)","price":0,"tax":0,"abbr":"Venous Doppler"},{"type":"radiology","name":"موجات صوتية دوبلر على الشرايين (Arterial Doppler)","price":0,"tax":0,"abbr":"Arterial Doppler"},{"type":"radiology","name":"متابعة حمل بالموجات الصوتية (Obstetric US)","price":0,"tax":0,"abbr":"Obstetric US"},{"type":"radiology","name":"موجات صوتية على الخصية (US Scrotum)","price":0,"tax":0,"abbr":"US Scrotum"},{"type":"radiology","name":"موجات صوتية على الأنسجة الرخوة (US Soft Tissue)","price":0,"tax":0,"abbr":"US Soft Tissue"},{"type":"radiology","name":"موجات صوتية على المفاصل (MSK US)","price":0,"tax":0,"abbr":"MSK US"},{"type":"radiology","name":"رسم قلب (ECG)","price":0,"tax":0,"abbr":"ECG"},{"type":"radiology","name":"إيكو على القلب (Echo)","price":0,"tax":0,"abbr":"Echo"},{"type":"radiology","name":"رسم عصب (NCV)","price":0,"tax":0,"abbr":"NCV"},{"type":"radiology","name":"رسم عضلات (EMG)","price":0,"tax":0,"abbr":"EMG"},{"type":"radiology","name":"رسم مخ (EEG)","price":0,"tax":0,"abbr":"EEG"},{"type":"radiology","name":"أشعة مقطعية على المخ (CT Brain)","price":0,"tax":0,"abbr":"CT Brain"},{"type":"radiology","name":"أشعة مقطعية على الصدر (CT Chest)","price":0,"tax":0,"abbr":"CT Chest"},{"type":"radiology","name":"أشعة مقطعية على البطن والحوض (CT Abd & Pelvis)","price":0,"tax":0,"abbr":"CT Abd & Pelvis"},{"type":"radiology","name":"أشعة مقطعية على الجيوب الأنفية (CT PNS)","price":0,"tax":0,"abbr":"CT PNS"},{"type":"radiology","name":"أشعة مقطعية على العمود الفقري القطني (CT L-Spine)","price":0,"tax":0,"abbr":"CT L-Spine"},{"type":"radiology","name":"أشعة رنين مغناطيسي على المخ (MRI Brain)","price":0,"tax":0,"abbr":"MRI Brain"},{"type":"radiology","name":"أشعة رنين على العمود الفقري القطني (MRI L-Spine)","price":0,"tax":0,"abbr":"MRI L-Spine"},{"type":"radiology","name":"أشعة رنين على العمود الفقري العنقي (MRI C-Spine)","price":0,"tax":0,"abbr":"MRI C-Spine"},{"type":"radiology","name":"أشعة رنين على الركبة (MRI Knee)","price":0,"tax":0,"abbr":"MRI Knee"},{"type":"radiology","name":"أشعة رنين على الكتف (MRI Shoulder)","price":0,"tax":0,"abbr":"MRI Shoulder"},{"type":"radiology","name":"أشعة ماموجرام (Mammography)","price":0,"tax":0,"abbr":"Mammography"},{"type":"radiology","name":"قياس كثافة العظام (DEXA)","price":0,"tax":0,"abbr":"DEXA"},{"type":"radiology","name":"أشعة بالصبغة على المسالك (IVU)","price":0,"tax":0,"abbr":"IVU"},{"type":"radiology","name":"أشعة بالصبغة على الرحم (HSG)","price":0,"tax":0,"abbr":"HSG"},{"type":"radiology","name":"أشعة بالصبغة على المريء والمعدة (Barium Swallow/Meal)","price":0,"tax":0,"abbr":"Barium Swallow/Meal"}],"doctors":[{"name":"عبدالغنى احمد","clinic":"جراحة عامه","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"ياسر طه","clinic":"تخدير","percent":100.0,"fixed":0,"opPercent":0},{"name":"ايه رأفت","clinic":"اسنان","percent":40.0,"fixed":0,"opPercent":0},{"name":"كامل ربيع","clinic":"تحاليل","percent":0,"fixed":0,"opPercent":0},{"name":"عمر محمود","clinic":"اسنان","percent":40.0,"fixed":0,"opPercent":0},{"name":"اسماء محمد","clinic":"نساء","percent":60.0,"fixed":0,"opPercent":0},{"name":"احمد عبدالحميد","clinic":"عظام","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"اسلام السيد","clinic":"باطنه وطوارئ","percent":50.0,"fixed":500.0,"opPercent":0},{"name":"محمد صلاح","clinic":"علاج طبيعى","percent":50.0,"fixed":0,"opPercent":0},{"name":"كريم مشالى","clinic":"اسنان","percent":50.0,"fixed":0,"opPercent":0},{"name":"حسنى جمال","clinic":"طبيب اطفال","percent":100.0,"fixed":0,"opPercent":0},{"name":"محمد الجمل","clinic":"عظام","percent":70.0,"fixed":100.0,"opPercent":0},{"name":"محمد شاكر","clinic":"اسنان","percent":40.0,"fixed":0,"opPercent":0},{"name":"محمد طه","clinic":"جهاز هضمي وكبد","percent":50.0,"fixed":200.0,"opPercent":0},{"name":"ندى عادل","clinic":"اسنان","percent":40.0,"fixed":0,"opPercent":0},{"name":"اشرف الالفى","clinic":"باطنه وطوارئ","percent":50.0,"fixed":500.0,"opPercent":0},{"name":"جمال الخولى","clinic":"مسالك بوليه","percent":60.0,"fixed":0,"opPercent":0},{"name":"محمد عباس","clinic":"رمد","percent":60.0,"fixed":0,"opPercent":0},{"name":"منصور مهدى","clinic":"صدر","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"احمد اشرف","clinic":"باطنه وطوارئ","percent":50.0,"fixed":500.0,"opPercent":0},{"name":"عاطف حسن","clinic":"كلى والكلى الصناعية","percent":60.0,"fixed":0,"opPercent":0},{"name":"هانم عبدالفتاح الدموكي","clinic":"تخاطب وتنمية مهارات","percent":50.0,"fixed":0,"opPercent":0},{"name":"اسماء محمد","clinic":"عمليات جراحية","percent":60.0,"fixed":0,"opPercent":0},{"name":"يارا بهاء","clinic":"جلديه","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"جمال هنداوى","clinic":"اسنان","percent":40.0,"fixed":0,"opPercent":0},{"name":"على محجوب","clinic":"انف واذن","percent":60.0,"fixed":0,"opPercent":0},{"name":"علاء الدين محمود","clinic":"مخ وأعصاب","percent":60.0,"fixed":0,"opPercent":0},{"name":"محمد ايمن","clinic":"باطنه وطوارئ","percent":50.0,"fixed":500.0,"opPercent":0},{"name":"على محجوب","clinic":"عمليات جراحية","percent":45.0,"fixed":0,"opPercent":0},{"name":"عبدالغنى احمد","clinic":"عمليات جراحية","percent":60.0,"fixed":0,"opPercent":0},{"name":"محمد صلاح","clinic":"الحجامه","percent":0,"fixed":0,"opPercent":0},{"name":"اميره بهاء","clinic":"رمد","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"عبدالرحمن على","clinic":"جلديه","percent":60.0,"fixed":200.0,"opPercent":0},{"name":"سوسن محمود","clinic":"نساء","percent":50.0,"fixed":0,"opPercent":0}],"companies":[{"name":"AXA","fee":160.0},{"name":"الاهلى للخدمات الطبية","fee":100.0},{"name":"DMS","fee":175.0},{"name":"Careplus","fee":180.0},{"name":"المشرق","fee":150.0},{"name":"EGYMED","fee":200.0},{"name":"SMART","fee":160.0},{"name":"Nextcare","fee":140.0}],"staff":[{"name":"حماده حسن محمود"},{"name":"سعد سعيد ناجي"},{"name":"احمد عبدالسلام"},{"name":"منى عبدالعزيز عبد الوهاب"},{"name":"عواطف علي عبدالعظيم"},{"name":"ايمان فؤاد علي"},{"name":"هبه محمود رمضان"},{"name":"فاطمه فتحي عبد الوارث"}],"expenseCats":["مصاريف متنوعة","زيت","مصاريف تشغيل","مصاريف نقل","تجهيزات طبيه وأخرى","بنزين","مكأفات","مكأفات عمليات","بوفية","مصروفات محطة المياه","صيانه","تراخيص ورسوم وكارتات وجراج","جاز","مصروفات المصعد","رسوم تراخيص طبيه","انتقالات","مصروفات نقل","اتصالات وتليفون وانترنت","دعايا","مطبوعات","أدوات كتابيه","سباكه","نثريات وإكراميات ومصروفات أخرى","بوفيه","بدل ضيافه","مصروفات نظافه","كهرباء","نجاره ودهانات","اجهزة كهربائيه","إيصالات كهرباء","إيصال مياه","إيصال ضرائب","صيانة أجهزه طبيه","معمل لاب تولاب","مستلزمات معمل","تركيبات أسنان","مستلزمات أسنان","مستلزمات طبيه وأدويه","مرتبات الموظفين والعمال","اجور الأطباء والتمريض","مكافآت","بدلات","حوافز","مصروفات التأمين الصحي","الرد النقدي"]};window.HIST=[{"date":"2024/04/03","patient":"صابر شعبان ابو الغيط","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517430","cardNo":"1569-A4-507","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2024/04/11","patient":"محمود نافع احمد","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517431","cardNo":"1569-A3-136","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/03","patient":"احمد فتحي اسماعيل","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517397","cardNo":"1569-A4-440","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/14","patient":"خالد جمال احمد","phone":"","clinic":"عظام","doctor":"محمد ايمن","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517399","cardNo":"1569-A4-448","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/21","patient":"مصطفى ناجي محمد","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517400","cardNo":"1569-A4-572","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/21","patient":"خالد جمال احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517426","cardNo":"1569-A4-448","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/22","patient":"زغلول سيد علي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517427","cardNo":"1569-A4-471","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/03/24","patient":"اشرف عبد الستار عبد الخالق","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517428","cardNo":"1569-A4-378","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/05","patient":"اسلام صقر نصر","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492491","cardNo":"699-183","patientPct":20.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/16","patient":"احمد محمد ربيع","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492493","cardNo":"699-263","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/20","patient":"مصطفى كمال محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517432","cardNo":"1569-A4-449","patientPct":10.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/20","patient":"احمد محمد على ابوميرة","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492494","cardNo":"699-431","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/21","patient":"عمر جمال عبد العظيم","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492495","cardNo":"699-504","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/04/29","patient":"مصطفى ناجي محمد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":200.0,"category":"company","company":"EGYMED","formNo":"517432","cardNo":"1569-A4-572","patientPct":10.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد فتحى محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710885","cardNo":"2731224101492","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد فتحى محمد","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":242.0,"category":"company","company":"AXA","formNo":"3710885","cardNo":"2731224101492","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1503461","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"صلاح عزمى وهبه","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710886","cardNo":"2690312401872","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد فتحى محمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811802","cardNo":"27312242101492","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد فتحى محمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(1)خلع جراحى","value":350.0,"category":"company","company":"AXA","formNo":"811802","cardNo":"27312242101492","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174603","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد فتحى محمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(1)فيلم","value":40.0,"category":"company","company":"AXA","formNo":"811802","cardNo":"27312242101492","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174603","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"صلاح عزمى وهبه","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811803","cardNo":"269031920401672","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"صلاح عزمى وهبه","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(1)طربوش بورسلين سيراميك","value":1000.0,"category":"company","company":"AXA","formNo":"811803","cardNo":"269031920401672","patientPct":50.0,"discount":0,"notes":"رقم الموافقة: 174687","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"صلاح عزمى وهبه","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(1)فيلم","value":40.0,"category":"company","company":"AXA","formNo":"811803","cardNo":"269031920401672","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174687","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد جبريل سعد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811805","cardNo":"30407012103317","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد جبريل سعد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"حشو (1) ضرس كمبوزيت","value":400.0,"category":"company","company":"AXA","formNo":"811805","cardNo":"30407012103317","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174772","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد جبريل سعد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"ازالة رواسب","value":200.0,"category":"company","company":"AXA","formNo":"811805","cardNo":"30407012103317","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174772","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"محمد صلاح السيد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476727","cardNo":"1109505","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"احمد صبحى عبدالغنى","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476728","cardNo":"1082785","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"ياسمين صبحى ابوالغيط","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609133","cardNo":"27E917ED0BE140CC","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"منى حمدي سعد","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609134","cardNo":"74EAAA1BD61118EA","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"مصطفى حمدي عطيه","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609135","cardNo":"AC77D36A91405ED3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسلام سمير رجب","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609136","cardNo":"0826DY9D331923DE","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8629359/1","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسلام سمير رجب","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(2)حشو عصب","value":1500.0,"category":"company","company":"Nextcare","formNo":"7609136","cardNo":"0826DY9D331923DE","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8629359/2","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسلام سمير رجب","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(6)فيلم","value":240.0,"category":"company","company":"Nextcare","formNo":"7609136","cardNo":"0826DY9D331923DE","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8629359/2","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسماء نبيل بخاطره","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(2) حشو كمبوزيت","value":800.0,"category":"company","company":"Nextcare","formNo":"7609137","cardNo":"7074947F536FE108","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8629677/1","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسماء نبيل بخاطره","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"(2)طربوش","value":1995.0,"category":"company","company":"Nextcare","formNo":"7609137","cardNo":"7074947F536FE108","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8629677/1","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"حمدى فتحى سيد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609138","cardNo":"44bc845f6a09ec37","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"عبدالرحمن لبيب محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609139","cardNo":"188D6652CE72E4C7","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"عبدالرحمن عبدالباسط","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609140","cardNo":"A24D7BB7C5BD2A20","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"عمرو سعد كامل","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609141","cardNo":"2C55C4EB47145C5E","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"رمضان شاكر محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609142","cardNo":"787124A8E49D431","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"فاطمه عبد السلام على","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609143","cardNo":"F86BDD4EA678FB9B","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسماء عبدالله محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609144","cardNo":"041C6977BD02C1A2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"اسماء عبدالله محمد","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":170.0,"category":"company","company":"Nextcare","formNo":"7609144","cardNo":"041C6977BD02C1A2","patientPct":0,"discount":0,"notes":"رقم الموافقة: 7609144","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"عبدالله محمد عبدالفتاح","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609145","cardNo":"EF2283C5AF4485B4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/01","patient":"حمادة سعد محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609145","cardNo":"3C19AE231DF0050","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"روفيده مصطفي عبد الفتاح","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"3325572","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"حبيبه عبدالعاطى رضوان","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"3325573","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"نورهان مصطفي عبد الفتاح","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"3325574","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"نورهان مصطفي عبد الفتاح","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"متنوع","service":"حشو ليزر 2 ضرس","value":800.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"3325574","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"شعبان عثمان عبدالعاطى","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710887","cardNo":"28704142502154","patientPct":10.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"شعبان عثمان عبدالعاطى","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":67.0,"category":"company","company":"AXA","formNo":"3710887","cardNo":"28704142502154","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1504128","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"عاشور سعد محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710888","cardNo":"27803202101655","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"حسن اسماعيل ابراهيم","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710889","cardNo":"27503152101795","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"نجلاء ابراهيم عبده","phone":"","clinic":"رمد","doctor":"اميره بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710890","cardNo":"0","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"فاطمه احمد كمال","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710891","cardNo":"0","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"فاطمه احمد كمال","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":38.0,"category":"company","company":"AXA","formNo":"3710891","cardNo":"0","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1504303","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"محمود سعد محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710892","cardNo":"29611212100879","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"السيد عبدالباسط عبدالحميد","phone":"","clinic":"رمد","doctor":"اميره بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710893","cardNo":"2880411210672","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"انور محمد حسين","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811806","cardNo":"27709012102471","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"انور محمد حسين","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"(1)خلع جراحى","value":350.0,"category":"company","company":"AXA","formNo":"811806","cardNo":"27709012102471","patientPct":0,"discount":0,"notes":"رقم الموافقة: 174914","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"خالد على الله محمود","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811807","cardNo":"26908212101036","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"خالد على الله محمود","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"حشو (1) ضرس كمبوزيت","value":400.0,"category":"company","company":"AXA","formNo":"811807","cardNo":"26908212101036","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175027","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"خالد على الله محمود","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"(3)خلع ضرس","value":900.0,"category":"company","company":"AXA","formNo":"811807","cardNo":"26908212101036","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175027","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"رباب محمود السيد","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"استشارة","value":160.0,"category":"company","company":"AXA","formNo":"811808","cardNo":"02000698-1","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"نصر فوزى نصر","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"حشو كمبوزيت","value":500.0,"category":"company","company":"Careplus","formNo":"9476729","cardNo":"1081483","patientPct":20.0,"discount":0,"notes":"رقم الموافقة: 908000","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"على احمد متولى","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609147","cardNo":"66E655FB48140A46","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"عمرو شوقى عطيه","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609148","cardNo":"EE3B8B033CF84EEE","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"حسن حسنى محمود","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609149","cardNo":"8B8EC166EE247631","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/02","patient":"احمد محمد ربيع","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492496","cardNo":"699-263","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ماجد محمد جلال","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710894","cardNo":"2850418210139","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ماجد محمد جلال","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":38.0,"category":"company","company":"AXA","formNo":"3710894","cardNo":"28504182101391","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1504664","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ادهم احمد ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710895","cardNo":"VLO120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ادهم احمد ناجي","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":133.0,"category":"company","company":"AXA","formNo":"3710895","cardNo":"VLO120-4","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1505076","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"يونس احمد ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710896","cardNo":"VLO120-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"يونس احمد ناجي","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":133.0,"category":"company","company":"AXA","formNo":"3710896","cardNo":"VLO120-3","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1505092","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"حسن اسماعيل ابراهيم","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710897","cardNo":"27503152101795","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محمود سيد عبد الهادي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710898","cardNo":"30112022102297","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محمود سيد عبد الهادي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"متنوع","service":"جبيره","value":110.0,"category":"company","company":"AXA","formNo":"3710898","cardNo":"30112022102297","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"احمد صبحي فراج","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710899","cardNo":"29005272101818","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"احمد ناجي بكر","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811809","cardNo":"28607103316","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"احمد ناجي بكر","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع جراحي للضرس 1","value":350.0,"category":"company","company":"AXA","formNo":"811809","cardNo":"28607103316","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175300","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"احمد ناجي بكر","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازالة رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811809","cardNo":"28607103316","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175300","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"سميره توفيق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811810","cardNo":"VL0120-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"سميره توفيق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع جراحي للضرس 1","value":350.0,"category":"company","company":"AXA","formNo":"811810","cardNo":"VL0120-2","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175293","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"سميره توفيق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازالة رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811810","cardNo":"VL0120-2","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175293","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ادهم احمد ناجي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811811","cardNo":"VL0120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ادهم احمد ناجي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"حشوليزر 2 ضرس","value":1000.0,"category":"company","company":"AXA","formNo":"811811","cardNo":"VL0120-4","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175295","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"ادهم احمد ناجي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازالة رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811811","cardNo":"VL0120-4","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175295","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"علاء عبد الله محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811812","cardNo":"130","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"علاء عبد الله محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازالة رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811812","cardNo":"130","patientPct":0,"discount":0,"notes":"رقم الموافقة: 175320","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"هاني فوزي محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476730","cardNo":"1081733","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"مصطفي محمود مغاوري","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476732","cardNo":"1096348","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908677","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"وليد عطالله عبد الفتاح","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476733","cardNo":"1246855","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"جمال سمير يحي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476734","cardNo":"1082885","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908635","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"مصطفي حمدي عطيه","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609150","cardNo":"AC77D36A91405ED3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"نسمه علي محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609103","cardNo":"2BFDBF4BC15A2D59","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"نسمه علي محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع جراحي ضرس (1)","value":350.0,"category":"company","company":"Nextcare","formNo":"7609103","cardNo":"2BFDBF4BC15A2D59","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"نسمه علي محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"اشعه 2 فيلم","value":80.0,"category":"company","company":"Nextcare","formNo":"7609103","cardNo":"2BFDBF4BC15A2D59","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محي علي اسماعيل","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609104","cardNo":"8C9FBA4AD05F4F2D","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محي علي اسماعيل","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"حشو ليزر 2ضرس","value":800.0,"category":"company","company":"Nextcare","formNo":"7609104","cardNo":"8C9FBA4AD05F4F2D","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محي علي اسماعيل","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع جراحي ضرس (1)","value":350.0,"category":"company","company":"Nextcare","formNo":"7609104","cardNo":"8C9FBA4AD05F4F2D","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"محي علي اسماعيل","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"اشعه 2 فيلم","value":80.0,"category":"company","company":"Nextcare","formNo":"7609104","cardNo":"8C9FBA4AD05F4F2D","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"جني محي علي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609106","cardNo":"D1C84BA948172370","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/03","patient":"مني حلمي عبد الموجود","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609107","cardNo":"157282ADC8E0A54B","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"نصر عطيه ابو السعود","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولى","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"3325575","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمد صابر سالم","phone":"","clinic":"صدر","doctor":"منصور الشاهد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710900","cardNo":"29206022101354","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمد احمد فتحي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710751","cardNo":"29308082102535","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ماجد محمد جلال","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710752","cardNo":"28504182101391","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"احمد صابر فضل","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710753","cardNo":"28701032103093","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"معاذ محمد فوزي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710754","cardNo":"30407132100036","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"معاذ محمد فوزي","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":290.0,"category":"company","company":"AXA","formNo":"3710754","cardNo":"30407132100036","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1506777","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمد فوزي عبد العظيم","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710760","cardNo":"28809242101412","patientPct":9.38,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود جلال احمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811813","cardNo":"27112172101218","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود جلال احمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"حشو 1 عصب","value":750.0,"category":"company","company":"AXA","formNo":"811813","cardNo":"27112172101218","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود جلال احمد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"ازالة رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811813","cardNo":"27112172101218","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"دعاء شوقي مندي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811814","cardNo":"vlo154-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"احمد عاشور طه","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476735","cardNo":"1245205","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908838","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"عبدالحليم علاء عبد الحليم","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476736","cardNo":"1237356","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"وليد عتيق عبد الواجد","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476738","cardNo":"1095099","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 904621","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"خالد عبده توفيق","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476739","cardNo":"1082597","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 907467","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"فرج خليل عبد الغني","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476741","cardNo":"1081826","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود احمد عبد السلام","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609108","cardNo":"44D1E24AB62A544C","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود احمد عبد السلام","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609109","cardNo":"44D1E24AB62A544C","patientPct":21.43,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"محمود احمد عبد السلام","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"حشو كمبوزيت 2 ضرس","value":800.0,"category":"company","company":"Nextcare","formNo":"7609109","cardNo":"44D1E24AB62A544C","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ايه حماده محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609110","cardNo":"1cbd5e40388215e7","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"صفاء حماده محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609111","cardNo":"9DAD9279948DAAE4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ابراهيم حماده محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609112","cardNo":"2729a6215db28ee3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"حبيه حماده محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609113","cardNo":"e11dc701a15adb09","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ريا جلال احمد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609114","cardNo":"a0bbf3696d02e983","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ريا جلال احمد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو عصب 1 ضرس","value":750.0,"category":"company","company":"Nextcare","formNo":"7609114","cardNo":"a0bbf3696d02e983","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"ريا جلال احمد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"عدد 2 اشعه","value":80.0,"category":"company","company":"Nextcare","formNo":"7609114","cardNo":"a0bbf3696d02e983","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"سمير اسلام سمير","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609117","cardNo":"8d8b8545d1673b7b","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"سمير اسلام سمير","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو عصب 2 ضرس","value":1500.0,"category":"company","company":"Nextcare","formNo":"7609117","cardNo":"8d8b8545d1673b7b","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"سمير اسلام سمير","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"عدد4 اشعه","value":160.0,"category":"company","company":"Nextcare","formNo":"7609117","cardNo":"8B8EC166EE247631","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/04","patient":"هاني حسين فوزي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609119","cardNo":"f176cf067a933e0a","patientPct":10.71,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"طه عيد عطيه","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887276","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"حبيبه عبدالعاطى رضوان","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887251","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"احمد الأبيض سماح","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887252","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد احمد محمود","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710756","cardNo":"29307312101235","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد احمد محمود","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":242.0,"category":"company","company":"AXA","formNo":"3710756","cardNo":"29307312101235","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1506795","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد احمد ابراهيم","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710757","cardNo":"27108252101117","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد احمد ابراهيم","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":83.0,"category":"company","company":"AXA","formNo":"3710757","cardNo":"27108252101117","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1506807","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"ايهاب فتحي عزب","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710758","cardNo":"27307092101576","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"صباح يوسف فرج","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710759","cardNo":"2635834254","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد عبدالوهاب محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710761","cardNo":"28803272101877","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"عمرو سعيد احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710762","cardNo":"30103012100939","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"عمرو سعيد احمد","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":38.0,"category":"company","company":"AXA","formNo":"3710762","cardNo":"30103012100939","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1506697","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد سعيد احمد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710763","cardNo":"29702132102531","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"حسين السيد عبد الحميد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710764","cardNo":"82","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"حسين السيد عبد الحميد","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":97.0,"category":"company","company":"AXA","formNo":"3710764","cardNo":"82","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1506759","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"مسعود عبدالصمد فتح الباب","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710765","cardNo":"28602262101351","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"دعاء شوقي مندي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو كمبوزيت 2 ضرس","value":800.0,"category":"company","company":"AXA","formNo":"811814","cardNo":"vlo154-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"دعاء شوقي مندي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو عصب 2 ضرس","value":1500.0,"category":"company","company":"AXA","formNo":"811814","cardNo":"vlo154-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"دعاء شوقي مندي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازاله رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811814","cardNo":"vlo154-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"أمينه عصام محمود","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811817","cardNo":"30111272100366","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"أمينه عصام محمود","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع جراحي","value":350.0,"category":"company","company":"AXA","formNo":"811817","cardNo":"3011272100366","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"أمينه عصام محمود","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازاله رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811817","cardNo":"3011272100366","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"شهد محمد مصطفي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811818","cardNo":"30606102102207","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"خالد عبد العظيم عبد العظيم","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811819","cardNo":"28911082101312","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"كريم جمعه السيد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476742","cardNo":"1246868","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"محمد جمال زكي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476744","cardNo":"1082414","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908218","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"عماد حمدي محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476745","cardNo":"1082357","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908781","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"طاهر محمد صلاح","phone":"","clinic":"انف واذن","doctor":"على محجوب","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609101","cardNo":"114F9561A4086B82","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"هاني حسين فوزي","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609121","cardNo":"f176cf067a933e0a","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"يوسف محمود محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609122","cardNo":"A31B814489550DA7","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"مايا حسن خليل","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609124","cardNo":"A8CC0C8B7260D4EB","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"شيماء عاطف ناجي","phone":"","clinic":"عظام","doctor":"اشرف الالفى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609125","cardNo":"663310BA6084E593","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/05","patient":"حذيفه حسن عبد الحكيم","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609126","cardNo":"D22669970D3AB45A","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"عمرو محمد ابراهيم","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710766","cardNo":"28706272101715","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"محمد ثروت مبارك","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710767","cardNo":"28512212101539","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"محمد سعيد عبد السلام","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710768","cardNo":"27903052101796","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"احمد جمال محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710769","cardNo":"10896","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"محمود محمد احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710770","cardNo":"28411202102412","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"محمود محمد احمد","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":263.0,"category":"company","company":"AXA","formNo":"3710770","cardNo":"28411202102412","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1508671","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"ايمن ابراهيم دسوقي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476746","cardNo":"1072974","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"غاليه فراج عطيه","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609077","cardNo":"b93672deb2608c7","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"عمر بشير عمر","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609078","cardNo":"abe842185bec0218","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"ملك محمد فرج","phone":"","clinic":"انف واذن","doctor":"على محجوب","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609079","cardNo":"dcdd6e03578dc4c6","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"سيف محمد فرج","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"3609080","cardNo":"7d3917608c927170","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/06","patient":"جمال فاروق عبد الفتاح","phone":"","clinic":"انف واذن","doctor":"على محجوب","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"3609080","cardNo":"8C61657C03FAEDB2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"اسعد عبد النبي خميس","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887277","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كمال فرج","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710771","cardNo":"28502182101754","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"محمد سعيد عبد السلام","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":302.0,"category":"company","company":"AXA","formNo":"3710773","cardNo":"27903052101796","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1510209","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"نجلاء ابراهيم عبده","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710774","cardNo":"0","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"يوسف شعبان السيد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811820","cardNo":"3006262100874","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"يوسف شعبان السيد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو 1 ليزر","value":500.0,"category":"company","company":"AXA","formNo":"811820","cardNo":"3006262100874","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"يوسف شعبان السيد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازاله رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811820","cardNo":"3006262100874","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كرم عبد العليم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811821","cardNo":"28410262100854","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كرم عبد العليم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو 1 عصب","value":750.0,"category":"company","company":"AXA","formNo":"811821","cardNo":"28410262100854","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كرم عبد العليم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو 1 ليزر","value":500.0,"category":"company","company":"AXA","formNo":"811821","cardNo":"28410262100854","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كرم عبد العليم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"خلع 2 ضرس","value":400.0,"category":"company","company":"AXA","formNo":"811821","cardNo":"28410262100854","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"احمد كرم عبد العليم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازاله رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811821","cardNo":"28410262100854","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"سعيد بلال سعيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476747","cardNo":"1159169","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"محمد خليل عبد الغني","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9467648","cardNo":"1081732","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 913073","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"محمد فرج جبريل","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9476750","cardNo":"1227699","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"موسي سعيد موسي","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"769120","cardNo":"ED6FFFD9E195280","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"وليد محمد صلاح","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"3609083","cardNo":"7C34582DD38C9DFD","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/07","patient":"شيماء احمد عبد القادر","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"3609084","cardNo":"ba457ad1272a71b1","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"طارق محمود حنفي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710775","cardNo":"VL0156-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"طارق محمود حنفي","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":225.0,"category":"company","company":"AXA","formNo":"3710775","cardNo":"VL0156-4","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1511467","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"محمود حنفي محمود","phone":"","clinic":"مخ وأعصاب","doctor":"علاء الدين محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710726","cardNo":"28611202105879","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"شهد محمود حنفي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710727","cardNo":"VL0156-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"شهد محمود حنفي","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":225.0,"category":"company","company":"AXA","formNo":"3710727","cardNo":"VL0156-3","patientPct":0,"discount":0,"notes":"رقم الموافقة: 1511451","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"مصطفي محمد عيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413051","cardNo":"1082208","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"عرفه محمد علي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"3609086","cardNo":"93CC69F109CA48B5","patientPct":21.43,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"عرفه محمد علي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو كمبوزيت","value":400.0,"category":"company","company":"Nextcare","formNo":"7609086","cardNo":"93CC69F109CA48B5","patientPct":20.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"عرفه محمد علي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازالة رواسب","value":250.0,"category":"company","company":"Nextcare","formNo":"7609086","cardNo":"93CC69F109CA48B5","patientPct":20.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"عرفه محمد علي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"اشعه 1 فيلم","value":40.0,"category":"company","company":"Nextcare","formNo":"7609086","cardNo":"93CC69F109CA48B5","patientPct":20.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"احمد سيد عبد الحميد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609087","cardNo":"35DFE49B9E48826A","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8702390","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"احمد سيد عبد الحميد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"حشو عصب 1 ضرس","value":750.0,"category":"company","company":"Nextcare","formNo":"7609087","cardNo":"35DFE49B9E48826A","patientPct":6.67,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"احمد سيد عبد الحميد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"اشعه 4 افلام","value":160.0,"category":"company","company":"Nextcare","formNo":"7609087","cardNo":"35DFE49B9E48826A","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"ادهم احمد سيد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609088","cardNo":"86015B27E4063FA3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"ادهم احمد سيد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"خلع عادي 2 ضرس","value":400.0,"category":"company","company":"Nextcare","formNo":"7609088","cardNo":"86015B27E4063FA3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"ادهم احمد سيد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"اشعه 2 فيلم","value":80.0,"category":"company","company":"Nextcare","formNo":"7609088","cardNo":"86015B27E4063FA3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"محمد عبد المعبود خليل","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609090","cardNo":"B1A158152736A48","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"جودي مصطفى محمد","phone":"","clinic":"تحاليل","doctor":"كريم مشالى","visitType":"متنوع","service":"تحاليل","value":37.0,"category":"company","company":"Nextcare","formNo":"","cardNo":"","patientPct":0,"discount":0,"notes":"رقم الموافقة: 7609156/1","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"محمد سعيد فتحي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"1492498","cardNo":"699-444","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/08","patient":"وليد حماده سيد","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"SMART","formNo":"","cardNo":"699-1130","patientPct":18.75,"discount":0,"notes":"رقم الموافقة: 205098461","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"ياسين مصطفى عبدالفتاح","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887278","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"ياسين مصطفى عبدالفتاح","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"(1) حشو كمبوزيت","value":400.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"4887278","cardNo":"8021910","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"نسمه احمد محمد على","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"7887279","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"نسمه احمد محمد على","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"(1) حشو ضرس","value":400.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"7887279","cardNo":"8021930","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"محمد رمضان دسوقى","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710729","cardNo":"29704052101715","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"عبدالرحمن محمد الصاوى","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710730","cardNo":"29801012116693","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"سيد عبدالعزيز عبدالحميد","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710731","cardNo":"27408030100451","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"رباب محمود السيد","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811822","cardNo":"0200698-1","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"محمود عمرو صميده","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413052","cardNo":"1082180","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 912280","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"محمود عمرو صميده","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"متنوع","service":"استئصال كيس شمعى كبير","value":450.0,"category":"company","company":"Careplus","formNo":"9413052","cardNo":"1082180","patientPct":0,"discount":0,"notes":"رقم الموافقة: 913795","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"وليد احمد عبد الحي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413053","cardNo":"1096326","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 908649","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"حسن عواد راضى","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413054","cardNo":"1237358","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 913296","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"حسن عواد راضى","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"حشو عصب جذور (1) ضرس","value":900.0,"category":"company","company":"Careplus","formNo":"9413054","cardNo":"1237358","patientPct":33.33,"discount":0,"notes":"رقم الموافقة: 914020","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"وليد صلاح عبدالمندى","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609092","cardNo":"0A941C19CCB31B58","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8709512/1","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"وليد صلاح عبدالمندى","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"خلع جراحى ضرس العقل (1)","value":350.0,"category":"company","company":"Nextcare","formNo":"7609092","cardNo":"0A941C19CCB31B58","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8710210/1","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"وليد صلاح عبدالمندى","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"متنوع","service":"(2) اشعة اسنان","value":80.0,"category":"company","company":"Nextcare","formNo":"7609092","cardNo":"0A941C19CCB31B58","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8710210/1","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"بلال عبدالسلام فرحات","phone":"","clinic":"اسنان","doctor":"محمد شاكر","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609093","cardNo":"4B3F55E627C47EF1","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8710635/1","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"ايمان سعيد شعبان","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609094","cardNo":"C47281FD25330F15","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"جودي مصطفى محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609095","cardNo":"9B0FDE6568242F88","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"محمد خالد فوزي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609097","cardNo":"C587608A86DF73DE","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"عمرو شوقى عطيه","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609098","cardNo":"EE3B8B033CF84EEE","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"خالد احمد طلعت","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609099","cardNo":"A196ACC496E9E7B9","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/09","patient":"ايه احمد عبدالكريم","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609100","cardNo":"2301C6E501AB7BFD","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"خالد عبد العظيم عبد العظيم","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710732","cardNo":"28911082101312","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"منصور سليم عبد الرحيم","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710733","cardNo":"28611222101772","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"خالد صبحي عبد الفضيل","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710734","cardNo":"3020416210247","patientPct":9.38,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"محمد مرضي محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710735","cardNo":"27305180103756","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"زياد احمد صوابي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710736","cardNo":"30502101803635","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"حسين مصطفي مهدي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710737","cardNo":"28401162101358","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"سعد ابراهيم السيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413056","cardNo":"1109542","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 913847","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"سامي عبد الباسط عبد الحميد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413060","cardNo":"1109483","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 913967","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"خالد عبده توفيق","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413061","cardNo":"1082597","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"احمد عبد العزيز عيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413063","cardNo":"1072965","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"احمد طلعت احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"76091001","cardNo":"7F8B4E80C27900D4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"اميره حسن حسني","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609002","cardNo":"A69D7890DB3CC62E","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"اياد اسلام جمال","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609004","cardNo":"BCFDDOA4EDB628F9","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"اسلام جمال السيد","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609005","cardNo":"176404A9FC741F3F","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"ناديه حمدي جمعه","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609006","cardNo":"7CAA3A52B75B7F3D","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/10","patient":"علي ربيع صاوي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":14.0,"category":"company","company":"Nextcare","formNo":"7609007","cardNo":"A8F384A4AC856AB2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"ايمان مرزوق محمد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":115.0,"category":"company","company":"الاهلى للخدمات الطبية","formNo":"7887280","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد صبحي فراج","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710738","cardNo":"29005272101818","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"عبدالرحمن محمد الصاوى","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710739","cardNo":"29801012116693","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"عبدالرحمن محمد الصاوى","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"متنوع","service":"خياطة (3) غرز جراحية تحت مخدر موضعى","value":230.0,"category":"company","company":"AXA","formNo":"3710739","cardNo":"29801012116693","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان عامر","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710740","cardNo":"28306022101452","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"مصطفى محمد صلاح","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710741","cardNo":"30105312100615","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد علي جمال","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710742","cardNo":"KT0142-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد علي جمال","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":55.0,"category":"company","company":"AXA","formNo":"3710742","cardNo":"KT0142-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان ابراهيم","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710743","cardNo":"28809232101732","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"شهد محمد مصطفي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710744","cardNo":"30606102102207","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"صبحيه الشربيني ابو المندور","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710745","cardNo":"0","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمود فوزي عبد النبي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811826","cardNo":"29112222101656","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811828","cardNo":"2880923101732","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"خلع جراحي","value":350.0,"category":"company","company":"AXA","formNo":"811828","cardNo":"2880923101732","patientPct":0,"discount":0,"notes":"رقم الموافقة: 180866","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"عدد1 فيلم اشعه","value":40.0,"category":"company","company":"AXA","formNo":"811828","cardNo":"2880923101732","patientPct":0,"discount":0,"notes":"رقم الموافقة: 180866","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو كمبوزيت1 ضرس","value":500.0,"category":"company","company":"AXA","formNo":"811828","cardNo":"2880923101732","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد عبد المجيد عابد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811829","cardNo":"29807122601757","patientPct":9.38,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد عبد المجيد عابد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو 1 عصب","value":750.0,"category":"company","company":"AXA","formNo":"811829","cardNo":"29807122601757","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد عبد المجيد عابد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"حشو كمبوزيت 1 ضرس","value":500.0,"category":"company","company":"AXA","formNo":"811829","cardNo":"29807122601757","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد عبد المجيد عابد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازاله رواسب","value":300.0,"category":"company","company":"AXA","formNo":"811829","cardNo":"29807122601757","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"احمد عبد المجيد عابد","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"اشعه 2 فيلم","value":80.0,"category":"company","company":"AXA","formNo":"811829","cardNo":"29807122601757","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"كريم حسني يحي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413064","cardNo":"1237317","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 914259","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"كمال نبيل علي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413066","cardNo":"1082300","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"وليد سمير عبد المعطي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609008","cardNo":"DED16E29FB683F56","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"وليد سمير عبد المعطي","phone":"","clinic":"تحاليل","doctor":"محمد ايمن","visitType":"متنوع","service":"تحاليل","value":226.0,"category":"company","company":"Nextcare","formNo":"7609008","cardNo":"DED16E29FB683F56","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمود عطيه محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609009","cardNo":"3d3ec032028e7935","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمود شحات محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609011","cardNo":"9d98c4884b345cb3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"جني شحات محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609012","cardNo":"9D994C61F3D69F37","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"عبد الرحمن نصر كامل","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609013","cardNo":"a81c4364a4262294","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"نجوي صبحي محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609014","cardNo":"CB9D0748BAB54113","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"عطيه محمد عطيه","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609016","cardNo":"4d4432e967fd1c09","patientPct":21.43,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/11","patient":"محمود حمدي فتحي","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609017","cardNo":"8a68c2088db39075","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"مصطفي محمد سعيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710747","cardNo":"30312252100217","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"احمد علي جمعه","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710748","cardNo":"28207102104551","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"فاطمه ناجي فرحات","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710749","cardNo":"11094756-1","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"فاطمه ناجي فرحات","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":225.0,"category":"company","company":"AXA","formNo":"3710749","cardNo":"11094756-1","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمد احمد محمود","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710750","cardNo":"29307312101235","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"حسين السيد عبد الحميد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710701","cardNo":"82","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"ندي نشأت ماهر","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710702","cardNo":"30306291301181","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"كمال نبيل علي","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413067","cardNo":"1082300","patientPct":11.11,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"عيد عبد العزيز عيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413070","cardNo":"1072964","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمود عبده توفيق","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413071","cardNo":"1245193","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 917688","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"خالد عبده توفيق","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":180.0,"category":"company","company":"Careplus","formNo":"9413072","cardNo":"1082597","patientPct":11.11,"discount":0,"notes":"رقم الموافقة: 913953","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"سعيد احمد سعيد","phone":"","clinic":"كلى والكلى الصناعية","doctor":"عاطف حسن","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609018","cardNo":"C676A7FBVF4BC239","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"وجيده محمد منشاوي","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609020","cardNo":"F6996A405554FC85","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"يسرا ابو بكر معافي","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609021","cardNo":"8EF85BAA3B2E3AA5","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"شيماء نصر عبد التواب","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609022","cardNo":"5D964F4CFF804945","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"سكه سعيد جبروني","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609023","cardNo":"6205A1634DB35D01","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"فاطمه عبد السلام فرحات","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609024","cardNo":"C79C265E141CC9C0","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"رجب عبد العليم السيد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609025","cardNo":"CF7DEF3983BA5F51","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"سحر محمد حنفي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609026","cardNo":"91B44FA36C018F31","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"سعيد طه عطيه","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609027","cardNo":"B89448B941781C34","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"سعيد طه عطيه","phone":"","clinic":"تحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":170.0,"category":"company","company":"Nextcare","formNo":"7609027","cardNo":"B89448B941781C34","patientPct":0,"discount":0,"notes":"رقم الموافقة: 7609027","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"هشام ياسر هشام","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609028","cardNo":"98BF63F9C1AF8FF","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"هشام ياسر هشام","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"حشو كمبوزيت 2 ضرس","value":800.0,"category":"company","company":"Nextcare","formNo":"7609028","cardNo":"98BF63F9C1AF8FF","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمد عماد محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609029","cardNo":"OF1D6966B058A5CE","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمد عماد محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"حشو عصب 1 ضرس","value":75.0,"category":"company","company":"Nextcare","formNo":"7609029","cardNo":"OF1D6966B058A5CE","patientPct":0,"discount":0,"notes":"رقم الموافقة: 8741313","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمد عماد محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"عدد 2 اشعه","value":80.0,"category":"company","company":"Nextcare","formNo":"7609029","cardNo":"OF1D6966B058A5CE","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"احمد محمد فوزي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609030","cardNo":"85F16CD02BAA4025","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"احمد محمد فوزي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"حشو كمبوزيت 2 ضرس","value":800.0,"category":"company","company":"Nextcare","formNo":"7609030","cardNo":"85F16CD02BAA4025","patientPct":34.38,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"احمد محمد فوزي","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"ازالة رواسب","value":250.0,"category":"company","company":"Nextcare","formNo":"7609030","cardNo":"85F16CD02BAA4025","patientPct":20.0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"حسن محمد فاروق","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609031","cardNo":"5E488C8BBDFA29","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"احمد عبد الرحيم سعيد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"7609032","cardNo":"34897C6773E993F5","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/12","patient":"محمود احمد سيد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":140.0,"category":"company","company":"Nextcare","formNo":"760933","cardNo":"c107f98e5ee96276","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/13","patient":"صباح بوسف فرج","phone":"","clinic":"اسنان","doctor":"كريم مشالي","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811832","cardNo":"2635834251","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"محمد حاتم عبد المحسن","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811833","cardNo":"29408212102812","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"محمد ممدوح اسماعيل","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811834","cardNo":"1000548-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"منال مهدي حامد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710706","cardNo":"0","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"مني عبد العزيز احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710707","cardNo":"28611102102244","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"محمد سعد عبد اللطيف","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710708","cardNo":"28104122102033","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"فتحيه محمد محمد","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710710","cardNo":"0","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"حسين السيد عبد الحميد","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710711","cardNo":"82","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"فتحيه محمد محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710712","cardNo":"0","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/14","patient":"احمد سلامه محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710713","cardNo":"","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اميره انيس يوسف","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811835","cardNo":"28103272100836","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اميره انيس يوسف","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"حشو (2) ضرس كمبوزيت","value":800.0,"category":"company","company":"AXA","formNo":"811835","cardNo":"28103272100836","patientPct":0,"discount":0,"notes":"رقم الموافقة: 184061","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اميره انيس يوسف","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"ازاله رواسب","value":250.0,"category":"company","company":"AXA","formNo":"811835","cardNo":"28103272100836","patientPct":0,"discount":0,"notes":"رقم الموافقة: 184061","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اميره انيس يوسف","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"دعامة فايبر جلاس","value":600.0,"category":"company","company":"AXA","formNo":"811835","cardNo":"28103272100836","patientPct":0,"discount":0,"notes":"رقم الموافقة: 184061","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"ماجد محمد جلال","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811836","cardNo":"28504182101391","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"عبد الله عيد حنفي","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811837","cardNo":"VL0154-6","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اسماء ذكي محمد","phone":"","clinic":"نساء","doctor":"اسماء محمد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710715","cardNo":"30107172102003","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"اسماء ذكي محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710716","cardNo":"30107172102003","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/15","patient":"ماجد محمد جلال","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710717","cardNo":"28504182101391","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"احمد جمال عبد الناصر","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811838","cardNo":"29906012103571","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"احمد جمال عبد الناصر","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"متنوع","service":"حشو (2) ضرس جذور","value":1500.0,"category":"company","company":"AXA","formNo":"811838","cardNo":"29906012103571","patientPct":0,"discount":0,"notes":"رقم الموافقة: 183886","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"احمد جمال عبد الناصر","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"متنوع","service":"عدد2 اشعه","value":80.0,"category":"company","company":"AXA","formNo":"811838","cardNo":"29906012103571","patientPct":0,"discount":0,"notes":"رقم الموافقة: 183886","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"هدير ممدوح اسماعيل","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710718","cardNo":"1000548-3","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"عادل يسري السيد","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710719","cardNo":"29205132102856","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"عمر سعيد احمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710720","cardNo":"103012100939","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"محمد علي جمال","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710721","cardNo":"1s10142-2","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/16","patient":"نصر ابراهيم ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710722","cardNo":"28910272100839","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"محمد طارق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811840","cardNo":"29301171401916","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"محمد طارق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"خلع (1) ضرس جراحي","value":350.0,"category":"company","company":"AXA","formNo":"811840","cardNo":"29301171401916","patientPct":0,"discount":0,"notes":"رقم الموافقة: 184543","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"محمد طارق محمد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"متنوع","service":"عدد (1) فيلم","value":40.0,"category":"company","company":"AXA","formNo":"811840","cardNo":"29301171401916","patientPct":0,"discount":0,"notes":"رقم الموافقة: 184543","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"علي فرج علي","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الألفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710723","cardNo":"29008051802411","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"علي فرج علي","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":208.0,"category":"company","company":"AXA","formNo":"3710723","cardNo":"29008051802411","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"احمد حسن توفيق","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الألفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710724","cardNo":"30112012106677","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/17","patient":"حسن اسماعيل ابراهيم","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"3710725","cardNo":"2750315201795","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"رزق كمال سالم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811841","cardNo":"37","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"رزق كمال سالم","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"ازاله رواسب","value":250.0,"category":"company","company":"AXA","formNo":"811841","cardNo":"37","patientPct":0,"discount":0,"notes":"رقم الموافقة: 185107","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"رزق كمال سالم","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الألفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401501","cardNo":"37","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"رضا وهبه عبد المجيد","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولي","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401502","cardNo":"28304012103519","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"عمر صابرفضل","phone":"","clinic":"مسالك بوليه","doctor":"جمال الخولي","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401503","cardNo":"28408112101831","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"هدير ممدوح اسماعيل","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الألفى","visitType":"متنوع","service":"عشره غيارات","value":650.0,"category":"company","company":"AXA","formNo":"8401504","cardNo":"1000548-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"احمد سلامه محمد","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401505","cardNo":"30009072101652","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"علي سلامه محمد","phone":"","clinic":"رمد","doctor":"محمد عباس","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401506","cardNo":"28201092102719","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/18","patient":"علي سلامه محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"اشرف الألفى","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401507","cardNo":"28201092102719","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"محمود عادل سعد","phone":"","clinic":"اسنان","doctor":"ندى عادل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811842","cardNo":"30201302101337","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"محمد احمد محمود","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401508","cardNo":"29307312101235","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"حسني عبدالله عطيه","phone":"","clinic":"جلديه","doctor":"يارا بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401509","cardNo":"34","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"حسني عبدالله عطيه","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":168.0,"category":"company","company":"AXA","formNo":"8401509","cardNo":"34","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"محمد احمد محمود","phone":"","clinic":"جلديه","doctor":"يارا بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401510","cardNo":"29307312101235","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"فوزي عيد عبد العزيز","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401511","cardNo":"28507032102657","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"محمود عادل سعد","phone":"","clinic":"جلديه","doctor":"يارا بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401512","cardNo":"30201302101337","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"محمد صميده عطيه","phone":"","clinic":"جلديه","doctor":"يارا بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401513","cardNo":"27708132101391","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/19","patient":"شعبان عثمان عبدالعاطى","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401514","cardNo":"28704142502154","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"احمد جمال عبد الناصر","phone":"","clinic":"اسنان","doctor":"كريم مشالى","visitType":"متنوع","service":"طربوشين","value":2000.0,"category":"company","company":"AXA","formNo":"811843","cardNo":"29906012103571","patientPct":0,"discount":0,"notes":"رقم الموافقة: 186617","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"هدير ممدوح اسماعيل","phone":"","clinic":"جراحة عامه","doctor":"عبدالغنى احمد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401518","cardNo":"1000548-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"محمد عثمان عبدالعاطى","phone":"","clinic":"جلديه","doctor":"يارا بهاء","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401519","cardNo":"284084272502034","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"محمد اسامه محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد عبود","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401520","cardNo":"29501150104619","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"محمد علي خميس","phone":"","clinic":"عظام","doctor":"محمد الجمل","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401521","cardNo":"28004052102112","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/20","patient":"محمد علي خميس","phone":"","clinic":"علاج طبيعى","doctor":"محمد صلاح","visitType":"متنوع","service":"6 جلسات","value":300.0,"category":"company","company":"AXA","formNo":"8401521","cardNo":"28004052102112","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/21","patient":"خالد علي الله محمود","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8111845","cardNo":"26908212101036","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/21","patient":"محمد حميده عطيه","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811851","cardNo":"27708B210B71","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/21","patient":"فادي جرجس عوض","phone":"","clinic":"اسنان","doctor":"ايه رأفت","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"4510047679E0","cardNo":"28409162102193","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"طربوش 1","value":1000.0,"category":"company","company":"AXA","formNo":"811847","cardNo":"28809232101732","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد رمضان ابراهيم","phone":"","clinic":"اسنان","doctor":"عمر محمود","visitType":"متنوع","service":"ازاله رواسب","value":250.0,"category":"company","company":"AXA","formNo":"811847","cardNo":"28809232101732","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"شعبان عثمان عبدالعاطى","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401516","cardNo":"28704142502154","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"شعبان عثمان عبدالعاطى","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":67.0,"category":"company","company":"AXA","formNo":"8401516","cardNo":"28704142502154","patientPct":44.78,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد جلال فاروق","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401522","cardNo":"29204142101151","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد طارق محمد","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401523","cardNo":"29301171401916","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد طارق محمد","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":320.0,"category":"company","company":"AXA","formNo":"8401523","cardNo":"29301171401916","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد رمضان ابراهيم","phone":"","clinic":"مخ وأعصاب","doctor":"علاء الدين","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401524","cardNo":"28809232101732","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"يوسف ناجي فاروق","phone":"","clinic":"عظام","doctor":"محمد عيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401526","cardNo":"28602122101971","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"ايمان حامد بركات","phone":"","clinic":"باطنه وطوارئ","doctor":"محمد ايمن","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401527","cardNo":"8349551","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"ايمان حامد بركات","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":242.0,"category":"company","company":"AXA","formNo":"8401527","cardNo":"8349551","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"احمد بدوي سلامه","phone":"","clinic":"عظام","doctor":"محمد عيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401528","cardNo":"28312122101859","patientPct":18.75,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"وحيد حامد السيد","phone":"","clinic":"عظام","doctor":"محمد عيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401529","cardNo":"279101621038","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/22","patient":"محمد ثروت مبارك","phone":"","clinic":"عظام","doctor":"محمد عيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401530","cardNo":"28519221201539","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/23","patient":"عصام جمال ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401531","cardNo":"28802212102193","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/23","patient":"محمد عيد عبد الهادي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401532","cardNo":"28910112101014","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/23","patient":"محمد عيد عبد الهادي","phone":"","clinic":"عظام","doctor":"احمد عبدالحميد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401533","cardNo":"2891011201014","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"ادهم احمد ناجي","phone":"","clinic":"اسنان","doctor":"اسلام هنداوي","visitType":"متنوع","service":"استشارة","value":160.0,"category":"company","company":"AXA","formNo":"811849","cardNo":"vlo120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"ادهم احمد ناجي","phone":"","clinic":"اسنان","doctor":"اسلام هنداوي","visitType":"متنوع","service":"حشو كمبوزيت 1 ضرس","value":400.0,"category":"company","company":"AXA","formNo":"811849","cardNo":"vlo120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"احمد ناجي بكر","phone":"","clinic":"اسنان","doctor":"اسلام هنداوي","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811850","cardNo":"28607102103316","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"احمد محمد علي","phone":"","clinic":"اسنان","doctor":"اسلام هنداوي","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"811853","cardNo":"29801302101437","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"يونس احمد ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401534","cardNo":"vl0120-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"يونس احمد ناجي","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":240.0,"category":"company","company":"AXA","formNo":"8401534","cardNo":"vl0120-3","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"ادهم احمد ناجي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401535","cardNo":"vl0120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"ادهم احمد ناجي","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":240.0,"category":"company","company":"AXA","formNo":"8401535","cardNo":"vl0120-4","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"محمد محمود وهبه","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401536","cardNo":"29901022101494","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"محمد محمود وهبه","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":110.0,"category":"company","company":"AXA","formNo":"8401536","cardNo":"29901022101494","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"محمد محمود وهبه","phone":"","clinic":"الأشعة","doctor":"محمد طه","visitType":"متنوع","service":"موجات صوتيه","value":250.0,"category":"company","company":"AXA","formNo":"8401536","cardNo":"29901022101494","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"احمد حسن توفيق","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401537","cardNo":"30112012106677","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"اشرف رزق عبد العزيز","phone":"","clinic":"جهاز هضمي وكبد","doctor":"محمد طه","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401538","cardNo":"27711182100451","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"اشرف رزق عبد العزيز","phone":"","clinic":"التحاليل","doctor":"كامل ربيع","visitType":"متنوع","service":"تحاليل","value":57.0,"category":"company","company":"AXA","formNo":"8401538","cardNo":"27711182100451","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"ايهاب محمد ابراهيم","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401539","cardNo":"29301182102511","patientPct":15.62,"discount":0,"notes":"","tax":0,"src":"xl"},{"date":"2025/05/24","patient":"احمد محمد علي","phone":"","clinic":"باطنه وطوارئ","doctor":"اسلام السيد","visitType":"كشف","service":"","value":160.0,"category":"company","company":"AXA","formNo":"8401540","cardNo":"29801302101437","patientPct":0,"discount":0,"notes":"","tax":0,"src":"xl"}];</script>
 <script>
 /* طبقة الاتصال: php | gas | local (تجريبي داخل المتصفح)
    نفس الأوامر تعمل في الثلاثة: status, register, login, me, logout, list, save, delete, upload, file */
@@ -936,7 +244,7 @@ function ensureUrl() {
     } catch (e) {}
   })();
 }
-const WRITES = new Set(['save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
+const WRITES = new Set(['bulk_save','sync_sheets','save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
 async function call(action, payload){
   const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
@@ -1007,7 +315,7 @@ const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
   doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
-  services:'type,name,price,tax',
+  services:'type,name,price,tax,abbr',
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
@@ -1091,6 +399,14 @@ const Local = {
       if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
+    if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
+    if (A === 'bulk_save') {
+      if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); if (e === 'users' || !ENT.includes(e)) return fail('كيان غير مسموح');
+      const list = db.rec[e] || (db.rec[e] = []), kf = String(b.key || '').split(',').filter(Boolean), kk = r => kf.map(k => String(r[k] == null ? '' : r[k])).join('|'), seen = new Set(kf.length ? list.map(kk) : []); let added = 0, skipped = 0, ctr = AUTO[e] ? list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0) : 0;
+      for (const src of (b.records || [])) { const out = {}; for (const k of FIELDS[e].split(',')) { if (!(k in src)) continue; let v = src[k]; if (NUMS.has(k)) v = Number(v) || 0; else v = String(v == null ? '' : v).trim().slice(0, 500); out[k] = v; }
+        if (!String(out.name || out.date || out.category || out.type || '').trim()) { skipped++; continue; } if (kf.length) { const key = kk(out); if (seen.has(key)) { skipped++; continue; } seen.add(key); } if (AUTO[e]) out[AUTO[e]] = ++ctr; list.push(Object.assign({id: rid(), createdAt: new Date().toISOString(), registeredBy: me.username}, out)); added++; }
+      this.save(db); return {added, skipped};
+    }
     if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
     if (A === 'list') {
       const readable = me.isAdmin || (e !== 'users' && (e === 'staff' ? has(me, 'staff') : (LOOKUP.includes(e) || has(me, e) || has(me, 'dashboard') || has(me, 'dues') || me.perms.some(p => p.startsWith('rep_')))));
@@ -1291,12 +607,12 @@ document.addEventListener('change', async e => {
 
 /* ---------- حقول النماذج ---------- */
 function dateFld(name, val, extra = '') {
-  return `<div class="dt"><input type="text" name="${name}" value="${esc(val || '')}" inputmode="numeric" placeholder="yyyy/mm/dd" maxlength="10" data-dt ${extra}><button type="button" data-act="pickdate" title="اختيار من التقويم">📅</button><input type="date" class="hid" tabindex="-1"></div>`;
+  return `<div class="dt"><input type="text" name="${name}" value="${esc(val || '')}" inputmode="numeric" placeholder="yyyy/mm/dd" maxlength="10" data-dt ${extra}><span class="dtb"><button type="button" tabindex="-1" title="اختيار من التقويم">📅</button><input type="date" class="dpk" aria-label="اختيار من التقويم"></span></div>`;
 }
-Acts.pickdate = el => { const d = $('input[type=date]', el.parentNode); const t = $('[data-dt]', el.parentNode).value; if (validDate(t)) d.value = t.replace(/\//g, '-'); try { d.showPicker ? d.showPicker() : d.click(); } catch (e) { d.click(); } };
+document.addEventListener('pointerdown', e => { const d = e.target; if (!d.classList || !d.classList.contains('dpk')) return; const t = $('[data-dt]', d.closest('.dt')); d.value = t && validDate(t.value) ? t.value.replace(/\//g, '-') : ''; }, true);
 document.addEventListener('change', e => {
   const d = e.target; if (d.type !== 'date' || !d.value) return;
-  const t = $('[data-dt]', d.parentNode); if (!t) return; t.value = d.value.replace(/-/g, '/'); t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true}));
+  const t = $('[data-dt]', d.closest('.dt')); if (!t) return; t.value = d.value.replace(/-/g, '/'); t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true}));
 });
 document.addEventListener('input', e => {
   const t = e.target; if (!t.matches || !t.matches('[data-dt]')) return;
@@ -1310,7 +626,7 @@ function fieldHTML(f, v) {
   switch (f.t) {
     case 'date': inner = dateFld(f.k, val); break;
     case 'num': inner = `<input type="number" step="any" ${nm} value="${esc(val)}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>`; break;
-    case 'sel': inner = `<select ${nm}>${(typeof f.opts === 'function' ? f.opts() : f.opts).map(o => { const ov = o.v != null ? o.v : o, ol = o.l != null ? o.l : o; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? 'selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`; break;
+    case 'sel': inner = `<select ${nm}>${(() => { let ol0 = typeof f.opts === 'function' ? f.opts() : f.opts; if (val !== '' && !ol0.some(o => String(o.v != null ? o.v : o) === String(val))) ol0 = [...ol0, {v: val, l: val}]; return ol0; })().map(o => { const ov = o.v != null ? o.v : o, ol = o.l != null ? o.l : o; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? 'selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`; break;
     case 'area': inner = `<textarea ${nm} rows="2">${esc(val)}</textarea>`; break;
     case 'ro': inner = `<input type="text" ${nm} value="${esc(val)}" readonly tabindex="-1">`; break;
     case 'img': inner = `<div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(val)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 إرفاق صورة</button><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
@@ -1571,12 +887,12 @@ async function renderLogin(app) {
     const u = prompt('الصق رابط نشر Google Apps Script (ينتهي بـ /exec) لتعمل هذه النسخة على نفس بيانات الشيت.\nاتركه فارغاً للعودة للخادم المحلي.', cur);
     if (u === null) return; const t = u.trim(); if (t && !/^https:\/\/script\.google\.com\/.+\/exec/.test(t)) return toast('الرابط غير صحيح');
     API.setServer(t); toast(t ? 'تم الربط بجوجل شيت' : 'تمت العودة للخادم المحلي'); renderLogin(app); };
-  $('#lf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => { const v = readForm(e.target); const r = await API.call('login', v); API.setToken(r.token); S.user = r.user; await loadAll(); render(); }); };
+  $('#lf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => { const v = readForm(e.target); const r = await API.call('login', v); API.setToken(r.token); S.user = r.user; await loadAll(); render(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 600); }); };
   $('#rf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => {
     const v = readForm(e.target); if (v.birthDate && !validDate(v.birthDate)) throw new Error('تاريخ الميلاد يجب أن يكون yyyy/mm/dd');
     const r = await API.call('register', v); toast(r.pending ? 'تم إنشاء الحساب، بانتظار موافقة المدير' : 'تم إنشاء حساب المدير، سجل الدخول');
     if (r.pending) { renderLogin(app); return; }
-    const l = await API.call('login', {username: v.username, password: v.password}); API.setToken(l.token); S.user = l.user; await loadAll(); render();
+    const l = await API.call('login', {username: v.username, password: v.password}); API.setToken(l.token); S.user = l.user; await loadAll(); render(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 600);
   }); };
 }
 
@@ -1625,7 +941,7 @@ document.addEventListener('click', e => { const el = e.target.closest('[data-act
 
 window.addEventListener('DOMContentLoaded', async () => {
   try { if (window.AndroidBridge) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
-  render(); startSync();
+  render(); startSync(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 1500);
 });
 
 </script>
@@ -1680,7 +996,7 @@ function crud(cfg) {
       }); };
     };
     const refreshList = () => { const rb = $('[data-rangebar]'); if (rb) rb.outerHTML = rangeBar(); const l = $('#lst'); if (l) { l.innerHTML = listHTML(); hydrateImgs(l); } };
-    S.view = {refresh: refreshList,
+    S.view = {refresh: refreshList, total: () => { const c = cfg.cols.find(x => x.sum); if (!c) return ''; const l = rows(); return fmtN(l.reduce((t, r) => t + (+c.sum(r) || 0), 0)); },
       edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
       del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
       reset};
@@ -1716,25 +1032,55 @@ SCREEN_RENDER.doctors = crud({k: 'doctors', ent: 'doctors', t: 'الأطباء',
 
 /* ---------- الخدمات ---------- */
 SCREEN_RENDER.services = crud({k: 'services', ent: 'services', t: 'الخدمات (عيادات – عمليات – أشعة – تحاليل – خدمات)', i: '💉', c: 'orange', add: 'خدمة جديدة',
-  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
-  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
+  fields: [{k: 'type', l: 'النوع', t: 'seg', opts: Object.keys(SVTYPE).map(v => ({v, l: SVTYPE[v], c: SVCOLOR[v]}))}, {k: 'name', l: 'اسم الخدمة', req: 1, sg: 'services.name'}, {k: 'abbr', l: 'الاختصار (مثل CBC)'}, {k: 'price', l: 'القيمة', t: 'num', req: 1}, {k: 'tax', l: 'الضريبة (لكل زيارة)', t: 'num'}],
+  cols: [{h: 'النوع', f: r => `<span class="tag c-${SVCOLOR[r.type] || 'teal'}">${SVTYPE[r.type] || ''}</span>`}, {h: 'الخدمة', f: r => r.type === 'clinic' ? L.clinic(r.name) : esc(r.name)}, {h: 'الاختصار', f: r => esc(r.abbr)}, {h: 'القيمة', f: r => fmtN(r.price)}, {h: 'الضريبة', f: r => fmtN(r.tax)}],
   sort: (a, b) => Object.keys(SVTYPE).indexOf(a.type) - Object.keys(SVTYPE).indexOf(b.type) || a.name.localeCompare(b.name, 'ar'),
   validate: (r, ed) => S.data.services.some(s => s.id !== ed && s.type === r.type && s.name === r.name) ? 'الخدمة مسجلة من قبل' : '',
   tools: () => can('services') ? '<button class="btn sm c-gold" data-act="importseed" title="يضيف الناقص فقط من بيانات الإكسيل ولا يعدّل ما عدّلته">📥 استيراد من الإكسيل</button>' : ''
 });
+/* استيراد البيانات الأساسية (من الإكسيل) وزيارات الإكسيل القديم إلى قاعدة البيانات (شيت جوجل) — يتخطى المكرر ولا يعدّل الموجود */
+const chunk = (a, n) => { const o = []; for (let i = 0; i < a.length; i += n) o.push(a.slice(i, i + n)); return o; };
+async function bulkSend(entity, records, key, onP) {
+  let added = 0, skipped = 0, done = 0;
+  for (const part of chunk(records, 100)) { const r = await API.call('bulk_save', {entity, records: part, key}); added += r.added || 0; skipped += r.skipped || 0; done += part.length; if (onP) onP(done); }
+  return {added, skipped};
+}
+async function seedBasics(onP) {
+  const SD = window.SEED || {}; let n = 0;
+  const jobs = [['services', SD.services, 'type,name'], ['doctors', SD.doctors, 'name,clinic'], ['companies', SD.companies, 'name'], ['staff', SD.staff, 'name']];
+  for (const [e, list, key] of jobs) { if (!list || !list.length) continue; if (onP) onP(e); const r = await bulkSend(e, list, key); n += r.added; }
+  await loadAll(['services', 'doctors', 'companies', 'staff']); return n;
+}
+async function seedHistory(onP) {
+  const H = window.HIST || []; if (!H.length) return {added: 0, skipped: 0};
+  const rs = H.map(r => { const d = S.data.doctors.find(x => x.name === r.doctor && x.clinic === r.clinic) || S.data.doctors.find(x => x.name === r.doctor); return Object.assign({}, r, {doctorId: d ? d.id : '', doctor: d ? d.name : r.doctor}); });
+  const pats = [...new Map(H.filter(r => r.patient).map(r => [r.patient, {name: r.patient, phone: r.phone || ''}])).values()];
+  const res = await bulkSend('visits', rs, 'date,patient,value,visitType,service,formNo,clinic', onP);
+  await bulkSend('patients', pats, 'name');
+  await loadAll(['visits', 'patients']); return res;
+}
 Acts.importseed = async el => {
-  const SD = window.SEED; if (!SD) return toast('لا توجد بيانات للاستيراد');
-  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل والخدمات والأطباء والشركات غير الموجودة فقط من ملف الإكسيل، دون تغيير ما عدّلته. متابعة؟')) return;
+  if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل (بالاختصارات) والخدمات والأطباء والشركات غير الموجودة فقط، دون تغيير ما عدّلته. متابعة؟')) return;
+  await guard(el, async () => { const n = await seedBasics(); toast(n ? `تمت إضافة ${n} سجل ✔` : 'كل البيانات موجودة بالفعل'); refreshView(); });
+};
+Acts.importhist = async el => {
+  const H = window.HIST || []; if (!H.length) return toast('لا توجد بيانات قديمة للاستيراد', true);
+  if (!await confirmBox(`سيتم استيراد ${H.length} زيارة من الإكسيل السابق (${H[0].date} حتى ${H[H.length - 1].date}) إلى قاعدة البيانات وشيت جوجل، مع تخطي المكرر. متابعة؟`)) return;
   await guard(el, async () => {
-    const jobs = [];
-    (SD.services || []).forEach(x => { if (!S.data.services.some(s => s.type === x.type && s.name === x.name)) jobs.push(['services', x]); });
-    if (can('doctors')) (SD.doctors || []).forEach(x => { if (!S.data.doctors.some(d => d.name === x.name && d.clinic === x.clinic)) jobs.push(['doctors', x]); });
-    if (can('companies')) (SD.companies || []).forEach(x => { if (!S.data.companies.some(c => c.name === x.name)) jobs.push(['companies', x]); });
-    if (!jobs.length) return toast('كل البيانات موجودة بالفعل');
-    for (let i = 0; i < jobs.length; i += 5) await Promise.all(jobs.slice(i, i + 5).map(([entity, record]) => API.call('save', {entity, record})));
-    await loadAll(['services', 'doctors', 'companies']); toast(`تمت إضافة ${jobs.length} سجل ✔`); refreshView();
+    await seedBasics(); const r = await seedHistory(n => toast(`⏳ جاري الاستيراد… ${n}/${H.length}`));
+    try { await API.call('sync_sheets'); } catch (e) {}
+    toast(`تم استيراد ${r.added} زيارة (تخطي ${r.skipped} مكررة) ✔`); refreshView();
   });
 };
+Acts.syncsheets = async el => guard(el, async () => { await API.call('sync_sheets'); toast('تمت مزامنة أوراق جوجل ✔'); });
+async function autoSeedCheck() {
+  if (!S.user || !S.user.isAdmin || window.__seedAsked) return; window.__seedAsked = true;
+  try {
+    if (!S.data.services.length) { toast('⏳ جاري تعبئة البيانات الأساسية…'); await seedBasics(); toast('تمت تعبئة العيادات والأشعة والتحاليل والأطباء والشركات ✔'); render(); }
+    if (!S.data.visits.length && (window.HIST || []).length && await confirmBox(`لا توجد زيارات مسجلة. هل تريد استيراد ${window.HIST.length} زيارة من الإكسيل السابق الآن؟`)) { const r = await seedHistory(); try { await API.call('sync_sheets'); } catch (e) {} toast(`تم استيراد ${r.added} زيارة ✔`); render(); }
+  } catch (e) { toast(e.message || 'تعذر الاستيراد التلقائي', true); window.__seedAsked = false; }
+}
+window.autoSeedCheck = autoSeedCheck;
 
 /* ---------- المرضى ---------- */
 SCREEN_RENDER.patients = crud({k: 'patients', ent: 'patients', t: 'المرضى', i: '🧑‍🤝‍🧑', c: 'blue', add: 'مريض جديد',
@@ -1784,7 +1130,7 @@ SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'الع�
 function visitAuto(f, why) {
   const clinic = getv(f, 'clinic'), vt = getv(f, 'visitType'), cat = getv(f, 'category'), svc = getv(f, 'service');
   const c = clinicOf(clinic), sv = S.data.services.find(s => s.name === svc && s.type !== 'clinic');
-  if (why === 'clinic') { setv(f, 'tax', c ? c.tax || 0 : 0); }
+  if (why === 'clinic' || why === 'visitType') { setv(f, 'tax', vt === 'كشف' && c ? c.tax || 0 : 0); }
   if (['clinic', 'visitType', 'category', 'company', 'service'].includes(why)) {
     let val = null;
     if (sv && why === 'service') val = sv.price;
@@ -1793,6 +1139,7 @@ function visitAuto(f, why) {
   }
   const co = S.data.companies.find(x => x.name === getv(f, 'company')), fee = co && co.fee > 0 && vt === 'كشف' ? co.fee : (+getv(f, 'value') || 0);
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
+  { const pv = getv(f, 'paid'), due = dueOf({category: cat, value: getv(f, 'value'), patientPct: getv(f, 'patientPct'), discount: getv(f, 'discount'), company: getv(f, 'company'), visitType: vt}); setv(f, '_rem', pv === '' ? fmtN(0) : fmtN(Math.max(0, due - (+pv || 0)))); }
   const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
 }
 function visitBanner(f, ctx) {
@@ -1822,40 +1169,37 @@ function visitLast(f, ctx) {
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
 SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
-  groups: {pay: {title: '💳 بيانات الدفع', show: v => v.payMethod && v.payMethod !== 'cash'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
     {k: '_banner', t: 'html', html: () => '<div class="fld full"><div id="vbanner"></div></div>'},
-    {k: 'clinic', l: 'العيادة / القسم', t: 'combo', sg: 'clinicsx', req: 1},
+    {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS].map(x => ({v: x, l: x || '— اختر العيادة —'}))},
     {k: '_doc', l: 'الطبيب المعالج', t: 'docpick', sg: 'clinicdocs'},
-    {k: 'visitType', l: 'الزيارة', t: 'combo', sg: 'vtypes'}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
-    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع (فارغ = مدفوع بالكامل)', t: 'num'}, {k: 'tax', l: 'الضريبة', t: 'ro'},
+    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: () => VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع', t: 'num', ph: 'اتركه فارغاً = مدفوع بالكامل'}, {k: '_rem', l: 'المتبقي', t: 'ro'}, {k: 'tax', l: 'الضريبة (على الكشف فقط)', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
-    {k: 'payMethod', l: 'طريقة الدفع', t: 'seg', w: 'full', opts: [{v: 'cash', l: '💵 نقدي', c: 'lime'}, {v: 'visa', l: '💳 فيزا', c: 'blue'}, {v: 'master', l: '💳 ماستر كارد', c: 'orange'}, {v: 'transfer', l: '📲 تحويل كاش', c: 'violet'}, {v: 'credit', l: '⏳ دفع آجل', c: 'red'}]},
-    {k: 'payRef', l: 'الرقم المرجعي', grp: 'pay'}, {k: 'payPhone', l: 'رقم الهاتف', num: 1, grp: 'pay'},
-    {k: 'notes', l: 'ملاحظات', t: 'area'}, {k: '_by', l: 'مسئول التسجيل', t: 'ro'},
+    {k: 'notes', l: 'ملاحظات', t: 'area'},
     {k: 'discount', l: 'نسبة الخصم %', t: 'num', grp: 'ins'}, {k: '_net', l: 'الصافي بعد الخصم', t: 'ro', grp: 'ins'},
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
     {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
-  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'الدفع', f: r => ({visa: '💳 فيزا', master: '💳 ماستر', transfer: '📲 تحويل كاش', credit: '⏳ آجل'})[r.payMethod] || 'نقدي'}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', payMethod: 'cash', _by: S.user.username, tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
-    if (o.payMethod === 'cash') { o.payRef = ''; o.payPhone = ''; }
-    if (o.payMethod === 'credit' && (o.paid === '' || o.paid == null)) o.paid = '0';
+    o.payMethod = ''; o.payRef = ''; o.payPhone = '';
     return o;
   },
-  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date), _by: r.registeredBy || S.user.username}),
-  validate: r => (r.payMethod === 'visa' || r.payMethod === 'master') && /\d{12,}/.test(String(r.payRef || '').replace(/[\s-]/g, '')) ? 'لا تُدخل رقم البطاقة كاملاً — اكتب آخر 4 أرقام أو رقم مرجع العملية فقط' : (r.category === 'company' && !r.company ? 'اختر اسم الشركة' : ''),
+  fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
+  validate: r => r.category === 'company' && !r.company ? 'اختر اسم الشركة' : '',
   after: async (rec, sent) => {
     const p = S.data.patients.find(x => x.name === sent.patient);
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
@@ -1865,10 +1209,9 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', 
     if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
     if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
     if (n === 'phone') visitLast(f, ctx);
-    if (n === 'payMethod') { const pd = $('[name=paid]', f); if (getv(f, 'payMethod') === 'credit') { if (!pd.value) pd.value = '0'; } else if (pd.value === '0' && !ctx.editing) pd.value = ''; }
     if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
-    if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount'].includes(n) && !ctx.typing) visitAuto(f, n);
-    if (n === 'value' || n === 'patientPct' || n === 'discount') visitAuto(f, n);
+    if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount', 'paid'].includes(n) && !ctx.typing) visitAuto(f, n);
+    if (n === 'value' || n === 'patientPct' || n === 'discount' || n === 'paid') visitAuto(f, n);
   }
 });
 
@@ -2473,6 +1816,9 @@ SCREEN_RENDER.admin = async function () {
     <div class="fld"><label>رقم الهاتف</label><input name="phone" value="${esc(st.phone)}" dir="ltr"></div>
     <div class="fld"><label>اللوجو</label><div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(st.logo)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 اختيار اللوجو</button><button type="button" class="btn sm ghost" id="nologo">إزالة</button><input type="hidden" name="logo" value="${esc(st.logo)}"></div></div>
     <div class="actions"><button class="btn c-teal" type="submit">💾 حفظ الإعدادات</button></div></form></div>
+  <div class="panel accent c-gold"><h3>📥 استيراد البيانات وأوراق جوجل</h3>
+    <p class="muted">استيراد البيانات الأساسية (عيادات، أطباء، شركات، أشعة وتحاليل باختصاراتها) وزيارات الإكسيل السابق. المكرر يُتخطى. بعدها تظهر البيانات في أوراق جوجل بأسماء الشاشات وتتحدث تلقائياً مع كل إدخال.</p>
+    <div class="actions"><button class="btn c-gold" data-act="importseed">📥 البيانات الأساسية</button><button class="btn c-orange" data-act="importhist">📥 زيارات الإكسيل السابق</button><button class="btn c-teal" data-act="syncsheets">🔄 مزامنة أوراق جوجل</button></div></div>
   <div class="panel accent c-blue"><h3>💾 النسخ الاحتياطي والاسترجاع</h3>
     <p class="muted">النسخة تشمل كل بيانات البرنامج والمستخدمين والإعدادات (الصور لا تدخل في الملف).</p>
     <div class="actions"><button class="btn c-blue" id="bk">⬇️ تنزيل نسخة احتياطية</button><button class="btn c-orange" id="rs">⬆️ استرجاع من ملف</button><input type="file" id="rsf" accept=".json,application/json" class="hid"></div></div>
@@ -2654,30 +2000,39 @@ const OCR = (() => {
     sheets = sheets.map(s => ({name: s.name, rows: [...meta.map(r => r.slice()), ...s.rows], headRows: meta.length + 1}));
     saveBlob(xlsx(sheets), `${title.replace(/[\\/:*?"<>|]/g, ' ').trim()}-${stamp()}.xlsx`); toast('تم تجهيز ملف Excel');
   };
-  /* ---- الطباعة: بنود وتقارير فقط على A4 (ليست صفحات البرنامج) ---- */
-  const PRINT_CSS = (land) => `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:10mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.hd{text-align:center;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:8px;position:relative;min-height:44px}.hd h2{margin:0 0 2px;font-size:19px}.hd h3{margin:2px 0;font-size:14px}.hd div{font-size:11px}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:90px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
-table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
+  /* ---- الطباعة: التقرير المطلوب فقط على A4 — العنوان أعلى الصفحة، مربع الإجمالي على اليسار، ثم مربع التفاصيل (يتوسّط الصفحة ويتقلّص ليحتوي كل البيانات) ---- */
+  const PRINT_CSS = (land) => { const W = land ? 281 : 194; return `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:8mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.page{width:${W}mm;margin:0 auto;padding:0}
+.hd{position:relative;text-align:center;border-bottom:2px solid #000;padding:2px 0 6px;margin-bottom:8px;min-height:46px}.hd h2{margin:0;padding:6px 110px 0;font-size:20px;line-height:1.35}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:100px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
+.box{border:1.5px solid #000;border-radius:3px;padding:6px;overflow:hidden}.foot{margin-top:6px;text-align:center;font-size:10px;color:#333}
+table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto;table-layout:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle;white-space:nowrap}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
-img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}`;
-  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2><div>${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}</div><div>${esc(sub)}</div></div>`;
+img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}
+@media screen{body{background:#8a8a8a}.page{background:#fff;margin:8px auto;padding:8mm;width:${W + 16}mm;box-shadow:0 0 6px #000}}`; };
+  const FIT_JS = `<script>(function(){function fit(){var t=document.getElementById('fit'),b=t&&t.parentNode;if(!t||!b)return;t.style.zoom=1;var w=b.clientWidth-14,sw=t.scrollWidth;if(sw>w+1)t.style.zoom=Math.max(.3,w/sw*.985)}window.addEventListener('load',fit);window.addEventListener('beforeprint',fit);setTimeout(fit,150)})()<\/script>`;
+  const hdr = (title, sub, total) => `<div class="hd">${total ? `<div class="tot"><small>إجمالي القيمة</small><b>${esc(total)}</b></div>` : ''}<h2>${esc(title)}</h2></div>`;
+  function previewPrint(doc, title) {
+    const old = document.getElementById('pvov'); if (old) old.remove();
+    const ov = document.createElement('div'); ov.id = 'pvov'; ov.className = 'noprint';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#555;display:flex;flex-direction:column;direction:rtl';
+    ov.innerHTML = `<div style="display:flex;gap:8px;align-items:center;padding:8px;background:#fff;border-bottom:1px solid #999;flex-wrap:wrap"><b style="flex:1;min-width:120px;font-size:14px">${esc(title)}</b><button class="btn c-teal" id="pvp">🖨️ طباعة / PDF</button><button class="btn c-red" id="pvc">✖ إغلاق</button></div><iframe id="pvf" style="flex:1;border:0;width:100%;background:#8a8a8a"></iframe>`;
+    document.body.appendChild(ov);
+    const fr = ov.querySelector('#pvf'), go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة من هنا — جرّب من متصفح الهاتف/الكمبيوتر مباشرة', true); } };
+    ov.querySelector('#pvp').onclick = go; ov.querySelector('#pvc').onclick = () => ov.remove();
+    fr.srcdoc = doc; fr.onload = () => setTimeout(go, 400);
+  }
   function printDoc(title, sub, bodyHTML, land, opt) {
-    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${opt && opt.css ? opt.css : PRINT_CSS(land)}</style></head><body>${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}</body></html>`;
+    const custom = !!(opt && opt.css), foot = custom ? '' : `<div class="foot">${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}${sub ? ' — ' + esc(sub) : ''}</div>`;
+    const inner = custom ? bodyHTML : `<div class="box"><div id="fit">${bodyHTML}</div></div>${foot}`;
+    const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${custom ? opt.css : PRINT_CSS(land)}</style></head><body><div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>${custom ? '' : FIT_JS}</body></html>`;
     if (window.AndroidBridge && window.AndroidBridge.printHtml) { window.AndroidBridge.printHtml(doc, title, !!land); return; }
-    if (!window.AndroidBridge) { // المتصفح: نافذة طباعة مستقلة (تعمل على الهاتف والكمبيوتر)، وإلا إطار مخفي
-      let w = null; try { w = window.open('', '_blank'); } catch (x) {}
-      if (w && w.document) { w.document.open(); w.document.write(doc); w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (x) {} }, 500); return; }
-    }
     if (window.AndroidBridge) { // الأندرويد (نسخة قديمة): نستبدل المحتوى مؤقتاً
-      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (opt && opt.css ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
-      root.innerHTML = `${opt && opt.head ? opt.head : hdr(title, sub, opt && opt.total)}${bodyHTML}`;
+      const root = $('#app'), keep = root.innerHTML, st = document.createElement('style'); st.textContent = (custom ? opt.css : PRINT_CSS(land)).replace(/\*\{[^}]*\}/, ''); document.head.appendChild(st);
+      root.innerHTML = `<div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>`;
       let done = false; const back = () => { if (done) return; done = true; st.remove(); root.innerHTML = keep; render(); };
       window.AndroidBridge.print(); setTimeout(back, 4000); return;
     }
-    const fr = document.createElement('iframe'); fr.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0'; document.body.appendChild(fr);
-    const d = fr.contentDocument; d.open(); d.write(doc); d.close();
-    const go = () => { try { fr.contentWindow.focus(); fr.contentWindow.print(); } catch (e) { toast('تعذرت الطباعة', true); } setTimeout(() => fr.remove(), 60000); };
-    setTimeout(go, 350);
+    previewPrint(doc, title);
   }
   function cleanContent() {
     const m = $('#main').cloneNode(true);
@@ -2687,6 +2042,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     m.querySelectorAll('table').forEach(t => { // حذف عمود الأزرار (رأس فارغ)
       const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
     });
+    m.querySelectorAll('table').forEach(t => { const ths = [...t.querySelectorAll('thead th')]; for (let i = ths.length - 1; i >= 0; i--) if (/^\s*صور[ةه]/.test(ths[i].textContent)) t.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach(r => { if (r.children[i] && r.children[i].colSpan <= 1) r.children[i].remove(); }); });
     m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
     const kp = [...m.querySelectorAll('.kpis')]; if (kp.length && m.querySelector('table')) { kp.forEach(n => n.remove()); const w = document.createElement('div'); w.innerHTML = '<h2 class="s">ملخص</h2>' + kp.map(n => n.outerHTML).join(''); m.appendChild(w); } // العنوان ثم الجدول أولاً، والملخص بعده
     const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);

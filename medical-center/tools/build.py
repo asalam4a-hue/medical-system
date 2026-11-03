@@ -3,10 +3,11 @@ root = pathlib.Path(__file__).resolve().parent.parent
 web = root / "web"
 rd = lambda n: (web / n).read_text(encoding="utf-8")
 seed = (root / "tools/seed.json").read_text(encoding="utf-8")
+hist = (root / "tools/history.json").read_text(encoding="utf-8")
 def build(mode, out, extra=""):
     html = rd("index.html")
     css = "<style>\n" + rd("app.css") + "\n</style>"
-    js = "<script>window.API_MODE='%s';window.SEED=%s;%s</script>\n" % (mode, seed, extra)
+    js = "<script>window.API_MODE='%s';window.SEED=%s;window.HIST=%s;%s</script>\n" % (mode, seed, hist, extra)
     for f in ("api.js", "core.js", "screens.js", "reports.js", "details.js", "dues.js", "cash.js", "journal.js", "admin.js", "ocr.js", "export.js"):
         js += "<script>\n" + rd(f).replace("</script", "<\\/script") + "\n</script>\n"
     html = html.replace("<!--CSS-->", css).replace("<!--SCRIPTS-->", js)

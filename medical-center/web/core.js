@@ -134,12 +134,12 @@ document.addEventListener('change', async e => {
 
 /* ---------- حقول النماذج ---------- */
 function dateFld(name, val, extra = '') {
-  return `<div class="dt"><input type="text" name="${name}" value="${esc(val || '')}" inputmode="numeric" placeholder="yyyy/mm/dd" maxlength="10" data-dt ${extra}><button type="button" data-act="pickdate" title="اختيار من التقويم">📅</button><input type="date" class="hid" tabindex="-1"></div>`;
+  return `<div class="dt"><input type="text" name="${name}" value="${esc(val || '')}" inputmode="numeric" placeholder="yyyy/mm/dd" maxlength="10" data-dt ${extra}><span class="dtb"><button type="button" tabindex="-1" title="اختيار من التقويم">📅</button><input type="date" class="dpk" aria-label="اختيار من التقويم"></span></div>`;
 }
-Acts.pickdate = el => { const d = $('input[type=date]', el.parentNode); const t = $('[data-dt]', el.parentNode).value; if (validDate(t)) d.value = t.replace(/\//g, '-'); try { d.showPicker ? d.showPicker() : d.click(); } catch (e) { d.click(); } };
+document.addEventListener('pointerdown', e => { const d = e.target; if (!d.classList || !d.classList.contains('dpk')) return; const t = $('[data-dt]', d.closest('.dt')); d.value = t && validDate(t.value) ? t.value.replace(/\//g, '-') : ''; }, true);
 document.addEventListener('change', e => {
   const d = e.target; if (d.type !== 'date' || !d.value) return;
-  const t = $('[data-dt]', d.parentNode); if (!t) return; t.value = d.value.replace(/-/g, '/'); t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true}));
+  const t = $('[data-dt]', d.closest('.dt')); if (!t) return; t.value = d.value.replace(/-/g, '/'); t.dispatchEvent(new Event('input', {bubbles: true})); t.dispatchEvent(new Event('change', {bubbles: true}));
 });
 document.addEventListener('input', e => {
   const t = e.target; if (!t.matches || !t.matches('[data-dt]')) return;
@@ -153,7 +153,7 @@ function fieldHTML(f, v) {
   switch (f.t) {
     case 'date': inner = dateFld(f.k, val); break;
     case 'num': inner = `<input type="number" step="any" ${nm} value="${esc(val)}" ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>`; break;
-    case 'sel': inner = `<select ${nm}>${(typeof f.opts === 'function' ? f.opts() : f.opts).map(o => { const ov = o.v != null ? o.v : o, ol = o.l != null ? o.l : o; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? 'selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`; break;
+    case 'sel': inner = `<select ${nm}>${(() => { let ol0 = typeof f.opts === 'function' ? f.opts() : f.opts; if (val !== '' && !ol0.some(o => String(o.v != null ? o.v : o) === String(val))) ol0 = [...ol0, {v: val, l: val}]; return ol0; })().map(o => { const ov = o.v != null ? o.v : o, ol = o.l != null ? o.l : o; return `<option value="${esc(ov)}" ${String(ov) === String(val) ? 'selected' : ''}>${esc(ol)}</option>`; }).join('')}</select>`; break;
     case 'area': inner = `<textarea ${nm} rows="2">${esc(val)}</textarea>`; break;
     case 'ro': inner = `<input type="text" ${nm} value="${esc(val)}" readonly tabindex="-1">`; break;
     case 'img': inner = `<div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(val)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 إرفاق صورة</button><input type="hidden" ${nm} value="${esc(val)}"></div>`; break;
@@ -414,12 +414,12 @@ async function renderLogin(app) {
     const u = prompt('الصق رابط نشر Google Apps Script (ينتهي بـ /exec) لتعمل هذه النسخة على نفس بيانات الشيت.\nاتركه فارغاً للعودة للخادم المحلي.', cur);
     if (u === null) return; const t = u.trim(); if (t && !/^https:\/\/script\.google\.com\/.+\/exec/.test(t)) return toast('الرابط غير صحيح');
     API.setServer(t); toast(t ? 'تم الربط بجوجل شيت' : 'تمت العودة للخادم المحلي'); renderLogin(app); };
-  $('#lf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => { const v = readForm(e.target); const r = await API.call('login', v); API.setToken(r.token); S.user = r.user; await loadAll(); render(); }); };
+  $('#lf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => { const v = readForm(e.target); const r = await API.call('login', v); API.setToken(r.token); S.user = r.user; await loadAll(); render(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 600); }); };
   $('#rf').onsubmit = e => { e.preventDefault(); const b = $('button', e.target); guard(b, async () => {
     const v = readForm(e.target); if (v.birthDate && !validDate(v.birthDate)) throw new Error('تاريخ الميلاد يجب أن يكون yyyy/mm/dd');
     const r = await API.call('register', v); toast(r.pending ? 'تم إنشاء الحساب، بانتظار موافقة المدير' : 'تم إنشاء حساب المدير، سجل الدخول');
     if (r.pending) { renderLogin(app); return; }
-    const l = await API.call('login', {username: v.username, password: v.password}); API.setToken(l.token); S.user = l.user; await loadAll(); render();
+    const l = await API.call('login', {username: v.username, password: v.password}); API.setToken(l.token); S.user = l.user; await loadAll(); render(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 600);
   }); };
 }
 
@@ -468,5 +468,5 @@ document.addEventListener('click', e => { const el = e.target.closest('[data-act
 
 window.addEventListener('DOMContentLoaded', async () => {
   try { if (window.AndroidBridge) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
-  render(); startSync();
+  render(); startSync(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 1500);
 });
