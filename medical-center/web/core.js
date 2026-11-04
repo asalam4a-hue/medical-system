@@ -1,5 +1,8 @@
 /* ============ النواة: أدوات، حالة، واجهة عامة، دخول، شاشة رئيسية ============ */
 'use strict';
+window.__errs = []; window.addEventListener('error', e => { try { window.__errs.push((e.message || 'error') + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : '')); } catch (x) {} }); window.addEventListener('unhandledrejection', e => { try { window.__errs.push('promise: ' + ((e.reason && e.reason.message) || e.reason)); } catch (x) {} });
+window.BUILD = '2026-11-04-c';
+
 let CENTER = 'برنامج إدارة المركز الطبي', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
 function applySettings(s) {
   if (!s) return; APPNAME = s.appName || APPNAME; CENTER = s.centerName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
@@ -378,7 +381,7 @@ function render() {
   app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
-  else $('#main').innerHTML = '<div class="panel">الشاشة غير موجودة</div>';
+  else $('#main').innerHTML = `<div class="panel"><b>الشاشة غير موجودة</b> (${esc(S.screen)})<br><small dir="ltr">build ${window.BUILD || '?'} — screens loaded: ${Object.keys(window.SCREEN_RENDER || {}).length}${(window.__errs || []).length ? '<br>errors: ' + esc(window.__errs.join(' | ')) : ''}</small></div>`;
 }
 const pageHead = (t, i, c) => `<div class="pagehead c-${c}"><h1><span class="ico">${i}</span>${esc(t)}</h1></div>`;
 

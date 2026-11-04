@@ -214,7 +214,7 @@ function visitLast(f, ctx) {
   const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
-SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
+SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
   groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
@@ -311,4 +311,36 @@ Acts.turns = () => {
     const txt = `*${CENTER}*\nأدوار المرضى — ${day}\n` + d.map(g => `\n*${g.c}*\n` + g.l.map((v, i) => `${i + 1}- ${v.patient}${v.doctor ? ' (' + v.doctor + ')' : ''}`).join('\n')).join('\n');
     if (navigator.share) navigator.share({text: txt}).catch(() => {}); else window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
   };
+};
+
+/* إضافة مجمّعة: عدة مرضى بنفس البيانات المشتركة (اليوم، العيادة، الطبيب، الزيارة، النوع) مرة واحدة */
+Acts.bulkvisits = () => {
+  const {from, to} = getRange(), day = from === to && validDate(from) ? from : today(), cls = [...clinicNames(), ...EXTRA_CLINICS];
+  const m = modal(`<h3>👥 إضافة زيارات لأكثر من مريض</h3><div class="grid">
+    <div class="fld"><label>التاريخ</label>${dateFld('bdate', day)}</div>
+    <div class="fld"><label>العيادة</label><select name="bclinic"><option value="">— اختر —</option>${cls.map(c => `<option>${esc(c)}</option>`).join('')}</select></div>
+    <div class="fld"><label>الطبيب</label><select name="bdoc"><option value="">—</option></select></div>
+    <div class="fld"><label>الزيارة</label><select name="bvt">${VTYPES.map(c => `<option>${esc(c)}</option>`).join('')}</select></div>
+    <div class="fld"><label>نوع الزيارة</label><select name="bcat">${Object.keys(CAT).map(k => `<option value="${k}">${CAT[k]}</option>`).join('')}</select></div>
+    <div class="fld"><label>اسم الشركة</label><input name="bco" data-sg="companies" autocomplete="off" placeholder="للزيارات الشركات"></div>
+    <div class="fld"><label>البيان / الخدمة</label><input name="bsv" autocomplete="off"></div>
+    <div class="fld"><label>القيمة (للجميع، اتركها فارغة لسعر الكشف)</label><input name="bval" type="number" step="any"></div>
+    <div class="fld full"><label>المرضى — اسم في كل سطر (اختياري: ، رقم الهاتف ، القيمة)</label><textarea name="blist" rows="7" placeholder="أحمد محمد، 0100000000&#10;سعيد علي، ، 150&#10;منى حسن"></textarea></div></div>
+    <p class="muted" id="bcnt">0 مريض</p><div class="actions"><button class="btn c-lime" id="bok">💾 حفظ الكل</button><button class="btn ghost" id="bcl">إلغاء</button></div>`);
+  const q = n => $(`[name=${n}]`, m), parse = () => q('blist').value.split('\n').map(l => l.split(/[،,]/).map(x => x.trim())).filter(a => a[0]);
+  q('bclinic').onchange = () => { const d = S.data.doctors.filter(x => x.clinic === q('bclinic').value); q('bdoc').innerHTML = '<option value="">—</option>' + d.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join(''); if (d.length === 1) q('bdoc').value = d[0].id; };
+  q('blist').oninput = () => { $('#bcnt', m).textContent = parse().length + ' مريض'; };
+  $('#bcl', m).onclick = () => m.remove();
+  $('#bok', m).onclick = e => guard(e.target, async () => {
+    const date = q('bdate').value, cl = q('bclinic').value, vt = q('bvt').value, cat = q('bcat').value, co = q('bco').value.trim(), list = parse();
+    if (!validDate(date)) throw new Error('التاريخ يجب أن يكون yyyy/mm/dd'); if (!cl) throw new Error('اختر العيادة'); if (!list.length) throw new Error('اكتب اسم مريض واحد على الأقل');
+    if (cat === 'company' && !co) throw new Error('اختر اسم الشركة');
+    const c = clinicOf(cl), d = S.data.doctors.find(x => x.id === q('bdoc').value), common = +q('bval').value || 0; let n = 0;
+    for (const a of list) {
+      const val = +a[2] || common || ((vt === 'كشف' || vt === 'استشارة') && c ? c.price : 0);
+      await API.call('save', {entity: 'visits', record: {date, patient: a[0], phone: a[1] || '', clinic: cl, doctorId: d ? d.id : '', doctor: d ? d.name : '', visitType: vt, service: q('bsv').value.trim(), value: val, tax: vt === 'كشف' && c ? c.tax || 0 : 0, category: cat, company: cat === 'company' ? co : '', patientPct: 0, discount: 0}}); n++;
+      toast(`⏳ ${n}/${list.length}`);
+    }
+    await loadAll(['visits']); m.remove(); toast(`تمت إضافة ${n} زيارة ✔`); refreshView();
+  });
 };
