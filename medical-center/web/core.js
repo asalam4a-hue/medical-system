@@ -49,6 +49,7 @@ const REPS = [
   {k:'rep_cash', t:'حركة الخزينة', i:'🏦', c:'lime'},
   {k:'rep_settle', t:'كشف تسويات المصروفات', i:'📑', c:'gold'},
   {k:'rep_journal', t:'تحليل إيرادات العيادة', i:'🧾', c:'cyan'},
+  {k:'rep_committee', t:'تقرير اللجنة', i:'🏛️', c:'violet'},
   {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
   {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'rep_patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
@@ -435,7 +436,7 @@ function renderHome() {
     const clin = uniq(vs.map(v => v.clinic).filter(Boolean)).map(n => { const c = vs.filter(v => v.clinic === n), dm = new Map(); c.forEach(v => { const d = v.doctor || 'بدون طبيب', o = dm.get(d) || {n: d, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; dm.set(d, o); }); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0), docs: [...dm.values()].sort((a, b) => b.cnt - a.cnt)}; }).sort((a, b) => b.rev - a.rev);
     ['الأشعة','التحاليل'].forEach(n => { const c = vs.filter(v => v.clinic === n); if (c.length) clin.push({n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}); });
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️']];
+    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
@@ -443,8 +444,7 @@ function renderHome() {
     <div class="kpis">${kp.map(k => `<div class="glow kpi c-${k[2]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[3]} ${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>
     ${tiles.length ? '' : '<div class="panel">حسابك مفعّل لكن لم يُمنح أي صلاحيات بعد. اطلب من المدير فتح الشاشات المطلوبة.</div>'}
     <div class="sect"><h2>الشاشات</h2></div><div class="cards">${tiles.map(t => `<button class="glow tile c-${t.c}" data-act="go" data-s="${t.k}"><span class="ic">${t.i}</span><b>${t.t}</b>${t.n != null ? `<span class="n">${t.n}</span>` : ''}</button>`).join('')}</div>
-    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><small class="cdocs">${esc(c.docs.map(d => d.n).join('، '))}</small><span class="cinfo" data-act="clinicdet" data-v="${esc(c.n)}" title="تفاصيل العيادة">ℹ️</span><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>
-    <div class="sect"><h2>الإنفوجرافيك</h2></div><div class="charts"><div class="panel"><h3>الإيراد حسب نوع الزيارة</h3>${donut(catData)}</div><div class="panel"><h3>الإيراد حسب العيادة</h3>${bars(clin.filter(c => c.rev > 0).slice(0, 8).map(c => ({l: c.n, v: c.rev})), 'clinicrep')}</div></div>`;
+    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><small class="cdocs">${esc(c.docs.map(d => d.n).join('، '))}</small><span class="cinfo" data-act="clinicdet" data-v="${esc(c.n)}" title="تفاصيل العيادة">ℹ️</span><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>`;
   };
   S.view = {refresh: draw, exportData: () => {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);

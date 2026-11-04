@@ -223,3 +223,11 @@ function bodyStaff() {
   return tbl(['المسئول', 'عدد الزيارات', 'إيراد الزيارات', 'عدد المصروفات', 'مبلغ المصروفات'], names.map(n => { const a = vs.filter(v => v.registeredBy === n), e = ex.filter(x => x.registeredBy === n); return [esc(n), a.length, fmtN(sum(a, val)), e.length, fmtN(sum(e, x => x.amount))]; }));
 }
 SCREEN_RENDER.rep_staff = repScreen('rep_staff', 'نشاط مسئولي التسجيل', '👥', 'lime', bodyStaff);
+
+/* ---------- تقرير اللجنة: زيارات نوع اللجنة (اليوم، التاريخ، الاسم، الزيارة، الطبيب، القيمة، المرفق) ---------- */
+function bodyCommittee() {
+  const {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.category === 'committee').sort((a, b) => (a.date + String(1e6 + (a.serial || 0))).localeCompare(b.date + String(1e6 + (b.serial || 0))));
+  return kpiRow([['عدد زيارات اللجنة', vs.length, 'violet'], ['إجمالي اللجنة', fmtN(sum(vs, val)), 'teal']])
+    + tbl(['اليوم', 'التاريخ', 'الاسم', 'الزيارة', 'الطبيب المعالج', 'القيمة', 'المرفق (صورة)'], vs.map(v => [dayName(v.date), esc(v.date), L.patient(v.patient), esc(v.visitType + (v.service ? ' — ' + v.service : '')), L.doctor(v.doctor), fmtN(val(v)), thumb(v.formPhoto || v.cardPhoto)]), ['', '', '', '', `الإجمالي (${vs.length})`, fmtN(sum(vs, val)), '']);
+}
+SCREEN_RENDER.rep_committee = repScreen('rep_committee', 'تقرير اللجنة', '🏛️', 'violet', bodyCommittee);

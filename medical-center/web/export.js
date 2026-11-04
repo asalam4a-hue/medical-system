@@ -138,7 +138,13 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
     if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
     if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
-    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land, {total});
+    const sub = `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`;
+    let box = document.createElement('div'); box.innerHTML = html; const flat = n => [...n.children].flatMap(c => c.tagName === 'DIV' && !c.className ? flat(c) : [c]); const units = []; let curU = null;
+    flat(box).forEach(n => { if (n.classList.contains('sect') || n.matches('h2.s')) { curU = {name: n.textContent.trim() || 'بند', nodes: [n]}; units.push(curU); } else if (curU) curU.nodes.push(n); else { curU = {name: 'العنوان / الملخص', nodes: [n]}; units.push(curU); } });
+    if (units.length < 3) return printDoc(title, sub, html, land, {total});
+    const m = modal(`<h3>🖨️ اختر البنود المراد طباعتها</h3><div class="perm-grid">${units.map((u, i) => `<label><input type="checkbox" class="pu" data-i="${i}" checked> ${esc(u.name)}</label>`).join('')}</div><div class="actions"><button class="btn c-teal" id="pgo">🖨️ طباعة المحدد</button><button class="btn ghost" id="pcl">إلغاء</button></div>`);
+    $('#pcl', m).onclick = () => m.remove();
+    $('#pgo', m).onclick = () => { const keep = $$('.pu', m).filter(c => c.checked).map(c => +c.dataset.i); if (!keep.length) return toast('اختر بنداً واحداً على الأقل', true); m.remove(); const out = document.createElement('div'); keep.forEach(i => units[i].nodes.forEach(n => out.appendChild(n.cloneNode(true)))); printDoc(title, sub, out.innerHTML, land, {total}); };
   };
   /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
   Acts.prow = el => {

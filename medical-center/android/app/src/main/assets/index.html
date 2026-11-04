@@ -212,6 +212,13 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 
 .cards .tile:not(.clinic){padding:4px 3px;min-height:52px;gap:1px;border-radius:11px}.cards:has(.tile:not(.clinic)){grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}.tile:not(.clinic) .ic{font-size:1.1rem;animation:none}.tile:not(.clinic) b{font-size:.74rem}.tile:not(.clinic) .n{font-size:.85rem}
 
+/* ===== الشكل الجديد للكروت ===== */
+.kpis .kpi.glow{background:#fff;animation:none;border-radius:10px;border:1px solid var(--line);border-top:5px solid var(--b);box-shadow:0 4px 12px -6px rgba(0,0,0,.25);text-align:right;padding:8px 10px}
+.kpis .kpi.glow::before,.kpis .kpi.glow::after{display:none}.kpis .kpi.glow:hover{transform:translateY(-2px);box-shadow:0 8px 16px -8px var(--g)}
+.kpis .kpi small{font-size:.76rem;color:#333}.kpis .kpi strong{font-size:1.25rem;color:#000}
+.cards .tile.glow:not(.clinic){background:#fff;animation:none;border-radius:10px;border:1px solid var(--line);border-right:5px solid var(--b);box-shadow:0 3px 8px -5px rgba(0,0,0,.3);flex-direction:row;justify-content:flex-start;gap:8px;padding:6px 8px;min-height:44px;text-align:right}
+.cards .tile.glow:not(.clinic)::before,.cards .tile.glow:not(.clinic)::after{display:none}.cards .tile:not(.clinic) .ic{font-size:1.25rem}
+
 </style>
 </head>
 <body>
@@ -526,6 +533,7 @@ const REPS = [
   {k:'rep_cash', t:'حركة الخزينة', i:'🏦', c:'lime'},
   {k:'rep_settle', t:'كشف تسويات المصروفات', i:'📑', c:'gold'},
   {k:'rep_journal', t:'تحليل إيرادات العيادة', i:'🧾', c:'cyan'},
+  {k:'rep_committee', t:'تقرير اللجنة', i:'🏛️', c:'violet'},
   {k:'rep_clinics', t:'تقارير العيادات', i:'🏨', c:'orange'},
   {k:'rep_companies', t:'شركات التأمين', i:'🏢', c:'cyan'},
   {k:'rep_patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
@@ -912,7 +920,7 @@ function renderHome() {
     const clin = uniq(vs.map(v => v.clinic).filter(Boolean)).map(n => { const c = vs.filter(v => v.clinic === n), dm = new Map(); c.forEach(v => { const d = v.doctor || 'بدون طبيب', o = dm.get(d) || {n: d, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; dm.set(d, o); }); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0), docs: [...dm.values()].sort((a, b) => b.cnt - a.cnt)}; }).sort((a, b) => b.rev - a.rev);
     ['الأشعة','التحاليل'].forEach(n => { const c = vs.filter(v => v.clinic === n); if (c.length) clin.push({n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}); });
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️']];
+    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
@@ -920,8 +928,7 @@ function renderHome() {
     <div class="kpis">${kp.map(k => `<div class="glow kpi c-${k[2]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[3]} ${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>
     ${tiles.length ? '' : '<div class="panel">حسابك مفعّل لكن لم يُمنح أي صلاحيات بعد. اطلب من المدير فتح الشاشات المطلوبة.</div>'}
     <div class="sect"><h2>الشاشات</h2></div><div class="cards">${tiles.map(t => `<button class="glow tile c-${t.c}" data-act="go" data-s="${t.k}"><span class="ic">${t.i}</span><b>${t.t}</b>${t.n != null ? `<span class="n">${t.n}</span>` : ''}</button>`).join('')}</div>
-    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><small class="cdocs">${esc(c.docs.map(d => d.n).join('، '))}</small><span class="cinfo" data-act="clinicdet" data-v="${esc(c.n)}" title="تفاصيل العيادة">ℹ️</span><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>
-    <div class="sect"><h2>الإنفوجرافيك</h2></div><div class="charts"><div class="panel"><h3>الإيراد حسب نوع الزيارة</h3>${donut(catData)}</div><div class="panel"><h3>الإيراد حسب العيادة</h3>${bars(clin.filter(c => c.rev > 0).slice(0, 8).map(c => ({l: c.n, v: c.rev})), 'clinicrep')}</div></div>`;
+    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><small class="cdocs">${esc(c.docs.map(d => d.n).join('، '))}</small><span class="cinfo" data-act="clinicdet" data-v="${esc(c.n)}" title="تفاصيل العيادة">ℹ️</span><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>`;
   };
   S.view = {refresh: draw, exportData: () => {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
@@ -1536,6 +1543,14 @@ function bodyStaff() {
 }
 SCREEN_RENDER.rep_staff = repScreen('rep_staff', 'نشاط مسئولي التسجيل', '👥', 'lime', bodyStaff);
 
+/* ---------- تقرير اللجنة: زيارات نوع اللجنة (اليوم، التاريخ، الاسم، الزيارة، الطبيب، القيمة، المرفق) ---------- */
+function bodyCommittee() {
+  const {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.category === 'committee').sort((a, b) => (a.date + String(1e6 + (a.serial || 0))).localeCompare(b.date + String(1e6 + (b.serial || 0))));
+  return kpiRow([['عدد زيارات اللجنة', vs.length, 'violet'], ['إجمالي اللجنة', fmtN(sum(vs, val)), 'teal']])
+    + tbl(['اليوم', 'التاريخ', 'الاسم', 'الزيارة', 'الطبيب المعالج', 'القيمة', 'المرفق (صورة)'], vs.map(v => [dayName(v.date), esc(v.date), L.patient(v.patient), esc(v.visitType + (v.service ? ' — ' + v.service : '')), L.doctor(v.doctor), fmtN(val(v)), thumb(v.formPhoto || v.cardPhoto)]), ['', '', '', '', `الإجمالي (${vs.length})`, fmtN(sum(vs, val)), '']);
+}
+SCREEN_RENDER.rep_committee = repScreen('rep_committee', 'تقرير اللجنة', '🏛️', 'violet', bodyCommittee);
+
 </script>
 <script>
 /* ============ نوافذ التفاصيل عند الضغط على الكروت + تقرير الإجماليات التفصيلي ============ */
@@ -1793,24 +1808,24 @@ SCREEN_RENDER.rep_journal = async function () {
   };
   const draw = () => {
     const {L_, rows, T, leafTot, groups} = build(), n = x => x ? fmtN(x) : '', b = t => `<b>${t}</b>`, Lv = JLEAVES;
-    const head = `<thead><tr><th rowspan="2">التاريخ</th><th colspan="3">حركة الخزينة</th><th colspan="5">إيرادات غير محصلة</th><th colspan="3">العهد والسلف</th><th colspan="4">تحليل القيد</th>${groups.map(x => x.idx.length === 1 && Lv[x.idx[0]].l === x.g ? `<th rowspan="2">${esc(x.g)}</th>` : `<th colspan="${x.idx.length}">${esc(x.g)}</th>`).join('')}</tr>
-      <tr><th>الرصيد</th><th>مدين</th><th>دائن</th><th>شركات</th><th>رد نقدي أو شركات</th><th>لجنة</th><th>ضرائب مرتبات</th><th>تأمينات</th><th>الرصيد</th><th>مدين</th><th>دائن</th><th>البيان</th><th>العملية</th><th>رقم المستند</th><th>التعليق</th>${groups.map(x => x.idx.length === 1 && Lv[x.idx[0]].l === x.g ? '' : x.idx.map(i => `<th>${esc(Lv[i].l)}</th>`).join('')).join('')}</tr></thead>`;
-    const cells = r => [esc(r.date), fmtN(r.bal), n(r.in), n(r.out), n(r.co), n(r.refund), n(r.com), n(r.tax), n(r.ins), fmtN(r.cbal), n(r.cd), n(r.cc), esc(r.bayan), esc(r.op), esc(r.doc), esc(r.note), ...groups.flatMap(x => x.idx.map(i => n(r.ex[i])))];
-    const openRow = [b('رصيد مرحل'), b(fmtN(L_.open.bal)), '', '', '', '', '', '', '', b(fmtN(L_.open.cbal)), '', '', '', '', '', '', ...groups.flatMap(x => x.idx.map(() => ''))];
-    const tot = [b('الإجمالي'), b(fmtN(L_.close.bal)), b(fmtN(T('in'))), b(fmtN(T('out'))), b(fmtN(T('co'))), b(fmtN(T('refund'))), b(fmtN(T('com'))), b(fmtN(T('tax'))), b(fmtN(T('ins'))), b(fmtN(L_.close.cbal)), b(fmtN(T('cd'))), b(fmtN(T('cc'))), '', '', '', '', ...groups.flatMap(x => x.idx.map(i => b(fmtN(leafTot[i]))))];
+    const head = `<thead><tr><th rowspan="2">التاريخ</th><th colspan="3">حركة الخزينة</th><th colspan="5">إيرادات غير محصلة</th><th colspan="3">العهد والسلف</th><th colspan="3">تحليل القيد</th>${groups.map(x => x.idx.length === 1 && Lv[x.idx[0]].l === x.g ? `<th rowspan="2">${esc(x.g)}</th>` : `<th colspan="${x.idx.length}">${esc(x.g)}</th>`).join('')}</tr>
+      <tr><th>الرصيد</th><th>مدين</th><th>دائن</th><th>شركات</th><th>رد نقدي أو شركات</th><th>لجنة</th><th>ضرائب مرتبات</th><th>تأمينات</th><th>الرصيد</th><th>مدين</th><th>دائن</th><th>البيان</th><th>العملية</th><th>رقم المستند</th>${groups.map(x => x.idx.length === 1 && Lv[x.idx[0]].l === x.g ? '' : x.idx.map(i => `<th>${esc(Lv[i].l)}</th>`).join('')).join('')}</tr></thead>`;
+    const cells = r => [esc(r.date), fmtN(r.bal), n(r.in), n(r.out), n(r.co), n(r.refund), n(r.com), n(r.tax), n(r.ins), fmtN(r.cbal), n(r.cd), n(r.cc), esc(r.bayan), esc(r.op), esc(r.doc), ...groups.flatMap(x => x.idx.map(i => n(r.ex[i])))];
+    const openRow = [b('رصيد مرحل'), b(fmtN(L_.open.bal)), '', '', '', '', '', '', '', b(fmtN(L_.open.cbal)), '', '', '', '', '', ...groups.flatMap(x => x.idx.map(() => ''))];
+    const tot = [b('الإجمالي'), b(fmtN(L_.close.bal)), b(fmtN(T('in'))), b(fmtN(T('out'))), b(fmtN(T('co'))), b(fmtN(T('refund'))), b(fmtN(T('com'))), b(fmtN(T('tax'))), b(fmtN(T('ins'))), b(fmtN(L_.close.cbal)), b(fmtN(T('cd'))), b(fmtN(T('cc'))), '', '', '', ...groups.flatMap(x => x.idx.map(i => b(fmtN(leafTot[i]))))];
     main.innerHTML = `${pageHead('تحليل إيرادات العيادة', '🧾', 'cyan')}${rangeBar()}<div class="bar noprint">${window.exportButtons}<label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="jall" ${showAll ? 'checked' : ''} style="width:auto"> إظهار كل أعمدة المصروفات (حتى الفارغة)</label></div>
     ${kpiRow([['رصيد الخزينة أول الفترة', fmtN(L_.open.bal), 'teal'], ['إجمالي المدين (قبض)', fmtN(T('in')), 'lime'], ['إجمالي الدائن (صرف)', fmtN(T('out')), 'red'], ['رصيد الخزينة آخر الفترة', fmtN(L_.close.bal), 'orange'], ['رصيد العهد والسلف', fmtN(L_.close.cbal), 'blue']])}
-    <div class="tbl-wrap"><table>${head}<tbody>${rows.length || L_.open.bal ? `<tr class="daytot">${openRow.map(x => `<td>${x}</td>`).join('')}</tr>` : ''}${rows.map(r => `<tr>${cells(r).map(x => `<td>${x}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${16 + groups.reduce((s, x) => s + x.idx.length, 0)}" class="empty">لا توجد حركة في هذه الفترة</td></tr>`}</tbody><tfoot><tr>${tot.map(x => `<td>${x}</td>`).join('')}</tr></tfoot></table></div>
+    <div class="tbl-wrap"><table>${head}<tbody>${rows.length || L_.open.bal ? `<tr class="daytot">${openRow.map(x => `<td>${x}</td>`).join('')}</tr>` : ''}${rows.map(r => `<tr>${cells(r).map(x => `<td>${x}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${15 + groups.reduce((s, x) => s + x.idx.length, 0)}" class="empty">لا توجد حركة في هذه الفترة</td></tr>`}</tbody><tfoot><tr>${tot.map(x => `<td>${x}</td>`).join('')}</tr></tfoot></table></div>
     <small class="muted">مدين الخزينة = إيرادات اليوم − (الشركات + اللجنة + قيمة خصم التأمين) ؛ دائن الخزينة = المصروفات + المدفوع للأطباء + الرد النقدي + صرف العهد والسلف. المدفوع للأطباء يُسجَّل بتاريخ الصرف.</small>`;
     $('#jall').onchange = e => { showAll = e.target.checked; draw(); };
   };
   S.view = {refresh: draw, exportData: () => {
     const {L_, rows, T, leafTot, groups} = build(), N = x => x ? +(+x).toFixed(2) : '';
-    const top = ['التاريخ', 'حركة الخزينة', '', '', 'إيرادات غير محصلة', '', '', '', '', 'العهد والسلف', '', '', 'تحليل القيد', '', '', '', ...groups.flatMap(x => x.idx.map((_, k) => k ? '' : x.g))];
-    const sub = ['', 'الرصيد', 'مدين', 'دائن', 'شركات', 'رد نقدي أو شركات', 'لجنة', 'ضرائب مرتبات', 'تأمينات', 'الرصيد', 'مدين', 'دائن', 'البيان', 'العملية', 'رقم المستند', 'التعليق', ...groups.flatMap(x => x.idx.map(i => JLEAVES[i].l))];
-    const out = [top, sub, ['رصيد مرحل', N(L_.open.bal), '', '', '', '', '', '', '', N(L_.open.cbal), ...Array(6 + groups.reduce((s, x) => s + x.idx.length, 0)).fill('')]];
-    rows.forEach(r => out.push([r.date, N(r.bal), N(r.in), N(r.out), N(r.co), N(r.refund), N(r.com), N(r.tax), N(r.ins), N(r.cbal), N(r.cd), N(r.cc), r.bayan, r.op, r.doc, r.note, ...groups.flatMap(x => x.idx.map(i => N(r.ex[i])))]));
-    out.push(['الإجمالي', N(L_.close.bal), N(T('in')), N(T('out')), N(T('co')), N(T('refund')), N(T('com')), N(T('tax')), N(T('ins')), N(L_.close.cbal), N(T('cd')), N(T('cc')), '', '', '', '', ...groups.flatMap(x => x.idx.map(i => N(leafTot[i])))]);
+    const top = ['التاريخ', 'حركة الخزينة', '', '', 'إيرادات غير محصلة', '', '', '', '', 'العهد والسلف', '', '', 'تحليل القيد', '', '', ...groups.flatMap(x => x.idx.map((_, k) => k ? '' : x.g))];
+    const sub = ['', 'الرصيد', 'مدين', 'دائن', 'شركات', 'رد نقدي أو شركات', 'لجنة', 'ضرائب مرتبات', 'تأمينات', 'الرصيد', 'مدين', 'دائن', 'البيان', 'العملية', 'رقم المستند', ...groups.flatMap(x => x.idx.map(i => JLEAVES[i].l))];
+    const out = [top, sub, ['رصيد مرحل', N(L_.open.bal), '', '', '', '', '', '', '', N(L_.open.cbal), ...Array(5 + groups.reduce((s, x) => s + x.idx.length, 0)).fill('')]];
+    rows.forEach(r => out.push([r.date, N(r.bal), N(r.in), N(r.out), N(r.co), N(r.refund), N(r.com), N(r.tax), N(r.ins), N(r.cbal), N(r.cd), N(r.cc), r.bayan, r.op, r.doc, ...groups.flatMap(x => x.idx.map(i => N(r.ex[i])))]));
+    out.push(['الإجمالي', N(L_.close.bal), N(T('in')), N(T('out')), N(T('co')), N(T('refund')), N(T('com')), N(T('tax')), N(T('ins')), N(L_.close.cbal), N(T('cd')), N(T('cc')), '', '', '', ...groups.flatMap(x => x.idx.map(i => N(leafTot[i])))]);
     return [{name: 'تحليل إيرادات العيادة', rows: out}]; }};
   draw();
 };
@@ -2116,7 +2131,13 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
     if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
     if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
-    printDoc(title, `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, html, land, {total});
+    const sub = `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`;
+    let box = document.createElement('div'); box.innerHTML = html; const flat = n => [...n.children].flatMap(c => c.tagName === 'DIV' && !c.className ? flat(c) : [c]); const units = []; let curU = null;
+    flat(box).forEach(n => { if (n.classList.contains('sect') || n.matches('h2.s')) { curU = {name: n.textContent.trim() || 'بند', nodes: [n]}; units.push(curU); } else if (curU) curU.nodes.push(n); else { curU = {name: 'العنوان / الملخص', nodes: [n]}; units.push(curU); } });
+    if (units.length < 3) return printDoc(title, sub, html, land, {total});
+    const m = modal(`<h3>🖨️ اختر البنود المراد طباعتها</h3><div class="perm-grid">${units.map((u, i) => `<label><input type="checkbox" class="pu" data-i="${i}" checked> ${esc(u.name)}</label>`).join('')}</div><div class="actions"><button class="btn c-teal" id="pgo">🖨️ طباعة المحدد</button><button class="btn ghost" id="pcl">إلغاء</button></div>`);
+    $('#pcl', m).onclick = () => m.remove();
+    $('#pgo', m).onclick = () => { const keep = $$('.pu', m).filter(c => c.checked).map(c => +c.dataset.i); if (!keep.length) return toast('اختر بنداً واحداً على الأقل', true); m.remove(); const out = document.createElement('div'); keep.forEach(i => units[i].nodes.forEach(n => out.appendChild(n.cloneNode(true)))); printDoc(title, sub, out.innerHTML, land, {total}); };
   };
   /* طباعة بند واحد (إيصال/بطاقة) من أي شاشة إدخال */
   Acts.prow = el => {
