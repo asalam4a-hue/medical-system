@@ -117,6 +117,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     }
     previewPrint(doc, title);
   }
+  window.printDoc = printDoc;
   function cleanContent() {
     const m = $('#main').cloneNode(true);
     m.querySelectorAll('.pagehead,form,.bar,.noprint,.cards,.modal,input,select,textarea,script,.imgfld,[data-rangebar]').forEach(n => n.remove());
@@ -125,7 +126,8 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     m.querySelectorAll('table').forEach(t => { // حذف عمود الأزرار (رأس فارغ)
       const ths = [...t.querySelectorAll('thead th')]; ths.forEach((th, i) => { if (!th.textContent.trim()) { t.querySelectorAll('tr').forEach(r => { const c = r.children[i]; if (c && (c.tagName === 'TH' || !c.textContent.trim() || r.closest('tfoot'))) c.remove(); }); } });
     });
-    m.querySelectorAll('table').forEach(t => { const ths = [...t.querySelectorAll('thead th')]; for (let i = ths.length - 1; i >= 0; i--) if (/^\s*صور[ةه]/.test(ths[i].textContent)) t.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach(r => { if (r.children[i] && r.children[i].colSpan <= 1) r.children[i].remove(); }); });
+    m.querySelectorAll('table').forEach(t => { const ths = [...t.querySelectorAll('thead th')]; for (let i = ths.length - 1; i >= 0; i--) if (/^\s*(صور[ةه]|سجّ?لها|سجله|مسئول التسجيل|مسؤول التسجيل|المسجِّل)/.test(ths[i].textContent)) t.querySelectorAll('thead tr, tbody tr, tfoot tr').forEach(r => { if (r.children[i] && r.children[i].colSpan <= 1) r.children[i].remove(); }); });
+    m.querySelectorAll('table').forEach(t => { const h0 = t.querySelector('thead th'); if (h0 && /^\s*(م|#)\s*$/.test(h0.textContent)) [...t.querySelectorAll('tbody tr')].filter(r => !r.querySelector('td.empty')).forEach((r, i) => { if (r.children[0]) r.children[0].textContent = i + 1; }); });
     m.querySelectorAll('.tbl-wrap').forEach(w => { w.style.overflow = 'visible'; });
     const kp = [...m.querySelectorAll('.kpis')]; if (kp.length && m.querySelector('table')) { kp.forEach(n => n.remove()); const w = document.createElement('div'); w.innerHTML = '<h2 class="s">ملخص</h2>' + kp.map(n => n.outerHTML).join(''); m.appendChild(w); } // العنوان ثم الجدول أولاً، والملخص بعده
     const land = [...m.querySelectorAll('table')].some(t => (t.querySelector('tr') || {children: []}).children.length > 7);

@@ -10,7 +10,7 @@ function crud(cfg) {
     const main = $('#main'); let editing = null, q = '';
     const fields = cfg.fields, plain = fields.filter(f => !f.grp), grps = cfg.groups || {};
     const defaults = () => Object.assign({}, cfg.defaults ? cfg.defaults() : {});
-    const frmHTML = () => `<form id="frm" class="panel accent c-${cfg.c}" autocomplete="off"><h3 id="ftitle">➕ ${esc(cfg.add || 'إضافة جديد')}</h3><div class="grid">${plain.map(f => f.t === 'html' ? f.html() : fieldHTML(f, '')).join('')}</div>${Object.keys(grps).map(g => `<div class="sub hidden" data-grp="${g}"><h4>${esc(grps[g].title)}</h4><div class="grid">${fields.filter(f => f.grp === g).map(f => fieldHTML(f, '')).join('')}</div></div>`).join('')}<div class="actions"><button type="submit" class="btn c-${cfg.c}">💾 حفظ</button><button type="button" class="btn ghost c-${cfg.c}" data-act="frmnew">➕ جديد</button></div></form>`;
+    const frmHTML = () => `<form id="frm" class="panel accent c-${cfg.c}" autocomplete="off"><h3 id="ftitle">➕ ${esc(cfg.add || 'إضافة جديد')}</h3><div class="grid">${plain.map(f => f.t === 'html' ? f.html() : fieldHTML(f, '')).join('')}</div>${Object.keys(grps).map(g => `<div class="sub hidden" data-grp="${g}"><h4>${esc(grps[g].title)}</h4><div class="grid">${fields.filter(f => f.grp === g).map(f => fieldHTML(f, '')).join('')}</div></div>`).join('')}<div class="actions"><button type="submit" class="btn c-${cfg.c}">💾 حفظ</button>${cfg.keep ? `<button type="submit" class="btn c-gold" data-more="1" title="يحفظ هذه الزيارة ويفتح زيارة جديدة لنفس المريض">💾➕ حفظ وزيارة أخرى لنفس المريض</button>` : ''}<button type="button" class="btn ghost c-${cfg.c}" data-act="frmnew">➕ جديد</button></div></form>`;
     const rows = () => {
       let list = S.data[cfg.ent].slice();
       if (cfg.dated) { const {from, to} = getRange(); list = list.filter(r => r.date >= from && r.date <= to); }
@@ -19,9 +19,9 @@ function crud(cfg) {
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
-      return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
+      return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th><input type="checkbox" class="selall" title="تحديد الكل"></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
     const frm = () => $('#frm', main);
     const reset = () => {
@@ -31,12 +31,12 @@ function crud(cfg) {
     };
     const showGroups = () => { const v = readForm(frm()); Object.keys(grps).forEach(g => $(`[data-grp="${g}"]`, frm()).classList.toggle('hidden', !grps[g].show(v))); };
     const draw = () => {
-      main.innerHTML = `${pageHead(cfg.t, cfg.i, cfg.c)}${cfg.dated ? rangeBar() : ''}${frmHTML()}<div class="bar noprint"><input type="text" id="srch" placeholder="🔎 بحث…" value="${esc(q)}">${window.exportButtons}${cfg.tools ? cfg.tools() : ''}</div><div id="lst">${listHTML()}</div>`;
+      main.innerHTML = `${pageHead(cfg.t, cfg.i, cfg.c)}${cfg.dated ? rangeBar() : ''}${frmHTML()}<div class="bar noprint"><input type="text" id="srch" placeholder="🔎 بحث…" value="${esc(q)}">${window.exportButtons}${cfg.tools ? cfg.tools() : ''}<button type="button" class="btn sm c-red" data-act="delsel">🗑️ حذف المحدد</button><button type="button" class="btn sm c-red" data-act="delall">🗑️ حذف الكل</button></div><div id="lst">${listHTML()}</div>`;
       reset(); hydrateImgs(main);
       $('#srch').oninput = e => { q = e.target.value.trim().toLowerCase(); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); };
       frm().addEventListener('change', ev => { showGroups(); cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing}); });
       frm().addEventListener('input', ev => { if (ev.target.matches('[data-sg],input[type=number],[data-dt]')) cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing, typing: true}); });
-      frm().onsubmit = ev => { ev.preventDefault(); guard($('button[type=submit]', frm()), async () => {
+      frm().onsubmit = ev => { ev.preventDefault(); const more = !!(ev.submitter && ev.submitter.dataset.more); guard(ev.submitter || $('button[type=submit]', frm()), async () => {
         const raw = readForm(frm()); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
         for (const f of fields) if (f.req && !String(rec[f.k] == null ? raw[f.k] : rec[f.k]).trim()) throw new Error(`حقل "${f.l}" مطلوب`);
         for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
@@ -44,17 +44,29 @@ function crud(cfg) {
         if (editing) rec.id = editing;
         const r = await API.call('save', {entity: cfg.ent, record: rec});
         if (cfg.after) await cfg.after(r.record, rec);
-        await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset();
+        await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
       }); };
     };
     const refreshList = () => { const rb = $('[data-rangebar]'); if (rb) rb.outerHTML = rangeBar(); const l = $('#lst'); if (l) { l.innerHTML = listHTML(); hydrateImgs(l); } };
     S.view = {refresh: refreshList, total: () => { const c = cfg.cols.find(x => x.sum); if (!c) return ''; const l = rows(); return fmtN(l.reduce((t, r) => t + (+c.sum(r) || 0), 0)); },
       edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
       del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
-      reset};
+      reset, ids: () => rows().map(r => r.id), ent: cfg.ent};
     draw();
   };
 }
+async function delMany(ids, what) {
+  if (!ids.length) return toast('لا توجد سجلات', true);
+  if (!await confirmBox(`سيتم حذف ${what} (${ids.length} سجل) نهائياً. هل أنت متأكد؟`)) return;
+  await guard(null, async () => {
+    const ent = S.view.ent; let ok = 0, bad = 0;
+    for (const id of ids) { try { await API.call('delete', {entity: ent, id}); ok++; } catch (e) { bad++; } }
+    await loadAll([ent]); toast(`تم حذف ${ok}${bad ? ` — تعذر حذف ${bad}` : ''}`, !!bad && !ok); S.view.refresh();
+  });
+}
+document.addEventListener('change', e => { if (e.target.classList && e.target.classList.contains('selall')) document.querySelectorAll('#lst .rowsel').forEach(c => { c.checked = e.target.checked; }); });
+Acts.delsel = () => S.view && S.view.ids && delMany([...document.querySelectorAll('#lst .rowsel:checked')].map(c => c.dataset.id), 'السجلات المحددة');
+Acts.delall = () => S.view && S.view.ids && delMany(S.view.ids(), 'كل السجلات المعروضة' + (S.view.ent === 'visits' ? ' في الفترة المحددة' : ''));
 Acts.edit = el => S.view && S.view.edit(el.dataset.id);
 Acts.del = el => S.view && S.view.del(el.dataset.id);
 Acts.frmnew = () => S.view && S.view.reset();
@@ -103,33 +115,15 @@ async function seedBasics(onP) {
   for (const [e, list, key] of jobs) { if (!list || !list.length) continue; if (onP) onP(e); const r = await bulkSend(e, list, key); n += r.added; }
   await loadAll(['services', 'doctors', 'companies', 'staff']); return n;
 }
-async function seedHistory(onP) {
-  const H = window.HIST || []; if (!H.length) return {added: 0, skipped: 0};
-  const rs = H.map(r => { const d = S.data.doctors.find(x => x.name === r.doctor && x.clinic === r.clinic) || S.data.doctors.find(x => x.name === r.doctor); return Object.assign({}, r, {doctorId: d ? d.id : '', doctor: d ? d.name : r.doctor}); });
-  const pats = [...new Map(H.filter(r => r.patient).map(r => [r.patient, {name: r.patient, phone: r.phone || ''}])).values()];
-  const res = await bulkSend('visits', rs, 'date,patient,value,visitType,service,formNo,clinic', onP);
-  await bulkSend('patients', pats, 'name');
-  await loadAll(['visits', 'patients']); return res;
-}
 Acts.importseed = async el => {
   if (!await confirmBox('سيتم إضافة العيادات والعمليات والأشعة والتحاليل (بالاختصارات) والخدمات والأطباء والشركات غير الموجودة فقط، دون تغيير ما عدّلته. متابعة؟')) return;
   await guard(el, async () => { const n = await seedBasics(); toast(n ? `تمت إضافة ${n} سجل ✔` : 'كل البيانات موجودة بالفعل'); refreshView(); });
-};
-Acts.importhist = async el => {
-  const H = window.HIST || []; if (!H.length) return toast('لا توجد بيانات قديمة للاستيراد', true);
-  if (!await confirmBox(`سيتم استيراد ${H.length} زيارة من الإكسيل السابق (${H[0].date} حتى ${H[H.length - 1].date}) إلى قاعدة البيانات وشيت جوجل، مع تخطي المكرر. متابعة؟`)) return;
-  await guard(el, async () => {
-    await seedBasics(); const r = await seedHistory(n => toast(`⏳ جاري الاستيراد… ${n}/${H.length}`));
-    try { await API.call('sync_sheets'); } catch (e) {}
-    toast(`تم استيراد ${r.added} زيارة (تخطي ${r.skipped} مكررة) ✔`); refreshView();
-  });
 };
 Acts.syncsheets = async el => guard(el, async () => { await API.call('sync_sheets'); toast('تمت مزامنة أوراق جوجل ✔'); });
 async function autoSeedCheck() {
   if (!S.user || !S.user.isAdmin || window.__seedAsked) return; window.__seedAsked = true;
   try {
     if (!S.data.services.length) { toast('⏳ جاري تعبئة البيانات الأساسية…'); await seedBasics(); toast('تمت تعبئة العيادات والأشعة والتحاليل والأطباء والشركات ✔'); render(); }
-    if (!S.data.visits.length && (window.HIST || []).length && await confirmBox(`لا توجد زيارات مسجلة. هل تريد استيراد ${window.HIST.length} زيارة من الإكسيل السابق الآن؟`)) { const r = await seedHistory(); try { await API.call('sync_sheets'); } catch (e) {} toast(`تم استيراد ${r.added} زيارة ✔`); render(); }
   } catch (e) { toast(e.message || 'تعذر الاستيراد التلقائي', true); window.__seedAsked = false; }
 }
 window.autoSeedCheck = autoSeedCheck;
@@ -220,7 +214,7 @@ function visitLast(f, ctx) {
   const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
-SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
+SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
   groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
@@ -298,3 +292,23 @@ SCREEN_RENDER.execs = crud({k: 'execs', ent: 'execs', t: 'تنفيذ الشرك�
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()})
 });
+
+/* أدوار المرضى: لكل عيادة، ترقيم المرضى حسب ترتيب التسجيل في اليوم — طباعة أو إرسال */
+function turnsData(day) {
+  const by = new Map(); S.data.visits.filter(v => v.date === day).sort((a, b) => (a.serial || 0) - (b.serial || 0)).forEach(v => { const k = v.clinic || 'بدون عيادة'; (by.get(k) || by.set(k, []).get(k)).push(v); });
+  return [...by.entries()].map(([c, l]) => ({c, l}));
+}
+Acts.turns = () => {
+  const {from, to} = getRange(); let day = from === to && validDate(from) ? from : today();
+  const m = modal(`<h3>🔢 أدوار المرضى</h3><div class="fld"><label>اليوم</label>${dateFld('tday', day)}</div><div id="tbody"></div><div class="actions"><button class="btn c-teal" id="tpr">🖨️ طباعة</button><button class="btn c-lime" id="tws">📤 إرسال (واتساب / مشاركة)</button><button class="btn ghost" id="tcl">إغلاق</button></div>`);
+  const body = () => { const d = turnsData(day); $('#tbody', m).innerHTML = d.length ? d.map(g => `<h4>${esc(g.c)} (${g.l.length})</h4><table><thead><tr><th>الدور</th><th>المريض</th><th>الطبيب</th></tr></thead><tbody>${g.l.map((v, i) => `<tr><td>${i + 1}</td><td>${esc(v.patient)}</td><td>${esc(v.doctor)}</td></tr>`).join('')}</tbody></table>`).join('') : '<div class="empty">لا توجد زيارات في هذا اليوم</div>'; };
+  body();
+  m.addEventListener('input', e => { if (e.target.name === 'tday' && validDate(e.target.value)) { day = e.target.value; body(); } });
+  $('#tcl', m).onclick = () => m.remove();
+  $('#tpr', m).onclick = () => { const d = turnsData(day); if (!d.length) return toast('لا توجد زيارات', true); printDoc('أدوار المرضى — ' + day, '', d.map(g => `<h2 class="s">${esc(g.c)}</h2><table><thead><tr><th>الدور</th><th>المريض</th><th>الطبيب</th></tr></thead><tbody>${g.l.map((v, i) => `<tr><td>${i + 1}</td><td>${esc(v.patient)}</td><td>${esc(v.doctor)}</td></tr>`).join('')}</tbody></table>`).join(''), false, {}); };
+  $('#tws', m).onclick = () => {
+    const d = turnsData(day); if (!d.length) return toast('لا توجد زيارات', true);
+    const txt = `*${CENTER}*\nأدوار المرضى — ${day}\n` + d.map(g => `\n*${g.c}*\n` + g.l.map((v, i) => `${i + 1}- ${v.patient}${v.doctor ? ' (' + v.doctor + ')' : ''}`).join('\n')).join('\n');
+    if (navigator.share) navigator.share({text: txt}).catch(() => {}); else window.open('https://wa.me/?text=' + encodeURIComponent(txt), '_blank');
+  };
+};

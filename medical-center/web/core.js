@@ -429,7 +429,7 @@ function renderHome() {
   const draw = () => {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
     const st = statementRows(from, to), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0), dues = st.due, exp = st.expO;
-    const clin = clinicNames().map(n => { const c = vs.filter(v => v.clinic === n); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}; });
+    const clin = uniq(vs.map(v => v.clinic).filter(Boolean)).map(n => { const c = vs.filter(v => v.clinic === n), dm = new Map(); c.forEach(v => { const d = v.doctor || 'بدون طبيب', o = dm.get(d) || {n: d, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; dm.set(d, o); }); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0), docs: [...dm.values()].sort((a, b) => b.cnt - a.cnt)}; }).sort((a, b) => b.rev - a.rev);
     ['الأشعة','التحاليل'].forEach(n => { const c = vs.filter(v => v.clinic === n); if (c.length) clin.push({n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}); });
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
     const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️']];
@@ -440,7 +440,7 @@ function renderHome() {
     <div class="kpis">${kp.map(k => `<div class="glow kpi c-${k[2]}" data-act="kpi" data-l="${esc(k[0])}" data-v="${esc(k[1])}"><small>${k[3]} ${k[0]}</small><strong>${k[1]}</strong></div>`).join('')}</div>
     ${tiles.length ? '' : '<div class="panel">حسابك مفعّل لكن لم يُمنح أي صلاحيات بعد. اطلب من المدير فتح الشاشات المطلوبة.</div>'}
     <div class="sect"><h2>الشاشات</h2></div><div class="cards">${tiles.map(t => `<button class="glow tile c-${t.c}" data-act="go" data-s="${t.k}"><span class="ic">${t.i}</span><b>${t.t}</b>${t.n != null ? `<span class="n">${t.n}</span>` : ''}</button>`).join('')}</div>
-    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد عيادات — أضفها من شاشة الخدمات</div>'}</div>
+    <div class="sect"><h2>العيادات — ${esc(rangeLabel())}</h2></div><div class="cards">${clin.map((c, i) => `<button class="glow tile clinic c-${ALL_COLORS[i % 9]}" data-act="clinicrep" data-v="${esc(c.n)}"><div class="row"><b>${esc(c.n)}</b><span class="n">${c.cnt}</span></div><small class="cdocs">${esc(c.docs.map(d => d.n).join('، '))}</small><span class="cinfo" data-act="clinicdet" data-v="${esc(c.n)}" title="تفاصيل العيادة">ℹ️</span><div class="row"><small>زيارة</small><strong>${fmtN(c.rev)}</strong></div><div class="meter"><i style="width:${c.rev / mx * 100}%"></i></div></button>`).join('') || '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>
     <div class="sect"><h2>الإنفوجرافيك</h2></div><div class="charts"><div class="panel"><h3>الإيراد حسب نوع الزيارة</h3>${donut(catData)}</div><div class="panel"><h3>الإيراد حسب العيادة</h3>${bars(clin.filter(c => c.rev > 0).slice(0, 8).map(c => ({l: c.n, v: c.rev})), 'clinicrep')}</div></div>`;
   };
   S.view = {refresh: draw, exportData: () => {
@@ -470,3 +470,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   try { if (window.AndroidBridge) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
   render(); startSync(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 1500);
 });
+
+Acts.clinicdet = el => {
+  const n = el.dataset.v, {from, to} = getRange(), vs = S.data.visits.filter(v => v.clinic === n && v.date >= from && v.date <= to), dm = new Map();
+  vs.forEach(v => { const d = v.doctor || 'بدون طبيب', o = dm.get(d) || {cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; dm.set(d, o); });
+  const rows = [...dm.entries()].sort((a, b) => b[1].cnt - a[1].cnt);
+  const m = modal(`<h3>🏥 ${esc(n)} — ${esc(rangeLabel())}</h3><table><thead><tr><th>الطبيب</th><th>الزيارات</th><th>الإيراد</th></tr></thead><tbody>${rows.map(([d, o]) => `<tr><td>${esc(d)}</td><td>${o.cnt}</td><td>${fmtN(o.rev)}</td></tr>`).join('')}</tbody><tfoot><tr><td>الإجمالي</td><td>${vs.length}</td><td>${fmtN(vs.reduce((t, v) => t + (+v.value || 0), 0))}</td></tr></tfoot></table><div class="actions"><button class="btn c-teal" id="cdr">📋 تقرير العيادة</button><button class="btn ghost" id="cdc">إغلاق</button></div>`);
+  $('#cdc', m).onclick = () => m.remove(); $('#cdr', m).onclick = () => { m.remove(); Acts.clinicrep({dataset: {v: n}}); };
+};
