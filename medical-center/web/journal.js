@@ -75,7 +75,21 @@ SCREEN_RENDER.rep_journal = async function () {
     <small class="muted">مدين الخزينة = إيرادات اليوم − (الشركات + اللجنة + قيمة خصم التأمين) ؛ دائن الخزينة = المصروفات + المدفوع للأطباء + الرد النقدي + صرف العهد والسلف. المدفوع للأطباء يُسجَّل بتاريخ الصرف.</small>`;
     $('#jall').onchange = e => { showAll = e.target.checked; draw(); };
   };
-  S.view = {refresh: draw, exportData: () => {
+  S.view = {refresh: draw, printHTML: () => {
+    const {L_, rows, T, leafTot, groups} = build(), n = x => x ? fmtN(x) : '', Lv = JLEAVES;
+    const fx = [['حركة الخزينة','الرصيد'],['حركة الخزينة','مدين'],['حركة الخزينة','دائن'],['إيرادات غير محصلة','شركات'],['إيرادات غير محصلة','رد نقدي أو شركات'],['إيرادات غير محصلة','لجنة'],['إيرادات غير محصلة','ضرائب مرتبات'],['إيرادات غير محصلة','تأمينات'],['العهد والسلف','الرصيد'],['العهد والسلف','مدين'],['العهد والسلف','دائن'],['تحليل القيد','البيان'],['تحليل القيد','العملية'],['تحليل القيد','رقم المستند']];
+    const cols = [...fx.map((h, i) => ({g: h[0], l: h[1], c: r => [fmtN(r.bal), n(r.in), n(r.out), n(r.co), n(r.refund), n(r.com), n(r.tax), n(r.ins), fmtN(r.cbal), n(r.cd), n(r.cc), esc(r.bayan), esc(r.op), esc(r.doc)][i],
+      t: [fmtN(L_.close.bal), fmtN(T('in')), fmtN(T('out')), fmtN(T('co')), fmtN(T('refund')), fmtN(T('com')), fmtN(T('tax')), fmtN(T('ins')), fmtN(L_.close.cbal), fmtN(T('cd')), fmtN(T('cc')), '', '', ''][i],
+      o: i === 0 ? fmtN(L_.open.bal) : i === 8 ? fmtN(L_.open.cbal) : ''})),
+      ...groups.flatMap(x => x.idx.map(i => ({g: x.g, l: Lv[i].l, c: r => n(r.ex[i]), t: fmtN(leafTot[i]), o: ''})))];
+    const W = 7, N = Math.ceil(cols.length / W), out = [];
+    for (let p = 0; p < N; p++) {
+      const cs = cols.slice(p * W, p * W + W), gh = [];
+      cs.forEach(c => { const l = gh[gh.length - 1]; if (l && l.g === c.g) l.n++; else gh.push({g: c.g, n: 1}); });
+      out.push(`<div class="sect${p ? ' pb' : ''}"><h2 class="s">تحليل إيرادات العيادة — الجزء ${p + 1} من ${N}</h2><table><thead><tr><th rowspan="2">التاريخ</th>${gh.map(g => `<th colspan="${g.n}">${esc(g.g)}</th>`).join('')}</tr><tr>${cs.map(c => `<th>${esc(c.l)}</th>`).join('')}</tr></thead><tbody>${rows.length || L_.open.bal ? `<tr class="daytot"><td><b>رصيد مرحل</b></td>${cs.map(c => `<td><b>${c.o}</b></td>`).join('')}</tr>` : ''}${rows.map(r => `<tr><td>${esc(r.date)}</td>${cs.map(c => `<td>${c.c(r)}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><td><b>الإجمالي</b></td>${cs.map(c => `<td><b>${c.t}</b></td>`).join('')}</tr></tfoot></table></div>`);
+    }
+    return out.join('');
+  }, exportData: () => {
     const {L_, rows, T, leafTot, groups} = build(), N = x => x ? +(+x).toFixed(2) : '';
     const top = ['التاريخ', 'حركة الخزينة', '', '', 'إيرادات غير محصلة', '', '', '', '', 'العهد والسلف', '', '', 'تحليل القيد', '', '', ...groups.flatMap(x => x.idx.map((_, k) => k ? '' : x.g))];
     const sub = ['', 'الرصيد', 'مدين', 'دائن', 'شركات', 'رد نقدي أو شركات', 'لجنة', 'ضرائب مرتبات', 'تأمينات', 'الرصيد', 'مدين', 'دائن', 'البيان', 'العملية', 'رقم المستند', ...groups.flatMap(x => x.idx.map(i => JLEAVES[i].l))];

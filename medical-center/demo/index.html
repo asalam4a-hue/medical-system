@@ -212,12 +212,16 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 
 .cards .tile:not(.clinic){padding:4px 3px;min-height:52px;gap:1px;border-radius:11px}.cards:has(.tile:not(.clinic)){grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}.tile:not(.clinic) .ic{font-size:1.1rem;animation:none}.tile:not(.clinic) b{font-size:.74rem}.tile:not(.clinic) .n{font-size:.85rem}
 
-/* ===== الشكل الجديد للكروت ===== */
-.kpis .kpi.glow{background:#fff;animation:none;border-radius:10px;border:1px solid var(--line);border-top:5px solid var(--b);box-shadow:0 4px 12px -6px rgba(0,0,0,.25);text-align:right;padding:8px 10px}
-.kpis .kpi.glow::before,.kpis .kpi.glow::after{display:none}.kpis .kpi.glow:hover{transform:translateY(-2px);box-shadow:0 8px 16px -8px var(--g)}
-.kpis .kpi small{font-size:.76rem;color:#333}.kpis .kpi strong{font-size:1.25rem;color:#000}
-.cards .tile.glow:not(.clinic){background:#fff;animation:none;border-radius:10px;border:1px solid var(--line);border-right:5px solid var(--b);box-shadow:0 3px 8px -5px rgba(0,0,0,.3);flex-direction:row;justify-content:flex-start;gap:8px;padding:6px 8px;min-height:44px;text-align:right}
-.cards .tile.glow:not(.clinic)::before,.cards .tile.glow:not(.clinic)::after{display:none}.cards .tile:not(.clinic) .ic{font-size:1.25rem}
+/* ===== كروت صغيرة مضيئة متحركة ===== */
+@keyframes glowpulse{0%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7),0 4px 10px -4px var(--g),0 0 8px -2px var(--g)}100%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.9),0 6px 16px -4px var(--g),0 0 22px 2px var(--g)}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.kpis .kpi.glow,.cards .tile.glow:not(.clinic){animation:glowpulse 1.8s ease-in-out infinite alternate,bob 3.6s ease-in-out infinite}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px}
+.kpis .kpi.glow{padding:5px 6px;border-radius:11px}.kpis .kpi small{font-size:.7rem}.kpis .kpi strong{font-size:1rem;margin-top:0}
+.cards:has(.tile:not(.clinic)){grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.cards .tile.glow:not(.clinic){padding:4px 3px;min-height:48px;gap:1px;border-radius:11px;flex-direction:column}
+.tile:not(.clinic) .ic{font-size:1.05rem;animation:none}.tile:not(.clinic) b{font-size:.7rem}.tile:not(.clinic) .n{font-size:.8rem}
+.tile.clinic{padding:5px 8px;min-height:60px;animation:glowpulse 2s ease-in-out infinite alternate}
 
 </style>
 </head>
@@ -1819,7 +1823,21 @@ SCREEN_RENDER.rep_journal = async function () {
     <small class="muted">مدين الخزينة = إيرادات اليوم − (الشركات + اللجنة + قيمة خصم التأمين) ؛ دائن الخزينة = المصروفات + المدفوع للأطباء + الرد النقدي + صرف العهد والسلف. المدفوع للأطباء يُسجَّل بتاريخ الصرف.</small>`;
     $('#jall').onchange = e => { showAll = e.target.checked; draw(); };
   };
-  S.view = {refresh: draw, exportData: () => {
+  S.view = {refresh: draw, printHTML: () => {
+    const {L_, rows, T, leafTot, groups} = build(), n = x => x ? fmtN(x) : '', Lv = JLEAVES;
+    const fx = [['حركة الخزينة','الرصيد'],['حركة الخزينة','مدين'],['حركة الخزينة','دائن'],['إيرادات غير محصلة','شركات'],['إيرادات غير محصلة','رد نقدي أو شركات'],['إيرادات غير محصلة','لجنة'],['إيرادات غير محصلة','ضرائب مرتبات'],['إيرادات غير محصلة','تأمينات'],['العهد والسلف','الرصيد'],['العهد والسلف','مدين'],['العهد والسلف','دائن'],['تحليل القيد','البيان'],['تحليل القيد','العملية'],['تحليل القيد','رقم المستند']];
+    const cols = [...fx.map((h, i) => ({g: h[0], l: h[1], c: r => [fmtN(r.bal), n(r.in), n(r.out), n(r.co), n(r.refund), n(r.com), n(r.tax), n(r.ins), fmtN(r.cbal), n(r.cd), n(r.cc), esc(r.bayan), esc(r.op), esc(r.doc)][i],
+      t: [fmtN(L_.close.bal), fmtN(T('in')), fmtN(T('out')), fmtN(T('co')), fmtN(T('refund')), fmtN(T('com')), fmtN(T('tax')), fmtN(T('ins')), fmtN(L_.close.cbal), fmtN(T('cd')), fmtN(T('cc')), '', '', ''][i],
+      o: i === 0 ? fmtN(L_.open.bal) : i === 8 ? fmtN(L_.open.cbal) : ''})),
+      ...groups.flatMap(x => x.idx.map(i => ({g: x.g, l: Lv[i].l, c: r => n(r.ex[i]), t: fmtN(leafTot[i]), o: ''})))];
+    const W = 7, N = Math.ceil(cols.length / W), out = [];
+    for (let p = 0; p < N; p++) {
+      const cs = cols.slice(p * W, p * W + W), gh = [];
+      cs.forEach(c => { const l = gh[gh.length - 1]; if (l && l.g === c.g) l.n++; else gh.push({g: c.g, n: 1}); });
+      out.push(`<div class="sect${p ? ' pb' : ''}"><h2 class="s">تحليل إيرادات العيادة — الجزء ${p + 1} من ${N}</h2><table><thead><tr><th rowspan="2">التاريخ</th>${gh.map(g => `<th colspan="${g.n}">${esc(g.g)}</th>`).join('')}</tr><tr>${cs.map(c => `<th>${esc(c.l)}</th>`).join('')}</tr></thead><tbody>${rows.length || L_.open.bal ? `<tr class="daytot"><td><b>رصيد مرحل</b></td>${cs.map(c => `<td><b>${c.o}</b></td>`).join('')}</tr>` : ''}${rows.map(r => `<tr><td>${esc(r.date)}</td>${cs.map(c => `<td>${c.c(r)}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><td><b>الإجمالي</b></td>${cs.map(c => `<td><b>${c.t}</b></td>`).join('')}</tr></tfoot></table></div>`);
+    }
+    return out.join('');
+  }, exportData: () => {
     const {L_, rows, T, leafTot, groups} = build(), N = x => x ? +(+x).toFixed(2) : '';
     const top = ['التاريخ', 'حركة الخزينة', '', '', 'إيرادات غير محصلة', '', '', '', '', 'العهد والسلف', '', '', 'تحليل القيد', '', '', ...groups.flatMap(x => x.idx.map((_, k) => k ? '' : x.g))];
     const sub = ['', 'الرصيد', 'مدين', 'دائن', 'شركات', 'رد نقدي أو شركات', 'لجنة', 'ضرائب مرتبات', 'تأمينات', 'الرصيد', 'مدين', 'دائن', 'البيان', 'العملية', 'رقم المستند', ...groups.flatMap(x => x.idx.map(i => JLEAVES[i].l))];
@@ -2080,7 +2098,7 @@ const OCR = (() => {
   const PRINT_CSS = (land) => { const W = land ? 281 : 194; return `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:8mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.page{width:${W}mm;margin:0 auto;padding:0}
 .hd{position:relative;text-align:center;border-bottom:2px solid #000;padding:2px 0 6px;margin-bottom:8px;min-height:46px}.hd h2{margin:0;padding:6px 110px 0;font-size:20px;line-height:1.35}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:100px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
-.box{border:1.5px solid #000;border-radius:3px;padding:6px}.charts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}.panel{border:1px solid #000;border-radius:3px;padding:5px;break-inside:avoid}.panel h3{margin:0 0 4px;font-size:12px;text-align:center}.barrow{display:grid;grid-template-columns:30% 1fr 20%;gap:5px;align-items:center;margin:3px 0;font-size:10px}.barrow .tr{height:10px;background:#ddd;border:1px solid #777}.barrow .tr i{display:block;height:100%;background:#444!important;box-shadow:none!important}.legend{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:10px;margin-top:4px}.legend i{display:inline-block;width:10px;height:10px;border:1px solid #000;margin-inline-end:3px}.foot{margin-top:6px;text-align:center;font-size:10px;color:#333}
+.box{border:1.5px solid #000;border-radius:3px;padding:6px}.charts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}.panel{border:1px solid #000;border-radius:3px;padding:5px;break-inside:avoid}.panel h3{margin:0 0 4px;font-size:12px;text-align:center}.barrow{display:grid;grid-template-columns:30% 1fr 20%;gap:5px;align-items:center;margin:3px 0;font-size:10px}.barrow .tr{height:10px;background:#ddd;border:1px solid #777}.barrow .tr i{display:block;height:100%;background:#444!important;box-shadow:none!important}.legend{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:10px;margin-top:4px}.legend i{display:inline-block;width:10px;height:10px;border:1px solid #000;margin-inline-end:3px}.pb{page-break-before:always}
 table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto;table-layout:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle;white-space:nowrap}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}
@@ -2098,7 +2116,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     fr.srcdoc = doc; fr.onload = () => setTimeout(go, 400);
   }
   function printDoc(title, sub, bodyHTML, land, opt) {
-    const custom = !!(opt && opt.css), foot = custom ? '' : `<div class="foot">${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}${sub ? ' — ' + esc(sub) : ''}</div>`;
+    const custom = !!(opt && opt.css), foot = '';
     const inner = custom ? bodyHTML : `<div class="box"><div id="fit">${bodyHTML}</div></div>${foot}`;
     const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${custom ? opt.css : PRINT_CSS(land)}</style></head><body><div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>${custom ? '' : FIT_JS}</body></html>`;
     if (window.AndroidBridge && window.AndroidBridge.printHtml) { window.AndroidBridge.printHtml(doc, title, !!land); return; }
@@ -2127,7 +2145,8 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     return {html: m.innerHTML, land};
   }
   Acts.pdf = () => {
-    const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    let {html, land} = cleanContent(); const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    if (S.view && S.view.printHTML) { html = S.view.printHTML(); land = false; }
     let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
     if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
     if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }

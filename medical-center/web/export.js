@@ -87,7 +87,7 @@
   const PRINT_CSS = (land) => { const W = land ? 281 : 194; return `@page{size:A4 ${land ? 'landscape' : 'portrait'};margin:8mm}*{box-sizing:border-box;font-family:"Times New Roman",Times,serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 html,body{margin:0;background:#fff;direction:rtl;font-size:12px}.page{width:${W}mm;margin:0 auto;padding:0}
 .hd{position:relative;text-align:center;border-bottom:2px solid #000;padding:2px 0 6px;margin-bottom:8px;min-height:46px}.hd h2{margin:0;padding:6px 110px 0;font-size:20px;line-height:1.35}.hd .tot{position:absolute;left:0;top:0;border:2px solid #000;padding:3px 12px;text-align:center;min-width:100px}.hd .tot small{display:block;font-size:10px}.hd .tot b{font-size:15px}
-.box{border:1.5px solid #000;border-radius:3px;padding:6px}.charts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}.panel{border:1px solid #000;border-radius:3px;padding:5px;break-inside:avoid}.panel h3{margin:0 0 4px;font-size:12px;text-align:center}.barrow{display:grid;grid-template-columns:30% 1fr 20%;gap:5px;align-items:center;margin:3px 0;font-size:10px}.barrow .tr{height:10px;background:#ddd;border:1px solid #777}.barrow .tr i{display:block;height:100%;background:#444!important;box-shadow:none!important}.legend{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:10px;margin-top:4px}.legend i{display:inline-block;width:10px;height:10px;border:1px solid #000;margin-inline-end:3px}.foot{margin-top:6px;text-align:center;font-size:10px;color:#333}
+.box{border:1.5px solid #000;border-radius:3px;padding:6px}.charts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0}.panel{border:1px solid #000;border-radius:3px;padding:5px;break-inside:avoid}.panel h3{margin:0 0 4px;font-size:12px;text-align:center}.barrow{display:grid;grid-template-columns:30% 1fr 20%;gap:5px;align-items:center;margin:3px 0;font-size:10px}.barrow .tr{height:10px;background:#ddd;border:1px solid #777}.barrow .tr i{display:block;height:100%;background:#444!important;box-shadow:none!important}.legend{display:flex;flex-wrap:wrap;gap:3px 10px;font-size:10px;margin-top:4px}.legend i{display:inline-block;width:10px;height:10px;border:1px solid #000;margin-inline-end:3px}.pb{page-break-before:always}
 table{width:100%;border-collapse:collapse;margin:6px 0;page-break-inside:auto;table-layout:auto}tr{page-break-inside:avoid}th,td{border:1px solid #000;padding:3px 5px;text-align:center;font-size:11px;vertical-align:middle;white-space:nowrap}th{background:#e9e9e9}tfoot td{font-weight:bold;background:#f3f3f3}
 .sect h2,h2.s{font-size:14px;margin:10px 0 2px;border-right:4px solid #000;padding-right:6px}.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:6px 0}.kpi{border:1px solid #000;padding:4px;text-align:center;border-radius:4px}.kpi *{font-size:11px}
 img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32%;font-weight:bold;background:#f3f3f3}.slip td{text-align:right;font-size:13px;padding:5px 8px}.sign{display:flex;justify-content:space-between;margin-top:34px;font-size:12px}
@@ -105,7 +105,7 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     fr.srcdoc = doc; fr.onload = () => setTimeout(go, 400);
   }
   function printDoc(title, sub, bodyHTML, land, opt) {
-    const custom = !!(opt && opt.css), foot = custom ? '' : `<div class="foot">${esc(CENTER)}${CPHONE ? ' — ☎ ' + esc(CPHONE) : ''}${sub ? ' — ' + esc(sub) : ''}</div>`;
+    const custom = !!(opt && opt.css), foot = '';
     const inner = custom ? bodyHTML : `<div class="box"><div id="fit">${bodyHTML}</div></div>${foot}`;
     const doc = `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${custom ? opt.css : PRINT_CSS(land)}</style></head><body><div class="page">${opt && opt.head != null ? opt.head : hdr(title, sub, opt && opt.total)}${inner}</div>${custom ? '' : FIT_JS}</body></html>`;
     if (window.AndroidBridge && window.AndroidBridge.printHtml) { window.AndroidBridge.printHtml(doc, title, !!land); return; }
@@ -134,7 +134,8 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
     return {html: m.innerHTML, land};
   }
   Acts.pdf = () => {
-    const {html, land} = cleanContent(), title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    let {html, land} = cleanContent(); const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
+    if (S.view && S.view.printHTML) { html = S.view.printHTML(); land = false; }
     let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
     if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
     if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
