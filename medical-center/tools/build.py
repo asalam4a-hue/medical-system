@@ -30,7 +30,9 @@ build("php", "php/index.html", "window.API_URL=%s;" % json.dumps(GAS_URL))
 build("gas", "gas/Index.html")
 build("local", "demo/index.html")
 import shutil; (root / "android/app/src/main/assets").mkdir(parents=True, exist_ok=True); shutil.copy(root / "php/index.html", root / "android/app/src/main/assets/index.html")
-(root / "gas/Seed.gs").write_text("var SEED = " + seed + ";\n", encoding="utf-8")
+(root / "gas/Code.gs").write_text((root / "tools/gas_core.gs").read_text(encoding="utf-8").rstrip("\n") + "\n\n/* ---------- البيانات الأساسية الأولية (تُضاف عند تسجيل أول مدير) ---------- */\nvar SEED = " + seed + ";\n", encoding="utf-8")
+import os
+if (root / "gas/Seed.gs").exists(): os.remove(root / "gas/Seed.gs")
 (root / "gas/appsscript.json").write_text(json.dumps({
   "timeZone": "Africa/Cairo", "exceptionLogging": "STACKDRIVER", "runtimeVersion": "V8",
   "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],

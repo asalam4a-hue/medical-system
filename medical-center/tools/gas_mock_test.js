@@ -14,7 +14,7 @@ const ctx={console,JSON,Math,Date,String,Number,Array,isNaN,
  SpreadsheetApp:{create:()=>ss,openById:()=>ss},
  Utilities:{DigestAlgorithm:{SHA_256:1},Charset:{UTF_8:1},computeDigest:(a,s)=>[...crypto.createHash('sha256').update(s).digest()].map(b=>b>127?b-256:b),getUuid:()=>crypto.randomUUID(),base64Decode:s=>[...Buffer.from(s,'base64')].map(b=>b>127?b-256:b),base64Encode:b=>Buffer.from(b.map(x=>x&255)).toString('base64'),newBlob:(bytes,mime,name)=>({bytes,getBytes:()=>bytes})},
  DriveApp:{Access:{PRIVATE:1},Permission:{NONE:1},createFolder:()=>({getId:()=>'F',createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFolderById:()=>({createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFileById:id=>({getBlob:()=>files[id]})}};
-vm.createContext(ctx);vm.runInContext(fs.readFileSync('gas/Seed.gs','utf8')+fs.readFileSync('gas/Code.gs','utf8'),ctx);
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('gas/Code.gs','utf8'),ctx);
 const call=o=>JSON.parse(ctx.handle(JSON.stringify(o)));
 const assert=(c,m)=>{if(!c){console.log('FAIL',m);process.exitCode=1}else console.log('ok',m)};
 assert(call({action:'status'}).hasUsers===false,'status empty');
