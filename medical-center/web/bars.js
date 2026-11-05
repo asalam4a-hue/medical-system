@@ -35,7 +35,7 @@ const Bars = (() => {
   /* ---- الصوت: ملفات متتابعة (مرفق/حسن صالح ثم قرآن الصباح) ---- */
   const YT_AZK = '2Xf0kDLa8RE', YT_QURAN = 'RZ1x5UjAMZQ';
   let au = null, yt = null, ytReady = false, cur = -1, fails = 0, customUrl = '', customId = '', retryBound = false, playing = false;
-  const tracks = () => customUrl ? [{url: customUrl}, {yt: YT_QURAN}] : [{yt: YT_QURAN}];
+  const tracks = () => customUrl ? [{url: customUrl}] : [];
   const loadCustom = async () => {
     try { const id = (window.S && S.settings && S.settings.azkAudio) || window.AZK_AUDIO_ID || ''; if (id === customId) return; customId = id; customUrl = id ? await fileURL(id) : ''; } catch (e) { customUrl = ''; }
   };
@@ -53,7 +53,7 @@ const Bars = (() => {
     const prev = window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady = () => { if (prev) prev(); go(); };
     const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.onerror = () => { fails++; advance(); }; document.head.appendChild(sc);
   };
-  const advance = () => { cur = (cur + 1) % tracks().length; if (fails >= tracks().length * 2) { playing = false; return; } playTrack(); };
+  const advance = () => { if (!tracks().length) { playing = false; return; } cur = (cur + 1) % tracks().length; if (fails >= tracks().length * 2) { playing = false; return; } playTrack(); };
   const playTrack = () => {
     if (!S.user || muted || !playing) return; const t = tracks()[cur]; if (!t) return;
     stopAll();
@@ -64,7 +64,7 @@ const Bars = (() => {
     } else ytInit(() => { try { if (yt.getVideoData && yt.getVideoData().video_id === t.yt && yt.playVideo) { yt.unMute(); yt.playVideo(); } else yt.loadVideoById(t.yt); setTimeout(() => { try { if (yt.getPlayerState() === -1 || yt.getPlayerState() === 5) bindRetry(); else fails = 0; } catch (e) {} }, 4000); } catch (e) { fails++; advance(); } });
   };
   const bindRetry = () => { if (retryBound) return; retryBound = true; const h = () => { retryBound = false; document.removeEventListener('click', h, true); if (!muted && S.user) { if (cur < 0) cur = 0; playing = true; playTrack(); } }; document.addEventListener('click', h, true); };
-  const startAudio = async () => { await loadCustom(); if (cur < 0) cur = 0; playing = true; fails = 0; playTrack(); };
+  const startAudio = async () => { await loadCustom(); if (!tracks().length) return; if (cur < 0) cur = 0; playing = true; fails = 0; playTrack(); };
   const stats = () => {
     try {
       const t = today(), vs = visitsIn(t, t), st = statementRows(t, t), sm = c => vs.filter(v => v.category === c).reduce((s, v) => s + (+v.value || 0), 0), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0);
@@ -78,7 +78,11 @@ const Bars = (() => {
       mute = document.createElement('button'); mute.className = 'azkmute'; mute.type = 'button';
       mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) stopAll(); else startAudio(); };
       txt = document.createElement('span'); txt.className = 'azktxt'; const w = document.createElement('div'); w.className = 'azkwrap'; w.appendChild(txt);
-      top.append(mute, w);
+      const vb = document.createElement('button'); vb.className = 'azkmute'; vb.type = 'button'; vb.textContent = '📺'; vb.title = 'قرآن الصباح (فيديو)';
+      vb.onclick = () => { let pn = document.getElementById('azkvid'); if (pn) { pn.remove(); return; } pn = document.createElement('div'); pn.id = 'azkvid'; pn.className = 'noprint';
+        pn.innerHTML = `<button type="button" class="azkx" title="إغلاق">✖</button><iframe src="https://www.youtube-nocookie.com/embed/${YT_QURAN}?rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+        pn.querySelector('.azkx').onclick = () => pn.remove(); document.body.appendChild(pn); };
+      top.append(mute, vb, w);
       bot = document.createElement('div'); bot.className = 'daybar noprint'; bot.innerHTML = '<div class="dwrap"></div>';
       setInterval(() => { paint(); paintText(); if (!S.user) { stopAll(); started = false; playing = false; } }, 4000);
     }
