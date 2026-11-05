@@ -135,10 +135,10 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
   }
   Acts.pdf = () => {
     let {html, land} = cleanContent(); const title = pageTitle().replace(/^[^؀-ۿA-Za-z0-9]+/, '');
-    if (S.view && S.view.printHTML) { html = S.view.printHTML(); land = false; }
+    if (S.view && S.view.printHTML) { html = S.view.printHTML(); land = !!S.view.printLand; }
     let total = ''; try { total = S.view && S.view.total ? S.view.total() : ''; } catch (e) {}
-    if (!total) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
-    if (!total) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
+    if (!total && !(S.view && S.view.noTotal)) { const ks = [...$('#main').querySelectorAll('.kpi[data-l]')]; const k = ks.find(x => /إجمالي/.test(x.dataset.l)) || ks.find(x => /صافي/.test(x.dataset.l)); if (k) total = k.dataset.v; }
+    if (!total && !(S.view && S.view.noTotal)) { const tf = $('#main tfoot tr:last-child'); if (tf) { const c = [...tf.children].map(x => x.textContent.trim()).filter(x => /^-?[\d,.]+$/.test(x)); if (c.length) total = c[c.length - 1]; } }
     const sub = `${S.view && S.view.noRange ? '' : rangeLabel()} — طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`;
     let box = document.createElement('div'); box.innerHTML = html; const flat = n => [...n.children].flatMap(c => c.tagName === 'DIV' && !c.className ? flat(c) : [c]); const units = []; let curU = null;
     flat(box).forEach(n => { if (n.classList.contains('sect') || n.matches('h2.s')) { curU = {name: n.textContent.trim() || 'بند', nodes: [n]}; units.push(curU); } else if (curU) curU.nodes.push(n); else { curU = {name: 'العنوان / الملخص', nodes: [n]}; units.push(curU); } });
