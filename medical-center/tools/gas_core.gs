@@ -246,7 +246,7 @@ function route_(b) {
   if (['settings_save', 'backup', 'restore', 'reset', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     if (A === 'settings_save') return withLock_(function () {
-      var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : '', azkAudio: /^[0-9a-f]{18}$/.test(String(b.azkAudio || '')) ? String(b.azkAudio) : ''};
+      var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : '', azkAudio: String(b.azkAudio || '').split(',').filter(function (x) { return /^[0-9a-f]{18}$/.test(x); }).slice(0, 10).join(',')};
       PropertiesService.getScriptProperties().setProperty('SETTINGS', JSON.stringify(o)); return {settings: settings_()};
     });
     if (A === 'backup') return {backup: snapshot_()};
@@ -304,7 +304,7 @@ function route_(b) {
     var mime = String(b.mime || ''), data = String(b.data || '');
     var isAud = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/wav', 'audio/webm'].indexOf(mime) >= 0;
     if (!isAud && ['image/jpeg', 'image/png', 'image/webp'].indexOf(mime) < 0) throw new ApiError('نوع الملف غير مسموح');
-    if (data.length > (isAud ? 8000000 : 5500000)) throw new ApiError('الملف كبير جداً');
+    if (data.length > (isAud ? 32000000 : 5500000)) throw new ApiError('الملف كبير جداً');
     if (isAud && !me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     var bytes; try { bytes = Utilities.base64Decode(data); } catch (x) { throw new ApiError('الصورة تالفة'); }
     var b0 = bytes[0] & 255, b1 = bytes[1] & 255, b2 = bytes[2] & 255, b3 = bytes[3] & 255;

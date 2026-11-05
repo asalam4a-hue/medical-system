@@ -174,7 +174,7 @@ const Local = {
         ENT.forEach(x => { db.rec[x] = Array.isArray(bk.data[x]) ? bk.data[x] : []; });
         if (bk.settings) db.settings = bk.settings; this.save(db); return '';
       };
-      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : '', azkAudio: db.files[b.azkAudio] ? String(b.azkAudio) : ''}; this.save(db); return {settings: this.settings(db)}; }
+      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : '', azkAudio: String(b.azkAudio || '').split(',').filter(x => db.files[x]).slice(0, 10).join(',')}; this.save(db); return {settings: this.settings(db)}; }
       if (A === 'backup') return {backup: snap()};
       if (A === 'master_info') return {at: db.master ? db.master.at : ''};
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
@@ -239,7 +239,7 @@ const Local = {
     if (A === 'upload') {
       const AUDIO = ['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/aac','audio/ogg','audio/wav','audio/webm'];
       if (!['image/jpeg','image/png','image/webp'].concat(AUDIO).includes(b.mime)) return fail('نوع الملف غير مسموح');
-      if (String(b.data || '').length > (AUDIO.includes(b.mime) ? 8e6 : 5.5e6)) return fail('الملف كبير جداً');
+      if (String(b.data || '').length > (AUDIO.includes(b.mime) ? 32e6 : 5.5e6)) return fail('الملف كبير جداً');
       const id = rid(); db.files[id] = 'data:' + b.mime + ';base64,' + b.data; this.save(db); return {file: id};
     }
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
