@@ -180,7 +180,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');

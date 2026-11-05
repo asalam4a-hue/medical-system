@@ -267,8 +267,8 @@ function route_(b) {
     });
     if (A === 'reset') return withLock_(function () {
       if (String(b.confirm || '') !== 'حذف الكل') throw new ApiError('اكتب عبارة التأكيد: حذف الكل');
-      ENT.forEach(function (x) { if (x !== 'users') wipe_(x); });
-      var pr = PropertiesService.getScriptProperties(); ['staff', 'doctors', 'visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
+      ['patients', 'operations', 'visits', 'expenses', 'custody', 'execs'].forEach(function (x) { wipe_(x); });
+      var pr = PropertiesService.getScriptProperties(); ['visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
       return {ok: true};
     });
   }

@@ -223,6 +223,22 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 .tile:not(.clinic) .ic{font-size:1.05rem;animation:none}.tile:not(.clinic) b{font-size:.7rem}.tile:not(.clinic) .n{font-size:.8rem}
 .tile.clinic{padding:5px 8px;min-height:60px;animation:glowpulse 2s ease-in-out infinite alternate}
 
+/* ===== شريط الأذكار والحسابات ===== */
+@keyframes azkmove{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+@keyframes bgflow{0%{background-position:0 50%}100%{background-position:200% 50%}}
+@keyframes dmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.azkbar{display:flex;align-items:center;gap:6px;padding:3px 8px;color:#fff;font-size:.85rem;font-weight:bold;background:linear-gradient(90deg,#0ea5a4,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#0ea5a4);background-size:200% 100%;animation:bgflow 12s linear infinite;direction:rtl}
+.azkmute{border:0;background:rgba(255,255,255,.3);border-radius:50%;width:24px;height:24px;line-height:24px;padding:0;cursor:pointer;font-size:.85rem;flex:none}
+.azkwrap{flex:1;overflow:hidden;white-space:nowrap;direction:ltr;position:relative;height:1.5em}
+.azktxt{position:absolute;right:auto;left:0;direction:rtl;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.35);will-change:transform}
+.daybar{position:fixed;bottom:0;left:0;right:0;z-index:40;overflow:hidden;white-space:nowrap;padding:3px 0;color:#fff;font-size:.82rem;background:linear-gradient(90deg,#f59e0b,#ef4444,#ec4899,#8b5cf6,#3b82f6,#0ea5a4,#f59e0b);background-size:200% 100%;animation:bgflow 14s linear infinite reverse;direction:ltr}
+.dtrack{display:inline-block;animation:dmove 40s linear infinite;direction:rtl}
+.dchip{display:inline-block;margin:0 14px;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.dchip b{background:rgba(255,255,255,.28);border-radius:8px;padding:0 6px}
+.daybar:hover .dtrack{animation-play-state:paused}
+#app{padding-bottom:30px}
+@media print{.azkbar,.daybar{display:none!important}#app{padding-bottom:0}}
+
 </style>
 </head>
 <body>
@@ -411,7 +427,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ENT.forEach(x => { if (x !== 'users') db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
@@ -868,6 +884,7 @@ function render() {
   const app = $('#app');
   if (!S.user) return renderLogin(app);
   app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  if (window.Bars) Bars.mount(app);
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = `<div class="panel"><b>الشاشة غير موجودة</b> (${esc(S.screen)})<br><small dir="ltr">build ${window.BUILD || '?'} — screens loaded: ${Object.keys(window.SCREEN_RENDER || {}).length}${(window.__errs || []).length ? '<br>errors: ' + esc(window.__errs.join(' | ')) : ''}</small></div>`;
@@ -924,7 +941,7 @@ function renderHome() {
     const clin = uniq(vs.map(v => v.clinic).filter(Boolean)).map(n => { const c = vs.filter(v => v.clinic === n), dm = new Map(); c.forEach(v => { const d = v.doctor || 'بدون طبيب', o = dm.get(d) || {n: d, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; dm.set(d, o); }); return {n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0), docs: [...dm.values()].sort((a, b) => b.cnt - a.cnt)}; }).sort((a, b) => b.rev - a.rev);
     ['الأشعة','التحاليل'].forEach(n => { const c = vs.filter(v => v.clinic === n); if (c.length) clin.push({n, cnt: c.length, rev: c.reduce((s, v) => s + (+v.value || 0), 0)}); });
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️']];
+    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
@@ -1896,6 +1913,76 @@ SCREEN_RENDER.rep_settle = async function () {
 
 </script>
 <script>
+/* ===== شريط الأذكار (أعلى) + شريط حسابات اليوم (أسفل) ===== */
+const AZK_M = ['أصبحنا وأصبح الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
+  'اللهم بك أصبحنا وبك أمسينا وبك نحيا وبك نموت وإليك النشور',
+  'اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي وأبوء بذنبي فاغفر لي فإنه لا يغفر الذنوب إلا أنت',
+  'رضيت بالله ربا وبالإسلام دينا وبمحمد صلى الله عليه وسلم نبيا',
+  'اللهم عافني في بدني، اللهم عافني في سمعي، اللهم عافني في بصري، لا إله إلا أنت',
+  'بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم',
+  'سبحان الله وبحمده، سبحان الله العظيم',
+  'أستغفر الله العظيم وأتوب إليه',
+  'حسبي الله لا إله إلا هو عليه توكلت وهو رب العرش العظيم',
+  'اللهم صل وسلم على نبينا محمد'];
+const AZK_E = ['أمسينا وأمسى الملك لله، والحمد لله، لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير',
+  'اللهم بك أمسينا وبك أصبحنا وبك نحيا وبك نموت وإليك المصير',
+  'اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي وأبوء بذنبي فاغفر لي فإنه لا يغفر الذنوب إلا أنت',
+  'أعوذ بكلمات الله التامات من شر ما خلق',
+  'اللهم إني أسألك العفو والعافية في الدنيا والآخرة',
+  'بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم',
+  'سبحان الله وبحمده، سبحان الله العظيم',
+  'أستغفر الله العظيم وأتوب إليه',
+  'يا حي يا قيوم برحمتك أستغيث، أصلح لي شأني كله ولا تكلني إلى نفسي طرفة عين',
+  'اللهم صل وسلم على نبينا محمد'];
+const Bars = (() => {
+  let top, bot, txt, mute, idx = 0, timer = null, started = false;
+  const ls = {get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }};
+  let muted = ls.get('azk_mute') === '1';
+  const list = () => new Date().getHours() < 12 ? AZK_M : AZK_E;
+  const speech = () => typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
+  const stopSpeak = () => { try { speech() && speechSynthesis.cancel(); } catch (e) {} };
+  const next = () => {
+    clearTimeout(timer);
+    if (!S.user) { started = false; stopSpeak(); return; }
+    const L = list(), t = L[idx++ % L.length], pre = new Date().getHours() < 12 ? '🌅 أذكار الصباح: ' : '🌙 أذكار المساء: ';
+    if (txt) { txt.textContent = pre + t; txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = `azkmove ${Math.max(14, t.length * .2)}s linear forwards`; }
+    const fallback = () => { timer = setTimeout(next, Math.max(14, t.length * .2) * 1000 + 1500); };
+    if (muted || !speech()) return fallback();
+    try {
+      stopSpeak(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = .9;
+      const v = speechSynthesis.getVoices().find(x => /^ar/i.test(x.lang)); if (v) u.voice = v;
+      let done = false; const fin = () => { if (done) return; done = true; timer = setTimeout(next, 2500); };
+      u.onend = fin; u.onerror = () => { if (done) return; done = true; fallback(); };
+      speechSynthesis.speak(u); timer = setTimeout(fin, 90000);
+    } catch (e) { fallback(); }
+  };
+  const stats = () => {
+    try {
+      const t = today(), vs = visitsIn(t, t), st = statementRows(t, t), sm = c => vs.filter(v => v.category === c).reduce((s, v) => s + (+v.value || 0), 0), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0);
+      return [['🧾 زيارات اليوم', vs.length], ['🩺 الكشف', fmtN(st.kosf)], ['🧩 متنوع', fmtN(st.mixed)], ['🏥 العمليات', fmtN(st.opsRev)], ['💰 إجمالي الإيراد', fmtN(st.dayRev)], ['🏢 الشركات', fmtN(sm('company'))], ['🏛️ اللجنة', fmtN(sm('committee'))], ['🛡️ التأمين', fmtN(sm('insurance'))], ['🏛️ الضريبة', fmtN(tax)], ['💸 المصروفات', fmtN(st.expO)], ['📊 الصافي', fmtN(st.net)]];
+    } catch (e) { return []; }
+  };
+  const paint = () => { if (!bot) return; const h = stats().map(x => `<span class="dchip">${x[0]}: <b>${x[1]}</b></span>`).join(''); const key = h; if (bot.dataset.k !== key) { bot.dataset.k = key; bot.firstChild.innerHTML = `<div class="dtrack">${h}${h}</div>`; } };
+  const mount = app => {
+    if (!top) {
+      top = document.createElement('div'); top.className = 'azkbar noprint';
+      mute = document.createElement('button'); mute.className = 'azkmute'; mute.type = 'button';
+      mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) { stopSpeak(); } clearTimeout(timer); idx--; next(); };
+      txt = document.createElement('span'); txt.className = 'azktxt'; const w = document.createElement('div'); w.className = 'azkwrap'; w.appendChild(txt);
+      top.append(mute, w);
+      bot = document.createElement('div'); bot.className = 'daybar noprint'; bot.innerHTML = '<div class="dwrap"></div>';
+      setInterval(paint, 4000);
+    }
+    mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت';
+    app.insertBefore(top, app.firstChild); app.appendChild(bot); bot.dataset.k = ''; paint();
+    if (!started) { started = true; idx = 0; next(); }
+  };
+  return {mount, paint};
+})();
+window.Bars = Bars;
+
+</script>
+<script>
 /* ============ إدارة البرنامج (للمدير فقط): الإعدادات، النسخ الاحتياطي، الاسترجاع، نسخة الماستر، حذف الكل ============ */
 'use strict';
 SCREEN_RENDER.admin = async function () {
@@ -1920,7 +2007,7 @@ SCREEN_RENDER.admin = async function () {
     <p class="muted">نسخة كاملة محفوظة على الخادم نفسه تستطيع الرجوع إليها بضغطة واحدة. آخر نسخة: <b id="mat">${fmtAt(master.at)}</b></p>
     <div class="actions"><button class="btn c-violet" id="ms">📌 حفظ نسخة ماستر الآن</button><button class="btn c-orange" id="mr">↩️ استرجاع النسخة الماستر</button></div></div>
   <div class="panel accent c-red"><h3>🗑️ حذف كل البيانات</h3>
-    <p class="muted">يحذف الزيارات والمرضى والأطباء والخدمات والعمليات والمصروفات وكل بيانات البرنامج، ويُبقي المستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>
+    <p class="muted">يحذف الزيارات والمرضى والعمليات والمصروفات والعهد والسلف والتنفيذات، ويُبقي البيانات الأساسية (الأطباء والخدمات والعاملين وشركات التأمين) والمستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>
     <div class="fld"><label>اكتب عبارة التأكيد: حذف الكل</label><input id="rc" autocomplete="off"></div>
     <div class="actions"><button class="btn c-red" id="rz">🗑️ حذف الكل</button></div></div>`;
   const reload = async () => { await loadAll(); await loadSettings(); render(); };

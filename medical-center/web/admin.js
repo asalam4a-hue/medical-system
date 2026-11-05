@@ -22,7 +22,7 @@ SCREEN_RENDER.admin = async function () {
     <p class="muted">نسخة كاملة محفوظة على الخادم نفسه تستطيع الرجوع إليها بضغطة واحدة. آخر نسخة: <b id="mat">${fmtAt(master.at)}</b></p>
     <div class="actions"><button class="btn c-violet" id="ms">📌 حفظ نسخة ماستر الآن</button><button class="btn c-orange" id="mr">↩️ استرجاع النسخة الماستر</button></div></div>
   <div class="panel accent c-red"><h3>🗑️ حذف كل البيانات</h3>
-    <p class="muted">يحذف الزيارات والمرضى والأطباء والخدمات والعمليات والمصروفات وكل بيانات البرنامج، ويُبقي المستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>
+    <p class="muted">يحذف الزيارات والمرضى والعمليات والمصروفات والعهد والسلف والتنفيذات، ويُبقي البيانات الأساسية (الأطباء والخدمات والعاملين وشركات التأمين) والمستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>
     <div class="fld"><label>اكتب عبارة التأكيد: حذف الكل</label><input id="rc" autocomplete="off"></div>
     <div class="actions"><button class="btn c-red" id="rz">🗑️ حذف الكل</button></div></div>`;
   const reload = async () => { await loadAll(); await loadSettings(); render(); };
