@@ -61,7 +61,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -376,7 +376,7 @@ function startSync() {
 async function loadAll(ents) {
   if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
-    try { S.data[e] = (await API.call('list', {entity: e})).items; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
+    try { const rr = await API.call('list', {entity: e}); S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
 }
 

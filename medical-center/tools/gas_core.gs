@@ -189,6 +189,10 @@ function logAct_(me, act, e, rec) {
   } catch (x) {}
 }
 function pub_(u) { var o = {}; for (var k in u) if (k !== 'hash' && k !== 'salt') o[k] = u[k]; return o; }
+function peekCounter_(e, f) {
+  var v = PropertiesService.getScriptProperties().getProperty('ctr_' + e), m = 0; getAll_(e).forEach(function (r) { m = Math.max(m, +r[f] || 0); });
+  return Math.max(+v || 0, m);
+}
 function nextCounter_(e, f) {
   var p = PropertiesService.getScriptProperties(), key = 'ctr_' + e, v = p.getProperty(key);
   if (v === null) { v = 0; getAll_(e).forEach(function (r) { v = Math.max(v, +r[f] || 0); }); }
@@ -279,8 +283,8 @@ function route_(b) {
     });
     if (A === 'reset') return withLock_(function () {
       if (String(b.confirm || '') !== 'حذف الكل') throw new ApiError('اكتب عبارة التأكيد: حذف الكل');
+      PropertiesService.getScriptProperties().setProperty('ctr_visits', String(peekCounter_('visits', 'serial')));
       ['patients', 'operations', 'visits', 'expenses', 'custody', 'execs'].forEach(function (x) { wipe_(x); });
-      var pr = PropertiesService.getScriptProperties(); ['visits'].forEach(function (x) { pr.deleteProperty('ctr_' + x); });
       return {ok: true};
     });
   }
@@ -293,7 +297,7 @@ function route_(b) {
     var ok = !!me.isAdmin || (e !== 'users' && (e === 'staff' ? has_(me, 'staff') : (LOOKUP.indexOf(e) >= 0 || has_(me, e) || has_(me, 'dashboard') || has_(me, 'dues') || reps)));
     if (!ok) throw new ApiError('غير مصرح', 'forbidden');
     var items = getAll_(e, b.from || null, b.to || null);
-    return {items: e === 'users' ? items.map(pub_) : items};
+    return {items: e === 'users' ? items.map(pub_) : items, ctr: AUTO[e] ? peekCounter_(e, AUTO[e]) : undefined};
   }
 
   if (A === 'bulk_save') {

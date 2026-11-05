@@ -180,7 +180,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
@@ -198,7 +198,7 @@ const Local = {
       let items = (db.rec[e] || []).slice();
       if (b.from) items = items.filter(r => !r.date || r.date >= b.from);
       if (b.to) items = items.filter(r => !r.date || r.date <= b.to);
-      return {items: items.map(r => e === 'users' ? this.pub(r) : r)};
+      return {items: items.map(r => e === 'users' ? this.pub(r) : r), ctr: AUTO[e] ? Math.max((db.ctr || {})[e] || 0, (db.rec[e] || []).reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) : undefined};
     }
     if (A === 'save' || A === 'delete') {
       const ok = me.isAdmin || (e !== 'users' && (WRITE[e] || []).some(p => has(me, p)));
@@ -228,7 +228,7 @@ const Local = {
         if (src.password) { out.salt = rid(); out.hash = await sha(out.salt + src.password); }
       } else {
         if (!String(out.name || out.date || out.category || out.type || '').trim()) return fail('بيانات ناقصة');
-        if (e !== 'users' && AUTO[e] && !rec) out[AUTO[e]] = list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0) + 1;
+        if (e !== 'users' && AUTO[e] && !rec) { db.ctr = db.ctr || {}; out[AUTO[e]] = db.ctr[e] = Math.max(db.ctr[e] || 0, list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) + 1; }
         if (rec && AUTO[e]) out[AUTO[e]] = rec[AUTO[e]];
       }
       if (rec) Object.assign(rec, out, {updatedAt: new Date().toISOString()});

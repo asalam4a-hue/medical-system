@@ -247,6 +247,8 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 
 .kpis .kpi.hasinfo,.cards .tile.hasinfo{padding-left:20px}
 
+.bcode{font-family:monospace;letter-spacing:1px;font-size:.78rem}
+
 </style>
 </head>
 <body>
@@ -435,7 +437,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
@@ -453,7 +455,7 @@ const Local = {
       let items = (db.rec[e] || []).slice();
       if (b.from) items = items.filter(r => !r.date || r.date >= b.from);
       if (b.to) items = items.filter(r => !r.date || r.date <= b.to);
-      return {items: items.map(r => e === 'users' ? this.pub(r) : r)};
+      return {items: items.map(r => e === 'users' ? this.pub(r) : r), ctr: AUTO[e] ? Math.max((db.ctr || {})[e] || 0, (db.rec[e] || []).reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) : undefined};
     }
     if (A === 'save' || A === 'delete') {
       const ok = me.isAdmin || (e !== 'users' && (WRITE[e] || []).some(p => has(me, p)));
@@ -483,7 +485,7 @@ const Local = {
         if (src.password) { out.salt = rid(); out.hash = await sha(out.salt + src.password); }
       } else {
         if (!String(out.name || out.date || out.category || out.type || '').trim()) return fail('بيانات ناقصة');
-        if (e !== 'users' && AUTO[e] && !rec) out[AUTO[e]] = list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0) + 1;
+        if (e !== 'users' && AUTO[e] && !rec) { db.ctr = db.ctr || {}; out[AUTO[e]] = db.ctr[e] = Math.max(db.ctr[e] || 0, list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) + 1; }
         if (rec && AUTO[e]) out[AUTO[e]] = rec[AUTO[e]];
       }
       if (rec) Object.assign(rec, out, {updatedAt: new Date().toISOString()});
@@ -574,7 +576,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -889,7 +891,7 @@ function startSync() {
 async function loadAll(ents) {
   if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
-    try { S.data[e] = (await API.call('list', {entity: e})).items; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
+    try { const rr = await API.call('list', {entity: e}); S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
 }
 
@@ -1006,6 +1008,30 @@ Acts.clinicdet = el => {
   const m = modal(`<h3>🏥 ${esc(n)}${dd ? ' — ' + esc(dd) : ''} — ${esc(rangeLabel())}</h3><table><thead><tr><th>الطبيب</th><th>الزيارات</th><th>الإيراد</th></tr></thead><tbody>${rows.map(([d, o]) => `<tr><td>${esc(d)}</td><td>${o.cnt}</td><td>${fmtN(o.rev)}</td></tr>`).join('')}</tbody><tfoot><tr><td>الإجمالي</td><td>${vs.length}</td><td>${fmtN(vs.reduce((t, v) => t + (+v.value || 0), 0))}</td></tr></tfoot></table><div class="actions"><button class="btn c-teal" id="cdr">📋 تقرير العيادة</button><button class="btn ghost" id="cdc">إغلاق</button></div>`);
   $('#cdc', m).onclick = () => m.remove(); $('#cdr', m).onclick = () => { m.remove(); Acts.clinicrep({dataset: {v: n}}); };
 };
+
+</script>
+<script>
+/* ===== باركود المسلسل: السنة+الشهر+اليوم+المسلسل (مثال 202611050001) — Code 128 (Set C) ===== */
+'use strict';
+const C128 = ["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","1100011101011"];
+function visitCode(v) {
+  if (!v || !v.date || !v.serial) return '';
+  let s = String(v.serial).padStart(4, '0'); const d = String(v.date).replace(/\D/g, '');
+  if ((d.length + s.length) % 2) s = '0' + s;
+  return d + s;
+}
+function code128Bits(code) {
+  const ds = String(code).replace(/\D/g, ''); if (!ds || ds.length % 2) return '';
+  let sum = 105, bits = C128[105];
+  for (let i = 0, k = 1; i < ds.length; i += 2, k++) { const val = +ds.substr(i, 2); sum += val * k; bits += C128[val]; }
+  return bits + C128[sum % 103] + C128[106];
+}
+function barcodeSVG(code, h) {
+  const b = code128Bits(code); if (!b) return ''; h = h || 38; const q = 10; let x = q, r = '';
+  for (let i = 0; i < b.length;) { let j = i; while (j < b.length && b[j] === b[i]) j++; if (b[i] === '1') r += '<rect x="' + x + '" y="0" width="' + (j - i) + '" height="' + h + '"/>'; x += j - i; i = j; }
+  const W = x + q; return '<svg class="bcsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + ' ' + h + '" width="' + Math.round(W * 1.2) + '" height="' + h + '" preserveAspectRatio="none" fill="#000" style="background:#fff">' + r + '</svg>';
+}
+window.visitCode = visitCode; window.barcodeSVG = barcodeSVG; window.code128Bits = code128Bits;
 
 </script>
 <script>
@@ -1243,9 +1269,9 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
   ],
-  cols: [{h: 'م', f: r => r.serial}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
@@ -1761,6 +1787,7 @@ Acts.delpay = async el => { if (!await confirmBox('حذف هذا الصرف؟ س
 <script>
 /* ============ حركة الخزينة: دفتر يومي (إيرادات العيادات / الشركات / المصروفات / حساب الأطباء) ============ */
 'use strict';
+const rowSerial = r => r.kind === 'v' && r.vs && r.vs.length ? Math.min(...r.vs.map(v => +v.serial || 1e8)) : 1e9;
 function cashLedger(from, to) {
   const days = [...new Set([
     ...visitsIn(from, to).map(v => v.date), ...opsIn(from, to).map(o => o.date),
@@ -1773,7 +1800,7 @@ function cashLedger(from, to) {
   const add = (acc, o) => NK.forEach(k => { acc[k] += +o[k] || 0; });
   days.forEach(d => {
     const dsum = zero(), dn = dayName(d);
-    detailSections(d, d).rows.slice().sort((a, b) => (a.c === 'المركز') - (b.c === 'المركز')).forEach(r => {
+    detailSections(d, d).rows.slice().sort((a, b) => ((a.c === 'المركز') - (b.c === 'المركز')) || (rowSerial(a) - rowSerial(b))).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
@@ -2363,26 +2390,27 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
       let v = f.k === '_doc' ? r.doctor : r[f.k]; if (v == null || v === '') return ''; if (f.t === 'chk') v = v ? 'نعم' : 'لا'; if (f.t === 'seg') { const o = f.opts.find(x => x.v === v); v = o ? o.l : v; }
       return `<tr><td>${esc(f.l)}</td><td>${esc(v)}</td></tr>`;
     }).join('');
-    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
-    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
+    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : ''; const bcRow = cfg.ent === 'visits' && visitCode(r) ? `<tr><td>الباركود</td><td style="text-align:center">${barcodeSVG(visitCode(r), 40)}<div style="font-family:monospace;letter-spacing:2px">${visitCode(r)}</div></td></tr>` : '';
+    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}${bcRow}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
   /* ---- إيصال كاشير صغير: معاينة + طباعة عادية + طباعة بلوتوث (ESC/POS صورة) ---- */
   const PAYL = {cash: 'نقدي', visa: 'فيزا', master: 'ماستر كارد', transfer: 'تحويل كاش', credit: 'دفع آجل'};
   const receiptLines = r => {
     const L = [['c', CENTER, 'b'], CPHONE ? ['c', '☎ ' + CPHONE] : null, ['hr'], ['c', 'إيصال استلام نقدية' + (r.serial ? ' — رقم ' + r.serial : ''), 'b'], ['c', r.date], ['hr'],
       ['kv', 'اسم المريض', r.patient], ['kv', 'نوع الزيارة', r.visitType || ''], ['kv', 'طريقة الدفع', (PAYL[r.payMethod] || 'نقدي') + (r.payRef ? ' (' + r.payRef + ')' : '')], ['hr'],
-      ['kv', 'القيمة', fmtN(+r.value || 0), 'big'], ['hr'], ['c', 'شكراً لزيارتكم'], ['c', 'وندعو لكم بالشفاء العاجل']];
+      ['kv', 'القيمة', fmtN(+r.value || 0), 'big'], ['hr'], ...(visitCode(r) ? [['bc', visitCode(r)], ['c', visitCode(r)], ['hr']] : []), ['c', 'شكراً لزيارتكم'], ['c', 'وندعو لكم بالشفاء العاجل']];
     return L.filter(Boolean);
   };
   async function receiptCanvas(r, w) {
     const c = document.createElement('canvas'), pad = 10, lh = 30; c.width = w; const lines = receiptLines(r);
     let logoImg = null; const src = CLOGO; if (src) { logoImg = await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
-    c.height = lines.length * (lh + 6) + (logoImg ? 70 : 0) + 40;
+    c.height = lines.length * (lh + 6) + (logoImg ? 70 : 0) + 40 + (lines.some(l => l[0] === 'bc') ? 50 : 0);
     const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#000'; x.direction = 'rtl'; x.textBaseline = 'middle';
     let y = 8; if (logoImg) { const k = Math.min(60 / logoImg.height, 200 / logoImg.width); x.drawImage(logoImg, (w - logoImg.width * k) / 2, y, logoImg.width * k, logoImg.height * k); y += 66; }
     lines.forEach(l => {
       const t = l[0]; y += (lh + 6) / 2;
       if (t === 'hr') { x.setLineDash([4, 3]); x.beginPath(); x.moveTo(pad, y); x.lineTo(w - pad, y); x.stroke(); x.setLineDash([]); }
+      else if (t === 'bc') { const bits = code128Bits(l[1]), m = Math.max(1, Math.floor((w - 2 * pad) / (bits.length + 20))), x0 = (w - bits.length * m) / 2; for (let i = 0; i < bits.length; i++) if (bits[i] === '1') x.fillRect(x0 + i * m, y - 14, m, 70); y += 50; }
       else if (t === 'c') { x.font = (l[2] === 'b' ? 'bold ' : '') + '22px "Times New Roman",serif'; x.textAlign = 'center'; x.fillText(l[1], w / 2, y); }
       else { x.font = (l[3] === 'big' ? 'bold 28px' : '22px') + ' "Times New Roman",serif'; x.textAlign = 'right'; x.fillText(l[1], w - pad, y); x.textAlign = 'left'; x.font = 'bold ' + (l[3] === 'big' ? 28 : 22) + 'px "Times New Roman",serif'; x.fillText(l[2], pad, y); }
       y += (lh + 6) / 2;

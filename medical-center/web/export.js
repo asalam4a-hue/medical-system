@@ -154,26 +154,27 @@ img{max-height:28px}svg{max-width:100%;height:auto}.slip td:first-child{width:32
       let v = f.k === '_doc' ? r.doctor : r[f.k]; if (v == null || v === '') return ''; if (f.t === 'chk') v = v ? 'نعم' : 'لا'; if (f.t === 'seg') { const o = f.opts.find(x => x.v === v); v = o ? o.l : v; }
       return `<tr><td>${esc(f.l)}</td><td>${esc(v)}</td></tr>`;
     }).join('');
-    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : '';
-    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
+    const extra = r.registeredBy ? `<tr><td>سجّله</td><td>${esc(r.registeredBy)}</td></tr>` : ''; const bcRow = cfg.ent === 'visits' && visitCode(r) ? `<tr><td>الباركود</td><td style="text-align:center">${barcodeSVG(visitCode(r), 40)}<div style="font-family:monospace;letter-spacing:2px">${visitCode(r)}</div></td></tr>` : '';
+    printDoc(cfg.t.replace(/\s*\(.*\)/, '') + (r.serial ? ` — رقم ${r.serial}` : ''), `طُبع في ${today()} بواسطة ${S.user ? S.user.username : ''}`, `<table class="slip"><tbody>${rows}${extra}${bcRow}</tbody></table><div class="sign"><span>توقيع المسؤول: ........................</span><span>توقيع المستلم: ........................</span></div>`, false);
   };
   /* ---- إيصال كاشير صغير: معاينة + طباعة عادية + طباعة بلوتوث (ESC/POS صورة) ---- */
   const PAYL = {cash: 'نقدي', visa: 'فيزا', master: 'ماستر كارد', transfer: 'تحويل كاش', credit: 'دفع آجل'};
   const receiptLines = r => {
     const L = [['c', CENTER, 'b'], CPHONE ? ['c', '☎ ' + CPHONE] : null, ['hr'], ['c', 'إيصال استلام نقدية' + (r.serial ? ' — رقم ' + r.serial : ''), 'b'], ['c', r.date], ['hr'],
       ['kv', 'اسم المريض', r.patient], ['kv', 'نوع الزيارة', r.visitType || ''], ['kv', 'طريقة الدفع', (PAYL[r.payMethod] || 'نقدي') + (r.payRef ? ' (' + r.payRef + ')' : '')], ['hr'],
-      ['kv', 'القيمة', fmtN(+r.value || 0), 'big'], ['hr'], ['c', 'شكراً لزيارتكم'], ['c', 'وندعو لكم بالشفاء العاجل']];
+      ['kv', 'القيمة', fmtN(+r.value || 0), 'big'], ['hr'], ...(visitCode(r) ? [['bc', visitCode(r)], ['c', visitCode(r)], ['hr']] : []), ['c', 'شكراً لزيارتكم'], ['c', 'وندعو لكم بالشفاء العاجل']];
     return L.filter(Boolean);
   };
   async function receiptCanvas(r, w) {
     const c = document.createElement('canvas'), pad = 10, lh = 30; c.width = w; const lines = receiptLines(r);
     let logoImg = null; const src = CLOGO; if (src) { logoImg = await new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; }); }
-    c.height = lines.length * (lh + 6) + (logoImg ? 70 : 0) + 40;
+    c.height = lines.length * (lh + 6) + (logoImg ? 70 : 0) + 40 + (lines.some(l => l[0] === 'bc') ? 50 : 0);
     const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.fillStyle = '#000'; x.direction = 'rtl'; x.textBaseline = 'middle';
     let y = 8; if (logoImg) { const k = Math.min(60 / logoImg.height, 200 / logoImg.width); x.drawImage(logoImg, (w - logoImg.width * k) / 2, y, logoImg.width * k, logoImg.height * k); y += 66; }
     lines.forEach(l => {
       const t = l[0]; y += (lh + 6) / 2;
       if (t === 'hr') { x.setLineDash([4, 3]); x.beginPath(); x.moveTo(pad, y); x.lineTo(w - pad, y); x.stroke(); x.setLineDash([]); }
+      else if (t === 'bc') { const bits = code128Bits(l[1]), m = Math.max(1, Math.floor((w - 2 * pad) / (bits.length + 20))), x0 = (w - bits.length * m) / 2; for (let i = 0; i < bits.length; i++) if (bits[i] === '1') x.fillRect(x0 + i * m, y - 14, m, 70); y += 50; }
       else if (t === 'c') { x.font = (l[2] === 'b' ? 'bold ' : '') + '22px "Times New Roman",serif'; x.textAlign = 'center'; x.fillText(l[1], w / 2, y); }
       else { x.font = (l[3] === 'big' ? 'bold 28px' : '22px') + ' "Times New Roman",serif'; x.textAlign = 'right'; x.fillText(l[1], w - pad, y); x.textAlign = 'left'; x.font = 'bold ' + (l[3] === 'big' ? 28 : 22) + 'px "Times New Roman",serif'; x.fillText(l[2], pad, y); }
       y += (lh + 6) / 2;
