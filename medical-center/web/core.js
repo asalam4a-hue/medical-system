@@ -266,9 +266,11 @@ function opCalc(o) {
   return {doc: d, pct, anes: an, base, surgeon: base * pct / 100};
 }
 function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
+const isCenterShare = v => (v.notes || '').startsWith('تحمل المريض —') || (v.clinic === 'المركز' && v.service === 'نسبة شركات');
 function accounts(from, to) {
   const map = new Map();
   for (const v of visitsIn(from, to)) {
+    if (isCenterShare(v)) continue;
     const d = findDoctor(v), key = d ? d.id : '?|' + (v.doctor || '') + '|' + (v.clinic || '');
     let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (v.doctor || '—'), d ? d.clinic : v.clinic); map.set(key, r); }
     const val = +v.value || 0, tx = +v.tax || 0; r.visits++;

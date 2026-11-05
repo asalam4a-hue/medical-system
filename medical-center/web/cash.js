@@ -1,6 +1,13 @@
 /* ============ حركة الخزينة: دفتر يومي (إيرادات العيادات / الشركات / المصروفات / حساب الأطباء) ============ */
 'use strict';
 const rowSerial = r => r.kind === 'v' && r.vs && r.vs.length ? Math.min(...r.vs.map(v => +v.serial || 1e8)) : 1e9;
+/* رقم المستند: من الأصغر إلى الأكبر (مثال 0-1) */
+function docRange(vs) {
+  const a = vs.map(v => String(v.docNo == null ? '' : v.docNo).trim()).filter(Boolean); if (!a.length) return '';
+  const nums = a.filter(x => /^\d+$/.test(x)).map(Number);
+  if (nums.length === a.length) { const mn = Math.min(...nums), mx = Math.max(...nums); return mn === mx ? String(mn) : mn + '-' + mx; }
+  return [...new Set(a)].join('، ');
+}
 function cashLedger(from, to) {
   const days = [...new Set([
     ...visitsIn(from, to).map(v => v.date), ...opsIn(from, to).map(o => o.date),
@@ -19,7 +26,7 @@ function cashLedger(from, to) {
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
       const o = {kosf: r.kosf, mixed: r.mixed, rev: r.rev, co: r.co, com: r.com, tax: r.tax, ins: r.ins, amount: 0, due: r.due, fixed: r.kind === 'v' && doc ? +doc.fixed || 0 : 0, paid: r.paid};
       add(dsum, o);
-      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: [...new Set(cov.map(v => v.formNo).filter(Boolean))].join('، '), co: sum(cov, v => +v.value || 0), pct}});
+      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: docRange(r.kind === 'v' ? r.vs : []), co: sum(cov, v => +v.value || 0), pct}});
     });
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));

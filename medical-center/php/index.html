@@ -360,7 +360,7 @@ const FIELDS = {
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   patients:'name,phone',
   companies:'name,fee,contact',
-  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
   custody:'date,person,kind,dir,amount,notes,docNo',
   execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
@@ -781,9 +781,11 @@ function opCalc(o) {
   return {doc: d, pct, anes: an, base, surgeon: base * pct / 100};
 }
 function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
+const isCenterShare = v => (v.notes || '').startsWith('تحمل المريض —') || (v.clinic === 'المركز' && v.service === 'نسبة شركات');
 function accounts(from, to) {
   const map = new Map();
   for (const v of visitsIn(from, to)) {
+    if (isCenterShare(v)) continue;
     const d = findDoctor(v), key = d ? d.id : '?|' + (v.doctor || '') + '|' + (v.clinic || '');
     let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (v.doctor || '—'), d ? d.clinic : v.clinic); map.set(key, r); }
     const val = +v.value || 0, tx = +v.tax || 0; r.visits++;
@@ -1259,7 +1261,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     {k: '_banner', t: 'html', html: () => '<div class="fld full"><div id="vbanner"></div></div>'},
     {k: 'clinic', l: 'العيادة / القسم', t: 'sel', req: 1, opts: () => ['', ...clinicNames(), ...EXTRA_CLINICS].map(x => ({v: x, l: x || '— اختر العيادة —'}))},
     {k: '_doc', l: 'الطبيب المعالج', t: 'docpick', sg: 'clinicdocs'},
-    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: () => VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'},
+    {k: 'visitType', l: 'الزيارة', t: 'sel', opts: () => VTYPES}, {k: 'service', l: 'البيان / الخدمة', sg: 'bayan'}, {k: 'docNo', l: 'رقم المستند', sg: 'visits.docNo'},
     {k: 'value', l: 'القيمة', t: 'num', req: 1}, {k: 'paid', l: 'المدفوع', t: 'num', ph: 'اتركه فارغاً = مدفوع بالكامل'}, {k: '_rem', l: 'المتبقي', t: 'ro'}, {k: 'tax', l: 'الضريبة (على الكشف فقط)', t: 'ro'},
     {k: 'category', l: 'نوع الزيارة', t: 'seg', w: 'full', opts: Object.keys(CAT).map(k => ({v: k, l: CAT[k], c: CATC[k]}))},
     {k: 'notes', l: 'ملاحظات', t: 'area'},
@@ -1289,9 +1291,9 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
       const mark = 'تحمل المريض — مرتبط بالزيارة رقم ' + rec.serial, old = S.data.visits.find(x => x.notes === mark && x.id !== rec.id);
       const req = rec.category === 'company' ? Math.round(coShare(rec) / 10) * 10 : 0;
       if (req > 0) {
-        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'المركز - متنوع - نسبة شركات', value: req, category: 'cash', notes: mark};
+        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'نسبة شركات', value: req, category: 'cash', notes: mark};
         await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
-        toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة: ' + fmtN(req));
+        toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة (مقرّبة لأقرب 10): ' + fmtN(req));
       } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
       await loadAll(['visits']);
     } catch (e) {}
@@ -1532,10 +1534,11 @@ function detailSections(from, to) {
      [b('صافي اليوم'), '', '', '', b(fmtN(st.net)), '', '', '', ''],
      [b('الضريبة'), '', '', '', '', '', '', '', b(fmtN(T('tax')))]]);
   const tag = r => r.due <= 0 && r.paid <= 0 ? '' : r.rest <= 0.005 ? '<span class="tag c-lime">تم الصرف</span>' : r.paid > 0 ? '<span class="tag c-orange">صرف جزئي</span>' : '<span class="tag c-red">لم يُصرف</span>';
+  const drows = rows.filter(r => !(r.kind === 'v' && r.vs.length && r.vs.every(isCenterShare))), TD = k => sum(drows, r => r[k]);
   const dues = tbl(['العيادة', 'اسم الطبيب', 'كشف', 'متنوع', 'إيرادات', 'الضرائب', 'المستحق', 'المدفوع', 'الباقي', 'الحالة'],
-    [...rows.map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax), b(fmtN(r.due)), fmtN(r.paid), b(fmtN(r.rest)), tag(r)]),
-     [b('الإجمالي'), '', b(fmtN(T('kosf'))), b(fmtN(T('mixed'))), b(fmtN(T('rev'))), b(fmtN(T('tax'))), b(fmtN(T('due'))), b(fmtN(T('paid'))), b(fmtN(T('rest'))), ''],
-     [b('إجمالي رصيد مستحق'), '', '', '', '', '', '', '', b(fmtN(T('rest'))), '']]);
+    [...drows.map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax), b(fmtN(r.due)), fmtN(r.paid), b(fmtN(r.rest)), tag(r)]),
+     [b('الإجمالي'), '', b(fmtN(TD('kosf'))), b(fmtN(TD('mixed'))), b(fmtN(TD('rev'))), b(fmtN(TD('tax'))), b(fmtN(TD('due'))), b(fmtN(TD('paid'))), b(fmtN(TD('rest'))), ''],
+     [b('إجمالي رصيد مستحق'), '', '', '', '', '', '', '', b(fmtN(TD('rest'))), '']]);
   return {detail, dues, rows};
 }
 
@@ -1788,6 +1791,13 @@ Acts.delpay = async el => { if (!await confirmBox('حذف هذا الصرف؟ س
 /* ============ حركة الخزينة: دفتر يومي (إيرادات العيادات / الشركات / المصروفات / حساب الأطباء) ============ */
 'use strict';
 const rowSerial = r => r.kind === 'v' && r.vs && r.vs.length ? Math.min(...r.vs.map(v => +v.serial || 1e8)) : 1e9;
+/* رقم المستند: من الأصغر إلى الأكبر (مثال 0-1) */
+function docRange(vs) {
+  const a = vs.map(v => String(v.docNo == null ? '' : v.docNo).trim()).filter(Boolean); if (!a.length) return '';
+  const nums = a.filter(x => /^\d+$/.test(x)).map(Number);
+  if (nums.length === a.length) { const mn = Math.min(...nums), mx = Math.max(...nums); return mn === mx ? String(mn) : mn + '-' + mx; }
+  return [...new Set(a)].join('، ');
+}
 function cashLedger(from, to) {
   const days = [...new Set([
     ...visitsIn(from, to).map(v => v.date), ...opsIn(from, to).map(o => o.date),
@@ -1806,7 +1816,7 @@ function cashLedger(from, to) {
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
       const o = {kosf: r.kosf, mixed: r.mixed, rev: r.rev, co: r.co, com: r.com, tax: r.tax, ins: r.ins, amount: 0, due: r.due, fixed: r.kind === 'v' && doc ? +doc.fixed || 0 : 0, paid: r.paid};
       add(dsum, o);
-      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: [...new Set(cov.map(v => v.formNo).filter(Boolean))].join('، '), co: sum(cov, v => +v.value || 0), pct}});
+      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: docRange(r.kind === 'v' ? r.vs : []), co: sum(cov, v => +v.value || 0), pct}});
     });
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));

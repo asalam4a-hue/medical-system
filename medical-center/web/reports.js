@@ -135,10 +135,11 @@ function detailSections(from, to) {
      [b('صافي اليوم'), '', '', '', b(fmtN(st.net)), '', '', '', ''],
      [b('الضريبة'), '', '', '', '', '', '', '', b(fmtN(T('tax')))]]);
   const tag = r => r.due <= 0 && r.paid <= 0 ? '' : r.rest <= 0.005 ? '<span class="tag c-lime">تم الصرف</span>' : r.paid > 0 ? '<span class="tag c-orange">صرف جزئي</span>' : '<span class="tag c-red">لم يُصرف</span>';
+  const drows = rows.filter(r => !(r.kind === 'v' && r.vs.length && r.vs.every(isCenterShare))), TD = k => sum(drows, r => r[k]);
   const dues = tbl(['العيادة', 'اسم الطبيب', 'كشف', 'متنوع', 'إيرادات', 'الضرائب', 'المستحق', 'المدفوع', 'الباقي', 'الحالة'],
-    [...rows.map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax), b(fmtN(r.due)), fmtN(r.paid), b(fmtN(r.rest)), tag(r)]),
-     [b('الإجمالي'), '', b(fmtN(T('kosf'))), b(fmtN(T('mixed'))), b(fmtN(T('rev'))), b(fmtN(T('tax'))), b(fmtN(T('due'))), b(fmtN(T('paid'))), b(fmtN(T('rest'))), ''],
-     [b('إجمالي رصيد مستحق'), '', '', '', '', '', '', '', b(fmtN(T('rest'))), '']]);
+    [...drows.map(r => [cl(r), dn(r), fmtN(r.kosf), fmtN(r.mixed), fmtN(r.rev), fmtN(r.tax), b(fmtN(r.due)), fmtN(r.paid), b(fmtN(r.rest)), tag(r)]),
+     [b('الإجمالي'), '', b(fmtN(TD('kosf'))), b(fmtN(TD('mixed'))), b(fmtN(TD('rev'))), b(fmtN(TD('tax'))), b(fmtN(TD('due'))), b(fmtN(TD('paid'))), b(fmtN(TD('rest'))), ''],
+     [b('إجمالي رصيد مستحق'), '', '', '', '', '', '', '', b(fmtN(TD('rest'))), '']]);
   return {detail, dues, rows};
 }
 
