@@ -250,11 +250,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     /* شركة + نسبة تحمل المريض ⇒ زيارة جديدة (المركز / متنوع) بقيمة تحمل المريض مقرّبة لأقرب عدد صحيح */
     try {
       const mark = 'تحمل المريض — مرتبط بالزيارة رقم ' + rec.serial, old = S.data.visits.find(x => x.notes === mark && x.id !== rec.id);
-      const req = rec.category === 'company' ? Math.round(coShare(rec)) : 0;
+      const req = rec.category === 'company' ? Math.round(coShare(rec) / 10) * 10 : 0;
       if (req > 0) {
-        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'تحمل المريض', value: req, category: 'cash', notes: mark};
+        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'نسبة شركات', value: req, category: 'cash', notes: mark};
         await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
-        toast('تمت إضافة زيارة «المركز — متنوع» بقيمة تحمل المريض: ' + fmtN(req));
+        toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة: ' + fmtN(req));
       } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
       await loadAll(['visits']);
     } catch (e) {}

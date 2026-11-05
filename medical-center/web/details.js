@@ -42,9 +42,9 @@ Acts.closemodal = el => { const m = el.closest('.modal'); if (m) m.remove(); };
 
 /* نافذة كرت العيادة */
 Acts.clinicrep = el => {
-  const n = el.dataset.v, {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.clinic === n), acc = accounts(from, to).filter(r => r.clinic === n), c = clinicOf(n);
+  const n = el.dataset.v, dd = el.dataset.d || '', {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.clinic === n && (!dd || (v.doctor || '') === dd)), acc = accounts(from, to).filter(r => r.clinic === n && (!dd || r.name === dd)), c = clinicOf(n);
   const last = vs.slice().sort((a, b) => (b.date + (b.serial || 0)).localeCompare(a.date + (a.serial || 0))).slice(0, 8);
-  modal(`<div style="min-width:min(540px,88vw)"><h3>🏨 ${esc(n)}</h3><small>${esc(rangeLabel())} — سعر الكشف: ${fmtN(c ? c.price : 0)}</small>
+  modal(`<div style="min-width:min(540px,88vw)"><h3>🏨 ${esc(n)}${dd ? ' — ' + esc(dd) : ''}</h3><small>${esc(rangeLabel())} — سعر الكشف: ${fmtN(c ? c.price : 0)}</small>
   ${kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink']]).replace(/data-act="kpi"/g, '')}
   <div style="max-height:46vh;overflow:auto">${acc.length ? '<h4>الأطباء</h4>' + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'حق الطبيب'], acc.map(r => [L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.right)])) : ''}
   ${vs.length ? '<h4>حسب نوع الدفع</h4>' + tbl(['النوع', 'العدد', 'القيمة'], Object.keys(CAT).map(k => { const a = vs.filter(v => (v.category || 'cash') === k); return [tagCat(k), a.length, fmtN(sum(a, val))]; })) + '<h4>آخر الزيارات</h4>' + tbl(['التاريخ', 'المريض', 'الطبيب', 'الزيارة', 'القيمة'], last.map(v => [esc(v.date), L.patient(v.patient), L.doctor(v.doctor), esc(v.visitType), fmtN(v.value)])) : '<div class="empty">لا توجد زيارات في هذه الفترة</div>'}</div>
@@ -97,14 +97,14 @@ Acts.tiledet = el => {
 (() => {
   const add = root => {
     if (!root || !root.querySelectorAll) return;
-    root.querySelectorAll('.kpis .kpi:not(.hasinfo),.cards .tile:not(.clinic):not(.hasinfo)').forEach(c => {
-      c.classList.add('hasinfo'); const i = document.createElement('i'); i.className = 'cinfo2 noprint'; i.textContent = 'ℹ️'; i.title = 'التفاصيل'; c.appendChild(i);
+    root.querySelectorAll('.kpis .kpi:not(.hasinfo),.cards .tile:not(.hasinfo)').forEach(c => {
+      c.classList.add('hasinfo'); const i = document.createElement('i'); i.className = 'cinfo2 noprint'; i.textContent = '▾'; i.title = 'إظهار التفاصيل'; c.appendChild(i);
     });
   };
   document.addEventListener('click', e => {
     const i = e.target.closest && e.target.closest('.cinfo2'); if (!i) return;
     e.preventDefault(); e.stopPropagation(); const c = i.parentElement;
-    if (c.classList.contains('kpi')) Acts.kpi(c); else Acts.tiledet(c);
+    if (c.classList.contains('kpi')) Acts.kpi(c); else if (c.classList.contains('clinic')) Acts.clinicdet(c); else Acts.tiledet(c);
   }, true);
   const start = () => { const app = document.getElementById('app'); if (!app) return; add(app); new MutationObserver(() => add(app)).observe(app, {childList: true, subtree: true}); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();

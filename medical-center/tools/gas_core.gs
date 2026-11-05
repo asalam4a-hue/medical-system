@@ -167,6 +167,7 @@ function bulk_(e, me, recs, keyFields) {
   if (rows.length) { var sh = sheet_(e); sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows); }
   if (AUTO[e]) PropertiesService.getScriptProperties().setProperty('ctr_' + e, String(ctr));
   if (rows.length) mirrorRebuild_(e);
+  logAct_(me, 'إضافة جماعية', e, {id: '', name: added + ' سجل'});
   return {added: added, skipped: skipped};
 }
 function put_(e, rec) {
@@ -175,6 +176,17 @@ function put_(e, rec) {
   if (row > 0) sh.getRange(row, 2, 1, 2).setValues([[dt, JSON.stringify(copy)]]);
   else sh.appendRow([id, dt, JSON.stringify(copy), new Date().toISOString()]);
   mirrorPut_(e, rec);
+}
+/* سجل العمليات: كل إدخال وتعديل وحذف يُسجَّل في ورقة مستقلة بجوجل شيت */
+function logAct_(me, act, e, rec) {
+  if (MIRROR_OFF) return;
+  try {
+    var ss = ss_(), nm = 'سجل العمليات', sh = ss.getSheetByName(nm);
+    if (!sh) { sh = ss.insertSheet(nm); sh.getRange(1, 1, 1, 6).setValues([['الوقت', 'المستخدم', 'العملية', 'الشاشة', 'البيان', 'المعرّف']]).setFontWeight('bold').setBackground('#d9ead3'); sh.setFrozenRows(1); sh.setRightToLeft(true); }
+    if (e === 'users' && rec) rec = {name: rec.username};
+    var d = rec ? (rec.name || rec.patient || rec.category || rec.date || rec.username || '') : '', extra = rec && rec.value ? ' — ' + rec.value : (rec && rec.amount ? ' — ' + rec.amount : '');
+    sh.appendRow([Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy/MM/dd HH:mm:ss'), me ? me.username : '', act, SHEETN[e] || e, String(d) + extra, rec && rec.id ? rec.id : '']);
+  } catch (x) {}
 }
 function pub_(u) { var o = {}; for (var k in u) if (k !== 'hash' && k !== 'salt') o[k] = u[k]; return o; }
 function nextCounter_(e, f) {
@@ -375,6 +387,7 @@ function doDelete_(e, me, id) {
   }
   var sh = sheet_(e), row = findRow_(sh, id); if (row > 0) sh.deleteRow(row);
   mirrorDel_(e, id);
+  logAct_(me, 'حذف', e, r);
   return {ok: true};
 }
 
@@ -393,9 +406,11 @@ function doSave_(e, me, src) {
     var nm2 = String(out.name || out.date || out.category || out.type || '').trim(); if (!nm2) throw new ApiError('بيانات ناقصة');
     if (AUTO[e]) out[AUTO[e]] = rec ? (rec[AUTO[e]] || 0) : nextCounter_(e, AUTO[e]);
   }
+  var isNew = !rec;
   if (rec) { for (var k in out) rec[k] = out[k]; rec.updatedAt = new Date().toISOString(); }
   else { rec = {id: rid_(), createdAt: new Date().toISOString()}; for (var k2 in out) rec[k2] = out[k2]; if (e === 'visits' || e === 'expenses' || e === 'custody') rec.registeredBy = me.username; }
   put_(e, rec);
+  logAct_(me, isNew ? 'إضافة' : 'تعديل', e, rec);
   return {record: e === 'users' ? pub_(rec) : rec};
 }
 
