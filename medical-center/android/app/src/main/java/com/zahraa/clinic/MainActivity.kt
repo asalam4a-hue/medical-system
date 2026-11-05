@@ -67,6 +67,7 @@ class MainActivity : Activity() {
     private fun setup() {
         with(web.settings) {
             javaScriptEnabled = true
+            mediaPlaybackRequiresUserGesture = false
             domStorageEnabled = true
             allowFileAccess = false
             allowContentAccess = false

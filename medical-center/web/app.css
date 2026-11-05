@@ -216,9 +216,9 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 .tile.clinic{padding:5px 8px;min-height:60px;animation:glowpulse 2s ease-in-out infinite alternate}
 
 /* ===== شريط الأذكار والحسابات ===== */
-@keyframes azkmove{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+@keyframes azkmove{from{transform:translateX(-100%)}to{transform:translateX(100vw)}}
 @keyframes bgflow{0%{background-position:0 50%}100%{background-position:200% 50%}}
-@keyframes dmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes dmove{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 .azkbar{display:flex;align-items:center;gap:6px;padding:3px 8px;color:#fff;font-size:.85rem;font-weight:bold;background:linear-gradient(90deg,#0ea5a4,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#0ea5a4);background-size:200% 100%;animation:bgflow 12s linear infinite;direction:rtl}
 .azkmute{border:0;background:rgba(255,255,255,.3);border-radius:50%;width:24px;height:24px;line-height:24px;padding:0;cursor:pointer;font-size:.85rem;flex:none}
 .azkwrap{flex:1;overflow:hidden;white-space:nowrap;direction:ltr;position:relative;height:1.5em}

@@ -224,9 +224,9 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 .tile.clinic{padding:5px 8px;min-height:60px;animation:glowpulse 2s ease-in-out infinite alternate}
 
 /* ===== شريط الأذكار والحسابات ===== */
-@keyframes azkmove{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+@keyframes azkmove{from{transform:translateX(-100%)}to{transform:translateX(100vw)}}
 @keyframes bgflow{0%{background-position:0 50%}100%{background-position:200% 50%}}
-@keyframes dmove{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes dmove{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 .azkbar{display:flex;align-items:center;gap:6px;padding:3px 8px;color:#fff;font-size:.85rem;font-weight:bold;background:linear-gradient(90deg,#0ea5a4,#3b82f6,#8b5cf6,#ec4899,#f59e0b,#0ea5a4);background-size:200% 100%;animation:bgflow 12s linear infinite;direction:rtl}
 .azkmute{border:0;background:rgba(255,255,255,.3);border-radius:50%;width:24px;height:24px;line-height:24px;padding:0;cursor:pointer;font-size:.85rem;flex:none}
 .azkwrap{flex:1;overflow:hidden;white-space:nowrap;direction:ltr;position:relative;height:1.5em}
@@ -1941,12 +1941,23 @@ const Bars = (() => {
   const list = () => new Date().getHours() < 12 ? AZK_M : AZK_E;
   const speech = () => typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
   const stopSpeak = () => { try { speech() && speechSynthesis.cancel(); } catch (e) {} };
-  const next = () => {
+  const AUD = {m: 'https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_03.mp3', e: 'https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_04.mp3'};
+  let au = null, auKind = '', auOk = true, retryBound = false;
+  const kind = () => new Date().getHours() < 12 ? 'm' : 'e';
+  const playAudio = () => {
+    if (!S.user || muted || !auOk) { if (au) au.pause(); return; }
+    const k = kind();
+    if (!au || auKind !== k) { if (au) au.pause(); au = new Audio(AUD[k]); au.loop = true; au.preload = 'auto'; auKind = k; au.onerror = () => { auOk = false; next(true); }; }
+    const pr = au.play(); if (pr && pr.catch) pr.catch(() => { if (retryBound) return; retryBound = true; const h = () => { retryBound = false; document.removeEventListener('click', h, true); playAudio(); }; document.addEventListener('click', h, true); });
+  };
+  const next = (speak) => {
     clearTimeout(timer);
-    if (!S.user) { started = false; stopSpeak(); return; }
+    if (!S.user) { started = false; stopSpeak(); if (au) au.pause(); return; }
     const L = list(), t = L[idx++ % L.length], pre = new Date().getHours() < 12 ? '🌅 أذكار الصباح: ' : '🌙 أذكار المساء: ';
-    if (txt) { txt.textContent = pre + t; txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = `azkmove ${Math.max(14, t.length * .2)}s linear forwards`; }
-    const fallback = () => { timer = setTimeout(next, Math.max(14, t.length * .2) * 1000 + 1500); };
+    const dur = Math.max(14, t.length * .2);
+    if (txt) { txt.textContent = pre + t; txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = `azkmove ${dur}s linear forwards`; }
+    const fallback = () => { timer = setTimeout(next, dur * 1000 + 1500); };
+    if (auOk) { playAudio(); return fallback(); }
     if (muted || !speech()) return fallback();
     try {
       stopSpeak(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = .9;
@@ -1967,7 +1978,7 @@ const Bars = (() => {
     if (!top) {
       top = document.createElement('div'); top.className = 'azkbar noprint';
       mute = document.createElement('button'); mute.className = 'azkmute'; mute.type = 'button';
-      mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) { stopSpeak(); } clearTimeout(timer); idx--; next(); };
+      mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) { stopSpeak(); if (au) au.pause(); } else playAudio(); clearTimeout(timer); idx--; next(); };
       txt = document.createElement('span'); txt.className = 'azktxt'; const w = document.createElement('div'); w.className = 'azkwrap'; w.appendChild(txt);
       top.append(mute, w);
       bot = document.createElement('div'); bot.className = 'daybar noprint'; bot.innerHTML = '<div class="dwrap"></div>';
