@@ -1951,7 +1951,7 @@ const Bars = (() => {
   /* ---- الصوت: ملفات متتابعة (مرفق/حسن صالح ثم قرآن الصباح) ---- */
   const YT_AZK = '2Xf0kDLa8RE', YT_QURAN = 'RZ1x5UjAMZQ';
   let au = null, yt = null, ytReady = false, cur = -1, fails = 0, customUrl = '', customId = '', retryBound = false, playing = false;
-  const tracks = () => [customUrl ? {url: customUrl} : {yt: YT_AZK}, {yt: YT_QURAN}];
+  const tracks = () => customUrl ? [{url: customUrl}, {yt: YT_QURAN}] : [{yt: YT_QURAN}];
   const loadCustom = async () => {
     try { const id = (window.S && S.settings && S.settings.azkAudio) || window.AZK_AUDIO_ID || ''; if (id === customId) return; customId = id; customUrl = id ? await fileURL(id) : ''; } catch (e) { customUrl = ''; }
   };
@@ -2021,7 +2021,7 @@ SCREEN_RENDER.admin = async function () {
     <div class="fld"><label>اسم المركز</label><input name="centerName" value="${esc(st.centerName)}"></div>
     <div class="fld"><label>رقم الهاتف</label><input name="phone" value="${esc(st.phone)}" dir="ltr"></div>
     <div class="fld"><label>اللوجو</label><div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(st.logo)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 اختيار اللوجو</button><button type="button" class="btn sm ghost" id="nologo">إزالة</button><input type="hidden" name="logo" value="${esc(st.logo)}"></div></div>
-    <div class="fld"><label>ملف صوتي للأذكار (mp3 / m4a — حتى 6 ميجا تقريباً)</label><div class="audfld"><span id="azn" class="muted">${st.azkAudio ? '🎵 تم إرفاق ملف صوتي' : 'لم يُرفق ملف — يعمل الصوت الافتراضي (حسن صالح ثم قرآن الصباح)'}</span> <button type="button" class="btn sm c-blue" id="azp">🎵 اختيار ملف صوتي</button><button type="button" class="btn sm ghost" id="azx">إزالة</button><input type="file" id="azf" accept="audio/*" class="hid"><input type="hidden" name="azkAudio" value="${esc(st.azkAudio)}"></div></div>
+    <div class="fld"><label>ملف صوتي للأذكار (mp3 / m4a — حتى 6 ميجا تقريباً)</label><div class="audfld"><span id="azn" class="muted">${st.azkAudio ? '🎵 تم إرفاق ملف صوتي' : 'لم يُرفق ملف — يعمل الصوت الافتراضي (قرآن الصباح)'}</span> <button type="button" class="btn sm c-blue" id="azp">🎵 اختيار ملف صوتي</button><button type="button" class="btn sm ghost" id="azx">إزالة</button><input type="file" id="azf" accept="audio/*" class="hid"><input type="hidden" name="azkAudio" value="${esc(st.azkAudio)}"></div></div>
     <div class="actions"><button class="btn c-teal" type="submit">💾 حفظ الإعدادات</button></div></form></div>
   <div class="panel accent c-gold"><h3>📥 استيراد البيانات وأوراق جوجل</h3>
     <p class="muted">استيراد البيانات الأساسية (عيادات، أطباء، شركات، أشعة وتحاليل باختصاراتها) . المكرر يُتخطى. بعدها تظهر البيانات في أوراق جوجل بأسماء الشاشات وتتحدث تلقائياً مع كل إدخال.</p>

@@ -35,7 +35,7 @@ const Bars = (() => {
   /* ---- الصوت: ملفات متتابعة (مرفق/حسن صالح ثم قرآن الصباح) ---- */
   const YT_AZK = '2Xf0kDLa8RE', YT_QURAN = 'RZ1x5UjAMZQ';
   let au = null, yt = null, ytReady = false, cur = -1, fails = 0, customUrl = '', customId = '', retryBound = false, playing = false;
-  const tracks = () => [customUrl ? {url: customUrl} : {yt: YT_AZK}, {yt: YT_QURAN}];
+  const tracks = () => customUrl ? [{url: customUrl}, {yt: YT_QURAN}] : [{yt: YT_QURAN}];
   const loadCustom = async () => {
     try { const id = (window.S && S.settings && S.settings.azkAudio) || window.AZK_AUDIO_ID || ''; if (id === customId) return; customId = id; customUrl = id ? await fileURL(id) : ''; } catch (e) { customUrl = ''; }
   };
