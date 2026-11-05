@@ -247,6 +247,17 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
   validate: r => r.category === 'company' && !r.company ? 'اختر اسم الشركة' : '',
   after: async (rec, sent) => {
+    /* شركة + نسبة تحمل المريض ⇒ زيارة جديدة (المركز / متنوع) بقيمة تحمل المريض مقرّبة لأقرب عدد صحيح */
+    try {
+      const mark = 'تحمل المريض — مرتبط بالزيارة رقم ' + rec.serial, old = S.data.visits.find(x => x.notes === mark && x.id !== rec.id);
+      const req = rec.category === 'company' ? Math.round(coShare(rec)) : 0;
+      if (req > 0) {
+        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'تحمل المريض', value: req, category: 'cash', notes: mark};
+        await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
+        toast('تمت إضافة زيارة «المركز — متنوع» بقيمة تحمل المريض: ' + fmtN(req));
+      } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
+      await loadAll(['visits']);
+    } catch (e) {}
     const p = S.data.patients.find(x => x.name === sent.patient);
     try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
   },

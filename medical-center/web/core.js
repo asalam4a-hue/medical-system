@@ -24,7 +24,7 @@ const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange
 const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
 const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
 const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
-const EXTRA_CLINICS = ['الأشعة','التحاليل'];
+const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز'];
 const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
 
 const SCREENS = [
