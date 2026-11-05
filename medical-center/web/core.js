@@ -356,10 +356,18 @@ async function syncOnce() {
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
   try {
-    const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
+    const old = JSON.stringify(S.data); await loadAll();
+    if (JSON.stringify(S.data) !== old) {
+      /* تحديث صامت في الخلفية: بدون إشعار وبدون إغلاق الصفحة/النماذج المفتوحة */
+      const y = window.scrollY, sc = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
+      if (S.view && S.view.refresh) { try { await S.view.refresh(); } catch (e) {} }
+      else if (!S.dirty) { S.syncing = true; render(); S.syncing = false; }
+      window.scrollTo(0, y || sc);
+    }
   } catch (e) { if (e.code === 'auth') logoutLocal(); }
 }
 window.__syncNow = () => syncOnce();
+document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
   if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
@@ -376,7 +384,7 @@ const LOGO = `<svg viewBox="0 0 120 120" aria-label="شعار المركز"><def
 
 /* ---------- الهيكل العام ---------- */
 function render() {
-  clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
+  clearInterval(clockTimer); S.view = null; S.scope = {}; S.dirty = false; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
   app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;

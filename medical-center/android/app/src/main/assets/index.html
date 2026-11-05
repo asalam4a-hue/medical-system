@@ -869,10 +869,18 @@ async function syncOnce() {
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
   try {
-    const old = JSON.stringify(S.data); await loadAll(); if (JSON.stringify(S.data) !== old) { S.syncing = true; render(); S.syncing = false; toast('🔄 تم تحديث البيانات'); }
+    const old = JSON.stringify(S.data); await loadAll();
+    if (JSON.stringify(S.data) !== old) {
+      /* تحديث صامت في الخلفية: بدون إشعار وبدون إغلاق الصفحة/النماذج المفتوحة */
+      const y = window.scrollY, sc = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
+      if (S.view && S.view.refresh) { try { await S.view.refresh(); } catch (e) {} }
+      else if (!S.dirty) { S.syncing = true; render(); S.syncing = false; }
+      window.scrollTo(0, y || sc);
+    }
   } catch (e) { if (e.code === 'auth') logoutLocal(); }
 }
 window.__syncNow = () => syncOnce();
+document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
   if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
@@ -889,7 +897,7 @@ const LOGO = `<svg viewBox="0 0 120 120" aria-label="شعار المركز"><def
 
 /* ---------- الهيكل العام ---------- */
 function render() {
-  clearInterval(clockTimer); S.view = null; S.scope = {}; sgClose();
+  clearInterval(clockTimer); S.view = null; S.scope = {}; S.dirty = false; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
   app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
@@ -1255,7 +1263,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
       const mark = 'تحمل المريض — مرتبط بالزيارة رقم ' + rec.serial, old = S.data.visits.find(x => x.notes === mark && x.id !== rec.id);
       const req = rec.category === 'company' ? Math.round(coShare(rec) / 10) * 10 : 0;
       if (req > 0) {
-        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'نسبة شركات', value: req, category: 'cash', notes: mark};
+        const base = {date: rec.date, patient: rec.patient, phone: rec.phone || '', clinic: 'المركز', doctorId: '', doctor: '', visitType: 'متنوع', service: 'المركز - متنوع - نسبة شركات', value: req, category: 'cash', notes: mark};
         await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
         toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة: ' + fmtN(req));
       } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
@@ -1765,7 +1773,7 @@ function cashLedger(from, to) {
   const add = (acc, o) => NK.forEach(k => { acc[k] += +o[k] || 0; });
   days.forEach(d => {
     const dsum = zero(), dn = dayName(d);
-    detailSections(d, d).rows.forEach(r => {
+    detailSections(d, d).rows.slice().sort((a, b) => (a.c === 'المركز') - (b.c === 'المركز')).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
@@ -1782,7 +1790,7 @@ function cashLedger(from, to) {
       if (revLines[k]) { revLines[k].o.amount = x.amount; Object.assign(revLines[k].cells, {bayan: x.bayan, doc2: x.doc2, notes: x.notes}); }
       else lines.push({kind: 'exp', o: Object.assign(zero(), {amount: x.amount}), cells: {day: dn, date: d, bayan: x.bayan, doc2: x.doc2, notes: x.notes}});
     });
-    add(grand, dsum); lines.push({kind: 'day', o: dsum, cells: {date: d}});
+    add(grand, dsum);
   });
   return {lines, grand, days};
 }

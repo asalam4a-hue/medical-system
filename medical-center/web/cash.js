@@ -12,7 +12,7 @@ function cashLedger(from, to) {
   const add = (acc, o) => NK.forEach(k => { acc[k] += +o[k] || 0; });
   days.forEach(d => {
     const dsum = zero(), dn = dayName(d);
-    detailSections(d, d).rows.forEach(r => {
+    detailSections(d, d).rows.slice().sort((a, b) => (a.c === 'المركز') - (b.c === 'المركز')).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
@@ -29,7 +29,7 @@ function cashLedger(from, to) {
       if (revLines[k]) { revLines[k].o.amount = x.amount; Object.assign(revLines[k].cells, {bayan: x.bayan, doc2: x.doc2, notes: x.notes}); }
       else lines.push({kind: 'exp', o: Object.assign(zero(), {amount: x.amount}), cells: {day: dn, date: d, bayan: x.bayan, doc2: x.doc2, notes: x.notes}});
     });
-    add(grand, dsum); lines.push({kind: 'day', o: dsum, cells: {date: d}});
+    add(grand, dsum);
   });
   return {lines, grand, days};
 }
