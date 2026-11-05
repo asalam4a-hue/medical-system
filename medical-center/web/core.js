@@ -5,7 +5,7 @@ window.BUILD = '2026-11-04-c';
 
 let CENTER = 'برنامج إدارة المركز الطبي', APPNAME = 'برنامج إدارة المركز الطبي', CPHONE = '', CLOGO = '', CLOGOID = '';
 function applySettings(s) {
-  if (!s) return; APPNAME = s.appName || APPNAME; CENTER = s.centerName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
+  if (!s) return; window.AZK_AUDIO_ID = s.azkAudio || ''; APPNAME = s.appName || APPNAME; CENTER = s.centerName || APPNAME; CPHONE = s.phone || ''; document.title = APPNAME;
   if ((s.logo || '') !== CLOGOID) { CLOGOID = s.logo || ''; CLOGO = ''; if (CLOGOID && S.user) fileURL(CLOGOID).then(u => { CLOGO = u; if (S.user) { const b = $('.top .brand'); if (b) { const sv = $('svg,img', b); if (sv) sv.outerHTML = `<img src="${u}" alt="">`; } } }).catch(() => {}); }
 }
 async function loadSettings() { try { applySettings((await API.call('settings')).settings); } catch (e) {} }

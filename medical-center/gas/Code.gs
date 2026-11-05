@@ -246,7 +246,7 @@ function route_(b) {
   if (['settings_save', 'backup', 'restore', 'reset', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     if (A === 'settings_save') return withLock_(function () {
-      var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : ''};
+      var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : '', azkAudio: /^[0-9a-f]{18}$/.test(String(b.azkAudio || '')) ? String(b.azkAudio) : ''};
       PropertiesService.getScriptProperties().setProperty('SETTINGS', JSON.stringify(o)); return {settings: settings_()};
     });
     if (A === 'backup') return {backup: snapshot_()};
@@ -302,12 +302,14 @@ function route_(b) {
 
   if (A === 'upload') {
     var mime = String(b.mime || ''), data = String(b.data || '');
-    if (['image/jpeg', 'image/png', 'image/webp'].indexOf(mime) < 0) throw new ApiError('يسمح بالصور فقط');
-    if (data.length > 5500000) throw new ApiError('الصورة كبيرة جداً');
+    var isAud = ['audio/mpeg', 'audio/mp3', 'audio/mp4', 'audio/x-m4a', 'audio/aac', 'audio/ogg', 'audio/wav', 'audio/webm'].indexOf(mime) >= 0;
+    if (!isAud && ['image/jpeg', 'image/png', 'image/webp'].indexOf(mime) < 0) throw new ApiError('نوع الملف غير مسموح');
+    if (data.length > (isAud ? 8000000 : 5500000)) throw new ApiError('الملف كبير جداً');
+    if (isAud && !me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     var bytes; try { bytes = Utilities.base64Decode(data); } catch (x) { throw new ApiError('الصورة تالفة'); }
     var b0 = bytes[0] & 255, b1 = bytes[1] & 255, b2 = bytes[2] & 255, b3 = bytes[3] & 255;
     var okMagic = (b0 === 0xFF && b1 === 0xD8 && b2 === 0xFF) || (b0 === 0x89 && b1 === 0x50 && b2 === 0x4E && b3 === 0x47) || (b0 === 0x52 && b1 === 0x49 && b2 === 0x46 && b3 === 0x46);
-    if (!okMagic) throw new ApiError('الملف ليس صورة صالحة');
+    if (!isAud && !okMagic) throw new ApiError('الملف ليس صورة صالحة');
     var canUp = !!me.isAdmin; ['staff', 'doctors', 'visits', 'patients', 'operations', 'companies', 'expenses'].forEach(function (x) { if (has_(me, x)) canUp = true; });
     if (!canUp) throw new ApiError('غير مصرح', 'forbidden');
     var fid = rid_(), f = folder_().createFile(Utilities.newBlob(bytes, mime, fid));
@@ -327,7 +329,7 @@ function route_(b) {
 
 /* ---------- الإعدادات والنسخ الاحتياطي ---------- */
 function settings_() {
-  var o = {appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: ''};
+  var o = {appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: '', azkAudio: ''};
   try { var v = JSON.parse(PropertiesService.getScriptProperties().getProperty('SETTINGS') || '{}'); for (var k in v) if (v[k] !== '' || k === 'logo' || k === 'phone') o[k] = v[k]; } catch (x) {}
   return o;
 }

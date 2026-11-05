@@ -174,7 +174,7 @@ const Local = {
         ENT.forEach(x => { db.rec[x] = Array.isArray(bk.data[x]) ? bk.data[x] : []; });
         if (bk.settings) db.settings = bk.settings; this.save(db); return '';
       };
-      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : ''}; this.save(db); return {settings: this.settings(db)}; }
+      if (A === 'settings_save') { db.settings = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: db.files[b.logo] ? String(b.logo) : '', azkAudio: db.files[b.azkAudio] ? String(b.azkAudio) : ''}; this.save(db); return {settings: this.settings(db)}; }
       if (A === 'backup') return {backup: snap()};
       if (A === 'master_info') return {at: db.master ? db.master.at : ''};
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
@@ -237,14 +237,15 @@ const Local = {
       return {record: e === 'users' ? this.pub(rec) : rec};
     }
     if (A === 'upload') {
-      if (!['image/jpeg','image/png','image/webp'].includes(b.mime)) return fail('يسمح بالصور فقط');
-      if (String(b.data || '').length > 5.5e6) return fail('الصورة كبيرة جداً');
+      const AUDIO = ['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/aac','audio/ogg','audio/wav','audio/webm'];
+      if (!['image/jpeg','image/png','image/webp'].concat(AUDIO).includes(b.mime)) return fail('نوع الملف غير مسموح');
+      if (String(b.data || '').length > (AUDIO.includes(b.mime) ? 8e6 : 5.5e6)) return fail('الملف كبير جداً');
       const id = rid(); db.files[id] = 'data:' + b.mime + ';base64,' + b.data; this.save(db); return {file: id};
     }
     if (A === 'file') { const d = db.files[b.id]; return d ? {dataUrl: d} : fail('الملف غير موجود'); }
     return fail('أمر غير معروف');
   },
-  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: ''}, db.settings || {}); },
+  settings(db){ return Object.assign({appName: 'برنامج إدارة المركز الطبي', centerName: '', phone: '', logo: '', azkAudio: ''}, db.settings || {}); },
   pub(r){ const o = Object.assign({}, r); delete o.hash; delete o.salt; return o; },
   seed(db){
     const S = window.SEED, mk = (e, a) => { const list = db.rec[e] || (db.rec[e] = []); a.forEach(x => list.push(Object.assign({id: rid(), createdAt: new Date().toISOString()}, x, AUTO[e] ? {[AUTO[e]]: list.length + 1} : {}))); };

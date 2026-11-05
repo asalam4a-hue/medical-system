@@ -11,6 +11,7 @@ SCREEN_RENDER.admin = async function () {
     <div class="fld"><label>اسم المركز</label><input name="centerName" value="${esc(st.centerName)}"></div>
     <div class="fld"><label>رقم الهاتف</label><input name="phone" value="${esc(st.phone)}" dir="ltr"></div>
     <div class="fld"><label>اللوجو</label><div class="imgfld"><div class="th" data-act="lightbox" data-fid="${esc(st.logo)}">🖼️</div><input type="file" accept="image/*" class="hid"><button type="button" class="btn sm c-blue" data-act="pickimg">📷 اختيار اللوجو</button><button type="button" class="btn sm ghost" id="nologo">إزالة</button><input type="hidden" name="logo" value="${esc(st.logo)}"></div></div>
+    <div class="fld"><label>ملف صوتي للأذكار (mp3 / m4a — حتى 6 ميجا تقريباً)</label><div class="audfld"><span id="azn" class="muted">${st.azkAudio ? '🎵 تم إرفاق ملف صوتي' : 'لم يُرفق ملف — يعمل الصوت الافتراضي (حسن صالح ثم قرآن الصباح)'}</span> <button type="button" class="btn sm c-blue" id="azp">🎵 اختيار ملف صوتي</button><button type="button" class="btn sm ghost" id="azx">إزالة</button><input type="file" id="azf" accept="audio/*" class="hid"><input type="hidden" name="azkAudio" value="${esc(st.azkAudio)}"></div></div>
     <div class="actions"><button class="btn c-teal" type="submit">💾 حفظ الإعدادات</button></div></form></div>
   <div class="panel accent c-gold"><h3>📥 استيراد البيانات وأوراق جوجل</h3>
     <p class="muted">استيراد البيانات الأساسية (عيادات، أطباء، شركات، أشعة وتحاليل باختصاراتها) . المكرر يُتخطى. بعدها تظهر البيانات في أوراق جوجل بأسماء الشاشات وتتحدث تلقائياً مع كل إدخال.</p>
@@ -28,7 +29,15 @@ SCREEN_RENDER.admin = async function () {
   const reload = async () => { await loadAll(); await loadSettings(); render(); };
   hydrateImgs(main);
   $('#nologo').onclick = () => { const h = $('[name=logo]', main); h.value = ''; const th = $('.th', main); th.dataset.fid = ''; th.innerHTML = '🖼️'; };
-  $('#stf').onsubmit = e => { e.preventDefault(); guard($('button[type=submit]', e.target), async () => { const v = readForm(e.target); const r = await API.call('settings_save', v); applySettings(r.settings); toast('تم حفظ الإعدادات'); render(); }); };
+  $('#azp').onclick = () => $('#azf').click();
+  $('#azx').onclick = () => { $('[name=azkAudio]').value = ''; $('#azn').textContent = 'سيُستخدم الصوت الافتراضي بعد الحفظ'; };
+  $('#azf').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    if (f.size > 6e6) return toast('الملف كبير — الحد الأقصى 6 ميجا تقريباً', true);
+    const mime = /^audio\//.test(f.type) ? f.type : 'audio/mpeg';
+    await guard(null, async () => { toast('جاري رفع الملف الصوتي…');
+      const data = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.onerror = no; r.readAsDataURL(f); });
+      const r = await API.call('upload', {mime, data}); $('[name=azkAudio]').value = r.file; $('#azn').textContent = '🎵 تم إرفاق: ' + f.name + ' — اضغط حفظ الإعدادات'; toast('تم رفع الملف الصوتي'); }); };
+  $('#stf').onsubmit = e => { e.preventDefault(); guard($('button[type=submit]', e.target), async () => { const v = readForm(e.target); const r = await API.call('settings_save', v); applySettings(r.settings); toast('تم حفظ الإعدادات'); if (window.Bars) Bars.reload(); render(); }); };
   $('#bk').onclick = e => guard(e.target, async () => {
     const r = await API.call('backup'); const blob = new Blob([JSON.stringify(r.backup)], {type: 'application/json'});
     saveBlob(blob, 'zahraa-backup-' + today().replace(/\//g, '-') + '.json'); toast('تم تنزيل النسخة الاحتياطية');

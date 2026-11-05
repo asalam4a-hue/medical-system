@@ -20,38 +20,51 @@ const AZK_E = ['أمسينا وأمسى الملك لله، والحمد لله�
   'يا حي يا قيوم برحمتك أستغيث، أصلح لي شأني كله ولا تكلني إلى نفسي طرفة عين',
   'اللهم صل وسلم على نبينا محمد'];
 const Bars = (() => {
-  let top, bot, txt, mute, idx = 0, timer = null, started = false;
+  let top, bot, txt, mute, started = false;
   const ls = {get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }};
   let muted = ls.get('azk_mute') === '1';
   const list = () => new Date().getHours() < 12 ? AZK_M : AZK_E;
-  const speech = () => typeof speechSynthesis !== 'undefined' && typeof SpeechSynthesisUtterance !== 'undefined';
-  const stopSpeak = () => { try { speech() && speechSynthesis.cancel(); } catch (e) {} };
-  const AUD = {m: 'https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_03.mp3', e: 'https://archive.org/download/makkah-live.-net-athkar-01/MakkahLive.Net_athkar_04.mp3'};
-  let au = null, auKind = '', auOk = true, retryBound = false;
   const kind = () => new Date().getHours() < 12 ? 'm' : 'e';
-  const playAudio = () => {
-    if (!S.user || muted || !auOk) { if (au) au.pause(); return; }
-    const k = kind();
-    if (!au || auKind !== k) { if (au) au.pause(); au = new Audio(AUD[k]); au.loop = true; au.preload = 'auto'; auKind = k; au.onerror = () => { auOk = false; next(true); }; }
-    const pr = au.play(); if (pr && pr.catch) pr.catch(() => { if (retryBound) return; retryBound = true; const h = () => { retryBound = false; document.removeEventListener('click', h, true); playAudio(); }; document.addEventListener('click', h, true); });
+  /* ---- النص: كل الأذكار وراء بعض في سطر واحد متحرك ---- */
+  let shownKind = '';
+  const paintText = () => {
+    if (!txt || shownKind === kind()) return; shownKind = kind();
+    const pre = kind() === 'm' ? '🌅 أذكار الصباح: ' : '🌙 أذكار المساء: ', t = pre + list().join('   ✦   ') + '   ✦   ';
+    txt.textContent = t; txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = `azkmove ${Math.max(60, Math.round(t.length * .22))}s linear infinite`;
   };
-  const next = (speak) => {
-    clearTimeout(timer);
-    if (!S.user) { started = false; stopSpeak(); if (au) au.pause(); return; }
-    const L = list(), t = L[idx++ % L.length], pre = new Date().getHours() < 12 ? '🌅 أذكار الصباح: ' : '🌙 أذكار المساء: ';
-    const dur = Math.max(14, t.length * .2);
-    if (txt) { txt.textContent = pre + t; txt.style.animation = 'none'; void txt.offsetWidth; txt.style.animation = `azkmove ${dur}s linear forwards`; }
-    const fallback = () => { timer = setTimeout(next, dur * 1000 + 1500); };
-    if (auOk) { playAudio(); return fallback(); }
-    if (muted || !speech()) return fallback();
-    try {
-      stopSpeak(); const u = new SpeechSynthesisUtterance(t); u.lang = 'ar-SA'; u.rate = .9;
-      const v = speechSynthesis.getVoices().find(x => /^ar/i.test(x.lang)); if (v) u.voice = v;
-      let done = false; const fin = () => { if (done) return; done = true; timer = setTimeout(next, 2500); };
-      u.onend = fin; u.onerror = () => { if (done) return; done = true; fallback(); };
-      speechSynthesis.speak(u); timer = setTimeout(fin, 90000);
-    } catch (e) { fallback(); }
+  /* ---- الصوت: ملفات متتابعة (مرفق/حسن صالح ثم قرآن الصباح) ---- */
+  const YT_AZK = '2Xf0kDLa8RE', YT_QURAN = 'RZ1x5UjAMZQ';
+  let au = null, yt = null, ytReady = false, cur = -1, fails = 0, customUrl = '', customId = '', retryBound = false, playing = false;
+  const tracks = () => [customUrl ? {url: customUrl} : {yt: YT_AZK}, {yt: YT_QURAN}];
+  const loadCustom = async () => {
+    try { const id = (window.S && S.settings && S.settings.azkAudio) || window.AZK_AUDIO_ID || ''; if (id === customId) return; customId = id; customUrl = id ? await fileURL(id) : ''; } catch (e) { customUrl = ''; }
   };
+  const stopAll = () => { try { if (au) au.pause(); } catch (e) {} try { if (yt && yt.pauseVideo) yt.pauseVideo(); } catch (e) {} };
+  const ytInit = cb => {
+    if (ytReady) return cb();
+    const go = () => {
+      const d = document.createElement('div'); d.id = 'azkyt'; d.style.cssText = 'position:fixed;left:-9999px;bottom:0;width:200px;height:120px;opacity:0;pointer-events:none'; const h = document.createElement('div'); h.id = 'azkyt_p'; d.appendChild(h); document.body.appendChild(d);
+      yt = new YT.Player('azkyt_p', {width: 200, height: 120, playerVars: {autoplay: 1, controls: 0, playsinline: 1, rel: 0}, events: {
+        onReady: () => { ytReady = true; cb(); },
+        onStateChange: e => { if (e.data === 0 && cur >= 0 && tracks()[cur] && tracks()[cur].yt) advance(); },
+        onError: () => { fails++; advance(); }}});
+    };
+    if (window.YT && YT.Player) return go();
+    const prev = window.onYouTubeIframeAPIReady; window.onYouTubeIframeAPIReady = () => { if (prev) prev(); go(); };
+    const sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; sc.onerror = () => { fails++; advance(); }; document.head.appendChild(sc);
+  };
+  const advance = () => { cur = (cur + 1) % tracks().length; if (fails >= tracks().length * 2) { playing = false; return; } playTrack(); };
+  const playTrack = () => {
+    if (!S.user || muted || !playing) return; const t = tracks()[cur]; if (!t) return;
+    stopAll();
+    if (t.url) {
+      if (!au) { au = new Audio(); au.onended = advance; au.onerror = () => { fails++; advance(); }; }
+      if (au.src !== t.url) au.src = t.url;
+      const pr = au.play(); if (pr && pr.catch) pr.catch(() => bindRetry()); fails = 0;
+    } else ytInit(() => { try { if (yt.getVideoData && yt.getVideoData().video_id === t.yt && yt.playVideo) { yt.unMute(); yt.playVideo(); } else yt.loadVideoById(t.yt); setTimeout(() => { try { if (yt.getPlayerState() === -1 || yt.getPlayerState() === 5) bindRetry(); else fails = 0; } catch (e) {} }, 4000); } catch (e) { fails++; advance(); } });
+  };
+  const bindRetry = () => { if (retryBound) return; retryBound = true; const h = () => { retryBound = false; document.removeEventListener('click', h, true); if (!muted && S.user) { if (cur < 0) cur = 0; playing = true; playTrack(); } }; document.addEventListener('click', h, true); };
+  const startAudio = async () => { await loadCustom(); if (cur < 0) cur = 0; playing = true; fails = 0; playTrack(); };
   const stats = () => {
     try {
       const t = today(), vs = visitsIn(t, t), st = statementRows(t, t), sm = c => vs.filter(v => v.category === c).reduce((s, v) => s + (+v.value || 0), 0), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0);
@@ -63,16 +76,16 @@ const Bars = (() => {
     if (!top) {
       top = document.createElement('div'); top.className = 'azkbar noprint';
       mute = document.createElement('button'); mute.className = 'azkmute'; mute.type = 'button';
-      mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) { stopSpeak(); if (au) au.pause(); } else playAudio(); clearTimeout(timer); idx--; next(); };
+      mute.onclick = () => { muted = !muted; ls.set('azk_mute', muted ? '1' : '0'); mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت'; if (muted) stopAll(); else startAudio(); };
       txt = document.createElement('span'); txt.className = 'azktxt'; const w = document.createElement('div'); w.className = 'azkwrap'; w.appendChild(txt);
       top.append(mute, w);
       bot = document.createElement('div'); bot.className = 'daybar noprint'; bot.innerHTML = '<div class="dwrap"></div>';
-      setInterval(paint, 4000);
+      setInterval(() => { paint(); paintText(); if (!S.user) { stopAll(); started = false; playing = false; } }, 4000);
     }
     mute.textContent = muted ? '🔇' : '🔊'; mute.title = muted ? 'تشغيل الصوت' : 'إيقاف الصوت';
     app.insertBefore(top, app.firstChild); app.appendChild(bot); bot.dataset.k = ''; paint();
-    if (!started) { started = true; idx = 0; next(); }
+    paintText(); if (!started) { started = true; if (!muted) startAudio(); }
   };
-  return {mount, paint};
+  return {mount, paint, reload: async () => { await loadCustom(); if (playing && !muted) { cur = -1; advance(); } }};
 })();
 window.Bars = Bars;
