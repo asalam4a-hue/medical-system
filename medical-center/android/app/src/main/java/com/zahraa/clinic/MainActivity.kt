@@ -52,6 +52,7 @@ class MainActivity : Activity() {
         root.addView(web, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         root.addView(bar, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 8))
         setContentView(root)
+        web.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         setup()
         loadApp()
     }
@@ -67,6 +68,7 @@ class MainActivity : Activity() {
     private fun setup() {
         with(web.settings) {
             javaScriptEnabled = true
+            @Suppress("DEPRECATION") saveFormData = false
             mediaPlaybackRequiresUserGesture = false
             domStorageEnabled = true
             allowFileAccess = false

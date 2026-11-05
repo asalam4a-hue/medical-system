@@ -240,6 +240,11 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 @media print{.azkbar,.daybar{display:none!important}#app{padding-bottom:0}}
 
 
+.kpis .kpi,.cards .tile{position:relative}
+.cinfo2{position:absolute;top:2px;left:3px;font-size:.62rem;line-height:1;cursor:pointer;font-style:normal;background:rgba(255,255,255,.75);border-radius:50%;width:15px;height:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 4px rgba(0,0,0,.25);z-index:3}
+.cinfo2:hover{background:#fff;transform:scale(1.15)}
+@media print{.cinfo2{display:none!important}}
+
 </style>
 </head>
 <body>
@@ -912,11 +917,14 @@ async function renderLogin(app) {
   const canServer = API.mode === 'php';
   app.innerHTML = `<div class="login"><button class="newuser" id="nu" title="${hasUsers ? 'مستخدم جديد' : 'إنشاء أول مستخدم (المدير)'}" aria-label="مستخدم جديد">👤<sup>＋</sup></button><div class="box"><h1>${esc(APPNAME)}</h1>${connErr ? `<div class="panel" style="border:2px solid #ff4d4d;margin-bottom:8px">⚠️ ${esc(connErr)}<br><small>تحقق من اتصال الإنترنت أو اضغط فحص الاتصال للتشخيص.</small> <button class="btn sm c-blue" onclick="location.reload()">إعادة المحاولة</button> <button class="btn sm c-orange" id="dg2">🔧 فحص الاتصال</button><div id="dgo" style="font-size:.8rem;margin-top:6px;text-align:right;direction:rtl"></div></div>` : ''}
   <div class="clockbox">${clockSVG()}<div><div class="digital" id="dg">--:--:--</div><div class="dateline" id="dl"></div></div></div>
-  <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="current-password" required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">${hasUsers ? 'الدخول بعد موافقة المدير فقط' : 'لا يوجد مستخدمون بعد — اضغط أيقونة 👤＋ لإنشاء أول مستخدم (المدير)'}</p></form>
+  <form id="lf" class="panel accent c-teal" autocomplete="off"><div class="fld"><label>اسم المستخدم</label><input name="username" autocomplete="off" autocapitalize="off" spellcheck="false" readonly required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" autocomplete="new-password" readonly required></div><button class="glow c-teal btnbig" type="submit">دخول ➜</button><p class="muted" style="margin:0;text-align:center;font-size:.85rem">${hasUsers ? 'الدخول بعد موافقة المدير فقط' : 'لا يوجد مستخدمون بعد — اضغط أيقونة 👤＋ لإنشاء أول مستخدم (المدير)'}</p></form>
   <form id="rf" class="panel accent c-pink hidden" autocomplete="off"><h3>مستخدم جديد</h3>${hasUsers ? '<p style="margin:0">سيتم تفعيل الحساب بعد موافقة المدير ومنحه الصلاحيات، ولا يمكنك الدخول قبل ذلك.</p>' : '<p style="margin:0"><b>أول مستخدم يصبح مدير النظام</b> ويُحمَّل الأطباء والعيادات والشركات من ملف الإكسيل تلقائياً.</p>'}
   <div class="fld"><label>اسم المستخدم</label><input name="username" required></div><div class="fld"><label>كلمة السر</label><input name="password" type="password" required></div><div class="fld"><label>الرقم القومي</label><input name="nationalId" inputmode="numeric" maxlength="14"></div><div class="fld"><label>تاريخ الميلاد</label>${dateFld('birthDate', '')}</div><button class="glow c-pink btnbig" type="submit">إنشاء الحساب</button><button type="button" class="linkbtn" id="bk">رجوع لتسجيل الدخول</button></form>
 </div></div>`;
   tick(); clockTimer = setInterval(tick, 1000);
+  /* منع الملء التلقائي لليوزر والباسورد: الحقول تبدأ فارغة وللقراءة فقط حتى النقر عليها */
+  $$('#lf input').forEach(i => { i.addEventListener('focus', () => i.removeAttribute('readonly'), {once: true}); });
+  [150, 600, 1500].forEach(ms => setTimeout(() => { const f = $('#lf'); if (f) $$('input', f).forEach(i => { if (document.activeElement !== i) i.value = ''; }); }, ms));
   const dg2 = $('#dg2'); if (dg2) dg2.onclick = async () => { dg2.disabled = true; $('#dgo').textContent = 'جاري الفحص…'; const r = await API.diag(); $('#dgo').innerHTML = r.map(x => `<div>${esc(x)}</div>`).join(''); dg2.disabled = false; };
   const showReg = on => { $('#lf').classList.toggle('hidden', on); $('#rf').classList.toggle('hidden', !on); };
   $('#nu').onclick = () => showReg(true);
@@ -1658,6 +1666,35 @@ function bodyTotals() {
     + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'إيراد الزيارات', 'العمليات', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(ops.filter(o => o.date === d), o => o.value)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; }), ['الإجمالي', vs.length, fmtN(sum(vs, val)), fmtN(sum(ops, o => o.value)), fmtN(sum(vs, v => v.tax)), fmtN(sum(ex, x => x.amount))]) : '');
 }
 SCREEN_RENDER.rep_totals = repScreen('rep_totals', 'تقرير الإجماليات بالتفصيل', '🧮', 'gold', bodyTotals);
+
+/* ===== أيقونة ℹ️ صغيرة على كل كرت لإظهار التفاصيل ===== */
+Acts.tiledet = el => {
+  const k = el.dataset.s, sc = SCREENS.find(x => x.k === k), t = sc ? sc.t : (k === 'reports' ? 'التقارير' : k), data = S.data[k];
+  let body = '';
+  if (k === 'visits') { const {from, to} = getRange(), vs = visitsIn(from, to); body = `<p>${esc(rangeLabel())}: <b>${vs.length}</b> زيارة بقيمة <b>${fmtN(sum(vs, val))}</b></p>` + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']); }
+  else if (Array.isArray(data)) {
+    const nm = r => r.name || r.patient || r.title || r.category || r.username || r.operation || r.doctor || '—';
+    body = `<p>العدد الكلي: <b>${data.length}</b></p>` + (data.length ? tbl(['آخر السجلات'], data.slice(-6).reverse().map(r => [esc(nm(r)) + (r.date ? ' — ' + esc(r.date) : '')])) : '');
+  } else if (k === 'reports') body = '<p>تقارير الدخل والمستحقات والإجماليات وتحليل الإيرادات والتسويات وغيرها — اضغط الكرت للدخول.</p>';
+  else if (k === 'dues') body = `<p>مستحقات الأطباء عن الفترة المختارة.</p>`;
+  else body = '<p>اضغط الكرت للدخول إلى الشاشة.</p>';
+  modal(`<div style="min-width:min(420px,88vw)"><h3>${sc ? sc.i + ' ' : ''}${esc(t)}</h3><div style="max-height:60vh;overflow:auto">${body}</div></div>`);
+};
+(() => {
+  const add = root => {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('.kpis .kpi:not(.hasinfo),.cards .tile:not(.clinic):not(.hasinfo)').forEach(c => {
+      c.classList.add('hasinfo'); const i = document.createElement('i'); i.className = 'cinfo2 noprint'; i.textContent = 'ℹ️'; i.title = 'التفاصيل'; c.appendChild(i);
+    });
+  };
+  document.addEventListener('click', e => {
+    const i = e.target.closest && e.target.closest('.cinfo2'); if (!i) return;
+    e.preventDefault(); e.stopPropagation(); const c = i.parentElement;
+    if (c.classList.contains('kpi')) Acts.kpi(c); else Acts.tiledet(c);
+  }, true);
+  const start = () => { const app = document.getElementById('app'); if (!app) return; add(app); new MutationObserver(() => add(app)).observe(app, {childList: true, subtree: true}); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
 
 </script>
 <script>

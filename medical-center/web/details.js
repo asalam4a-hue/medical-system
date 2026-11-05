@@ -80,3 +80,32 @@ function bodyTotals() {
     + (from !== to ? sect('يوماً بيوم') + tbl(['التاريخ', 'الزيارات', 'إيراد الزيارات', 'العمليات', 'الضريبة', 'المصروفات'], days.map(d => { const a = vs.filter(v => v.date === d); return [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val)), fmtN(sum(ops.filter(o => o.date === d), o => o.value)), fmtN(sum(a, v => v.tax)), fmtN(sum(ex.filter(x => x.date === d), x => x.amount))]; }), ['الإجمالي', vs.length, fmtN(sum(vs, val)), fmtN(sum(ops, o => o.value)), fmtN(sum(vs, v => v.tax)), fmtN(sum(ex, x => x.amount))]) : '');
 }
 SCREEN_RENDER.rep_totals = repScreen('rep_totals', 'تقرير الإجماليات بالتفصيل', '🧮', 'gold', bodyTotals);
+
+/* ===== أيقونة ℹ️ صغيرة على كل كرت لإظهار التفاصيل ===== */
+Acts.tiledet = el => {
+  const k = el.dataset.s, sc = SCREENS.find(x => x.k === k), t = sc ? sc.t : (k === 'reports' ? 'التقارير' : k), data = S.data[k];
+  let body = '';
+  if (k === 'visits') { const {from, to} = getRange(), vs = visitsIn(from, to); body = `<p>${esc(rangeLabel())}: <b>${vs.length}</b> زيارة بقيمة <b>${fmtN(sum(vs, val))}</b></p>` + byTable('حسب نوع الدفع', vs, v => CAT[v.category || 'cash']); }
+  else if (Array.isArray(data)) {
+    const nm = r => r.name || r.patient || r.title || r.category || r.username || r.operation || r.doctor || '—';
+    body = `<p>العدد الكلي: <b>${data.length}</b></p>` + (data.length ? tbl(['آخر السجلات'], data.slice(-6).reverse().map(r => [esc(nm(r)) + (r.date ? ' — ' + esc(r.date) : '')])) : '');
+  } else if (k === 'reports') body = '<p>تقارير الدخل والمستحقات والإجماليات وتحليل الإيرادات والتسويات وغيرها — اضغط الكرت للدخول.</p>';
+  else if (k === 'dues') body = `<p>مستحقات الأطباء عن الفترة المختارة.</p>`;
+  else body = '<p>اضغط الكرت للدخول إلى الشاشة.</p>';
+  modal(`<div style="min-width:min(420px,88vw)"><h3>${sc ? sc.i + ' ' : ''}${esc(t)}</h3><div style="max-height:60vh;overflow:auto">${body}</div></div>`);
+};
+(() => {
+  const add = root => {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('.kpis .kpi:not(.hasinfo),.cards .tile:not(.clinic):not(.hasinfo)').forEach(c => {
+      c.classList.add('hasinfo'); const i = document.createElement('i'); i.className = 'cinfo2 noprint'; i.textContent = 'ℹ️'; i.title = 'التفاصيل'; c.appendChild(i);
+    });
+  };
+  document.addEventListener('click', e => {
+    const i = e.target.closest && e.target.closest('.cinfo2'); if (!i) return;
+    e.preventDefault(); e.stopPropagation(); const c = i.parentElement;
+    if (c.classList.contains('kpi')) Acts.kpi(c); else Acts.tiledet(c);
+  }, true);
+  const start = () => { const app = document.getElementById('app'); if (!app) return; add(app); new MutationObserver(() => add(app)).observe(app, {childList: true, subtree: true}); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
