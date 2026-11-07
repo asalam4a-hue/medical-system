@@ -14,12 +14,13 @@ function crud(cfg) {
     const rows = () => {
       let list = S.data[cfg.ent].slice();
       if (cfg.dated) { const {from, to} = getRange(); list = list.filter(r => r.date >= from && r.date <= to); }
+      if (cfg.extraRows) list = list.concat(cfg.extraRows());
       if (q) list = list.filter(r => JSON.stringify(r).toLowerCase().includes(q));
       return (cfg.sort ? list.sort(cfg.sort) : list.reverse());
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${r._op ? `<button type="button" class="btn sm c-red" data-act="openop" data-id="${r.id}">🏥 فتح في العمليات</button>` : `<input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button>`}</td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th><input type="checkbox" class="selall" title="تحديد الكل"></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -42,7 +43,7 @@ function crud(cfg) {
         for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
         if (cfg.validate) { const m = cfg.validate(rec, editing); if (m) throw new Error(m); }
         if (editing) rec.id = editing;
-        const r = await API.call('save', {entity: cfg.ent, record: rec});
+        const r = cfg.saveFn ? await cfg.saveFn(rec, editing) : await API.call('save', {entity: cfg.ent, record: rec});
         if (cfg.after) await cfg.after(r.record, rec);
         await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
       }); };
@@ -51,7 +52,7 @@ function crud(cfg) {
     S.view = {refresh: refreshList, total: () => { const c = cfg.cols.find(x => x.sum); if (!c) return ''; const l = rows(); return fmtN(l.reduce((t, r) => t + (+c.sum(r) || 0), 0)); },
       edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
       del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
-      reset, ids: () => rows().map(r => r.id), ent: cfg.ent};
+      reset, ids: () => rows().filter(r => !r._op).map(r => r.id), ent: cfg.ent};
     draw();
   };
 }
@@ -163,7 +164,7 @@ SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد وا�
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: 'docNo', l: 'رقم المستند'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}${isOn(r.deductAnes) ? ' (مخصوم)' : ''}` : ''}, {h: 'نصيب الطبيب', f: r => fmtN(opCalc(r).surgeon), sum: r => opCalc(r).surgeon}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
@@ -215,7 +216,7 @@ function visitLast(f, ctx) {
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
 SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
-  groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  groups: {op: {title: '🏥 بيانات العملية الجراحية', show: v => v.visitType === 'عمليات جراحية'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
@@ -230,8 +231,20 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
     {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
-    {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
+    {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'},
+    {k: 'operation', l: 'العملية', sg: 'opnames', grp: 'op'}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs', grp: 'op'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num', grp: 'op'},
+    {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير', grp: 'op'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num', grp: 'op'}
   ],
+  extraRows: () => { const {from, to} = getRange(); return S.data.operations.filter(o => o.date >= from && o.date <= to).map(o => ({id: o.id, _op: true, date: o.date, patient: o.patient, clinic: o.clinic || ((S.data.doctors.find(d => d.id === o.doctorId) || {}).clinic || ''), doctor: o.doctor, visitType: 'عمليات جراحية', service: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', serial: ''})); },
+  saveFn: async (rec, editing) => {
+    if (rec.visitType !== 'عمليات جراحية') return API.call('save', {entity: 'visits', record: rec});
+    const op = {date: rec.date, patient: rec.patient, operation: rec.operation || rec.service, clinic: rec.clinic, doctor: rec.doctor, doctorId: rec.doctorId, value: rec.value, doctorPercent: rec.doctorPercent, notes: rec.notes || '', anesthetist: rec.anesthetist || '', anesthetistId: rec.anesthetistId || '', anesthesia: rec.anesthesia || 0, deductAnes: rec.deductAnes ? '1' : '', docNo: rec.docNo || ''};
+    if (!op.operation) throw new Error('اسم العملية مطلوب');
+    const old = editing ? S.data.operations.find(x => x.id === editing) : null;
+    if (editing && !old && S.data.visits.find(x => x.id === editing)) await API.call('delete', {entity: 'visits', id: editing});
+    const r = await API.call('save', {entity: 'operations', record: Object.assign(old ? {id: old.id} : {}, op)});
+    await loadAll(['operations']); toast('🏥 سُجّلت كعملية جراحية (تُحتسب زيارة)'); return r;
+  },
   cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
@@ -242,6 +255,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
     o.payMethod = ''; o.payRef = ''; o.payPhone = '';
+    { const an = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = an ? an.id : ''; o.anesthetist = an ? an.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; if (o.visitType !== 'عمليات جراحية') { o.operation = ''; o.anesthesia = 0; o.doctorPercent = 0; o.anesthetist = ''; o.anesthetistId = ''; o.deductAnes = ''; } }
     return o;
   },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
@@ -269,6 +283,8 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
     if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount', 'paid'].includes(n) && !ctx.typing) visitAuto(f, n);
     if (n === 'value' || n === 'patientPct' || n === 'discount' || n === 'paid') visitAuto(f, n);
+    if (n === '_doc' && getv(f, 'visitType') === 'عمليات جراحية') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d && !getv(f, 'doctorPercent')) setv(f, 'doctorPercent', d.opPercent || 0); }
+    if (n === 'operation' && getv(f, 'visitType') === 'عمليات جراحية') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); }
   }
 });
 
@@ -355,3 +371,5 @@ Acts.bulkvisits = () => {
     await loadAll(['visits']); m.remove(); toast(`تمت إضافة ${n} زيارة ✔`); refreshView();
   });
 };
+
+Acts.openop = el => { const id = el.dataset.id; nav('operations'); setTimeout(() => { if (S.view && S.view.edit) S.view.edit(id); }, 450); };

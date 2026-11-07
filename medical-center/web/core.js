@@ -21,7 +21,7 @@ const validDate = s => { if (!/^\d{4}\/\d{2}\/\d{2}$/.test(s || '')) return fals
 const dayName = s => { if (!validDate(s)) return ''; const [y,m,d] = s.split('/').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
 const CAT = {cash:'نقدي', company:'شركة', committee:'لجنة', insurance:'تأمين'};
 const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange'};
-const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
+const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى','عمليات جراحية'];
 const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
 const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
 const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز'];
@@ -266,6 +266,7 @@ function opCalc(o) {
   return {doc: d, pct, anes: an, base, surgeon: base * pct / 100};
 }
 function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
+const opsCountR = () => { const {from, to} = getRange(); return S.data.operations.filter(o => o.date >= from && o.date <= to).length; };
 const isCenterShare = v => (v.notes || '').startsWith('تحمل المريض —') || (v.clinic === 'المركز' && v.service === 'نسبة شركات');
 function accounts(from, to) {
   const map = new Map();
@@ -448,9 +449,10 @@ function renderHome() {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
     const st = statementRows(from, to), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0), dues = st.due, exp = st.expO;
     const cm = new Map(); vs.filter(v => v.clinic).forEach(v => { const dn = v.doctor || '', k = v.clinic + '\u0001' + dn, o = cm.get(k) || {n: v.clinic, d: dn, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; cm.set(k, o); });
+    S.data.operations.filter(x => x.date >= from && x.date <= to && x.clinic).forEach(x => { const dn = x.doctor || '', k = x.clinic + '\u0001' + dn, o = cm.get(k) || {n: x.clinic, d: dn, cnt: 0, rev: 0}; o.cnt++; o.rev += +x.value || 0; cm.set(k, o); });
     const clin = [...cm.values()];
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
+    const kp = [['عدد الزيارات', vs.length + opsCountR(), 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
@@ -464,7 +466,7 @@ function renderHome() {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
     const st = statementRows(from, to);
     const cl = [...clinicNames(), ...EXTRA_CLINICS].map(n => { const c = vs.filter(v => v.clinic === n); return [n, c.length, c.reduce((s, v) => s + (+v.value || 0), 0)]; }).filter(r => r[1] || clinicOf(r[0]));
-    return [{name: 'المؤشرات', rows: [['البند', 'القيمة'], ['عدد الزيارات', vs.length], ...st.rows, ...st.memo]}, {name: 'العيادات', rows: [['العيادة', 'الزيارات', 'الإيراد'], ...cl]}];
+    return [{name: 'المؤشرات', rows: [['البند', 'القيمة'], ['عدد الزيارات', vs.length + opsCountR()], ...st.rows, ...st.memo]}, {name: 'العيادات', rows: [['العيادة', 'الزيارات', 'الإيراد'], ...cl]}];
   }}; draw();
 }
 

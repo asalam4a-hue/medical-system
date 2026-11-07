@@ -94,13 +94,13 @@ window.API = {diag, call, setToken, setServer, server, getToken: () => token, mo
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
 const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
   doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
   services:'type,name,price,tax,abbr',
-  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
+  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   patients:'name,phone',
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',

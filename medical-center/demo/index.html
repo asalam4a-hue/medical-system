@@ -351,13 +351,13 @@ window.API = {diag, call, setToken, setServer, server, getToken: () => token, mo
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
 const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
   doctors:'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
   services:'type,name,price,tax,abbr',
-  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
+  operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   patients:'name,phone',
   companies:'name,fee,contact',
   visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
@@ -536,7 +536,7 @@ const validDate = s => { if (!/^\d{4}\/\d{2}\/\d{2}$/.test(s || '')) return fals
 const dayName = s => { if (!validDate(s)) return ''; const [y,m,d] = s.split('/').map(Number); return DAYS[new Date(y, m-1, d).getDay()]; };
 const CAT = {cash:'نقدي', company:'شركة', committee:'لجنة', insurance:'تأمين'};
 const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange'};
-const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى'];
+const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى','عمليات جراحية'];
 const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
 const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
 const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز'];
@@ -781,6 +781,7 @@ function opCalc(o) {
   return {doc: d, pct, anes: an, base, surgeon: base * pct / 100};
 }
 function emptyAcc(key, doc, name, clinic) { return {key, doc, name, clinic, visits: 0, kosf: 0, mixed: 0, committee: 0, company: 0, insurance: 0, consult: 0, total: 0, tax: 0, due: 0, fixed: 0, right: 0, ops: 0, dayMap: new Map()}; }
+const opsCountR = () => { const {from, to} = getRange(); return S.data.operations.filter(o => o.date >= from && o.date <= to).length; };
 const isCenterShare = v => (v.notes || '').startsWith('تحمل المريض —') || (v.clinic === 'المركز' && v.service === 'نسبة شركات');
 function accounts(from, to) {
   const map = new Map();
@@ -963,9 +964,10 @@ function renderHome() {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
     const st = statementRows(from, to), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0), dues = st.due, exp = st.expO;
     const cm = new Map(); vs.filter(v => v.clinic).forEach(v => { const dn = v.doctor || '', k = v.clinic + '\u0001' + dn, o = cm.get(k) || {n: v.clinic, d: dn, cnt: 0, rev: 0}; o.cnt++; o.rev += +v.value || 0; cm.set(k, o); });
+    S.data.operations.filter(x => x.date >= from && x.date <= to && x.clinic).forEach(x => { const dn = x.doctor || '', k = x.clinic + '\u0001' + dn, o = cm.get(k) || {n: x.clinic, d: dn, cnt: 0, rev: 0}; o.cnt++; o.rev += +x.value || 0; cm.set(k, o); });
     const clin = [...cm.values()];
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length, 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
+    const kp = [['عدد الزيارات', vs.length + opsCountR(), 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
@@ -979,7 +981,7 @@ function renderHome() {
     const {from, to} = getRange(), vs = visitsIn(from, to), acc = accounts(from, to);
     const st = statementRows(from, to);
     const cl = [...clinicNames(), ...EXTRA_CLINICS].map(n => { const c = vs.filter(v => v.clinic === n); return [n, c.length, c.reduce((s, v) => s + (+v.value || 0), 0)]; }).filter(r => r[1] || clinicOf(r[0]));
-    return [{name: 'المؤشرات', rows: [['البند', 'القيمة'], ['عدد الزيارات', vs.length], ...st.rows, ...st.memo]}, {name: 'العيادات', rows: [['العيادة', 'الزيارات', 'الإيراد'], ...cl]}];
+    return [{name: 'المؤشرات', rows: [['البند', 'القيمة'], ['عدد الزيارات', vs.length + opsCountR()], ...st.rows, ...st.memo]}, {name: 'العيادات', rows: [['العيادة', 'الزيارات', 'الإيراد'], ...cl]}];
   }}; draw();
 }
 
@@ -1053,12 +1055,13 @@ function crud(cfg) {
     const rows = () => {
       let list = S.data[cfg.ent].slice();
       if (cfg.dated) { const {from, to} = getRange(); list = list.filter(r => r.date >= from && r.date <= to); }
+      if (cfg.extraRows) list = list.concat(cfg.extraRows());
       if (q) list = list.filter(r => JSON.stringify(r).toLowerCase().includes(q));
       return (cfg.sort ? list.sort(cfg.sort) : list.reverse());
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td><input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button></td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${r._op ? `<button type="button" class="btn sm c-red" data-act="openop" data-id="${r.id}">🏥 فتح في العمليات</button>` : `<input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button>`}</td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th><input type="checkbox" class="selall" title="تحديد الكل"></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -1081,7 +1084,7 @@ function crud(cfg) {
         for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
         if (cfg.validate) { const m = cfg.validate(rec, editing); if (m) throw new Error(m); }
         if (editing) rec.id = editing;
-        const r = await API.call('save', {entity: cfg.ent, record: rec});
+        const r = cfg.saveFn ? await cfg.saveFn(rec, editing) : await API.call('save', {entity: cfg.ent, record: rec});
         if (cfg.after) await cfg.after(r.record, rec);
         await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
       }); };
@@ -1090,7 +1093,7 @@ function crud(cfg) {
     S.view = {refresh: refreshList, total: () => { const c = cfg.cols.find(x => x.sum); if (!c) return ''; const l = rows(); return fmtN(l.reduce((t, r) => t + (+c.sum(r) || 0), 0)); },
       edit: id => { const r = S.data[cfg.ent].find(x => x.id === id); if (!r) return; editing = id; const f = frm(); $('#ftitle', f).textContent = '✏️ تعديل'; setForm(f, cfg.fill ? cfg.fill(r) : r); showGroups(); cfg.onChange && cfg.onChange('*', f, {editing, loaded: true}); f.scrollIntoView({behavior: 'smooth', block: 'start'}); },
       del: async id => { if (!await confirmBox('هل تريد حذف هذا السجل نهائياً؟')) return; await guard(null, async () => { await API.call('delete', {entity: cfg.ent, id}); await loadAll([cfg.ent]); toast('تم الحذف'); $('#lst').innerHTML = listHTML(); if (editing === id) reset(); }); },
-      reset, ids: () => rows().map(r => r.id), ent: cfg.ent};
+      reset, ids: () => rows().filter(r => !r._op).map(r => r.id), ent: cfg.ent};
     draw();
   };
 }
@@ -1202,7 +1205,7 @@ SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد وا�
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
 SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
+  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: 'docNo', l: 'رقم المستند'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
   cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}${isOn(r.deductAnes) ? ' (مخصوم)' : ''}` : ''}, {h: 'نصيب الطبيب', f: r => fmtN(opCalc(r).surgeon), sum: r => opCalc(r).surgeon}, {h: 'ملاحظات', f: r => esc(r.notes)}],
   sort: (a, b) => b.date.localeCompare(a.date),
   defaults: () => ({date: today()}),
@@ -1254,7 +1257,7 @@ function visitLast(f, ctx) {
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
 SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
-  groups: {co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  groups: {op: {title: '🏥 بيانات العملية الجراحية', show: v => v.visitType === 'عمليات جراحية'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
@@ -1269,8 +1272,20 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     {k: 'company', l: 'اسم الشركة', sg: 'companies', grp: 'co'}, {k: 'formNo', l: 'رقم النموذج', grp: 'co', sg: 'visits.formNo'}, {k: 'formPhoto', l: 'صورة النموذج', t: 'img', grp: 'co'},
     {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
-    {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'}
+    {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'},
+    {k: 'operation', l: 'العملية', sg: 'opnames', grp: 'op'}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs', grp: 'op'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num', grp: 'op'},
+    {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير', grp: 'op'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num', grp: 'op'}
   ],
+  extraRows: () => { const {from, to} = getRange(); return S.data.operations.filter(o => o.date >= from && o.date <= to).map(o => ({id: o.id, _op: true, date: o.date, patient: o.patient, clinic: o.clinic || ((S.data.doctors.find(d => d.id === o.doctorId) || {}).clinic || ''), doctor: o.doctor, visitType: 'عمليات جراحية', service: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', serial: ''})); },
+  saveFn: async (rec, editing) => {
+    if (rec.visitType !== 'عمليات جراحية') return API.call('save', {entity: 'visits', record: rec});
+    const op = {date: rec.date, patient: rec.patient, operation: rec.operation || rec.service, clinic: rec.clinic, doctor: rec.doctor, doctorId: rec.doctorId, value: rec.value, doctorPercent: rec.doctorPercent, notes: rec.notes || '', anesthetist: rec.anesthetist || '', anesthetistId: rec.anesthetistId || '', anesthesia: rec.anesthesia || 0, deductAnes: rec.deductAnes ? '1' : '', docNo: rec.docNo || ''};
+    if (!op.operation) throw new Error('اسم العملية مطلوب');
+    const old = editing ? S.data.operations.find(x => x.id === editing) : null;
+    if (editing && !old && S.data.visits.find(x => x.id === editing)) await API.call('delete', {entity: 'visits', id: editing});
+    const r = await API.call('save', {entity: 'operations', record: Object.assign(old ? {id: old.id} : {}, op)});
+    await loadAll(['operations']); toast('🏥 سُجّلت كعملية جراحية (تُحتسب زيارة)'); return r;
+  },
   cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
@@ -1281,6 +1296,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
     o.payMethod = ''; o.payRef = ''; o.payPhone = '';
+    { const an = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = an ? an.id : ''; o.anesthetist = an ? an.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; if (o.visitType !== 'عمليات جراحية') { o.operation = ''; o.anesthesia = 0; o.doctorPercent = 0; o.anesthetist = ''; o.anesthetistId = ''; o.deductAnes = ''; } }
     return o;
   },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
@@ -1308,6 +1324,8 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
     if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount', 'paid'].includes(n) && !ctx.typing) visitAuto(f, n);
     if (n === 'value' || n === 'patientPct' || n === 'discount' || n === 'paid') visitAuto(f, n);
+    if (n === '_doc' && getv(f, 'visitType') === 'عمليات جراحية') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d && !getv(f, 'doctorPercent')) setv(f, 'doctorPercent', d.opPercent || 0); }
+    if (n === 'operation' && getv(f, 'visitType') === 'عمليات جراحية') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); }
   }
 });
 
@@ -1395,6 +1413,8 @@ Acts.bulkvisits = () => {
   });
 };
 
+Acts.openop = el => { const id = el.dataset.id; nav('operations'); setTimeout(() => { if (S.view && S.view.edit) S.view.edit(id); }, 450); };
+
 </script>
 <script>
 /* ============ التقارير: كل تقرير يعمل لليوم أو تاريخ محدد أو فترة، والأسماء روابط لتقارير تفصيلية ============ */
@@ -1448,7 +1468,7 @@ function bodyDaily() {
   const byCat = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
   const byClinic = [...groupBy(vs, v => v.clinic)].sort((a, b) => sum(b[1], val) - sum(a[1], val));
   const days = [...new Set([...vs.map(v => v.date), ...ex.map(x => x.date)])].sort();
-  return kpiRow([['عدد الزيارات', vs.length, 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal'], ['الضريبة', fmtN(tax), 'pink']])
+  return kpiRow([['عدد الزيارات', vs.length + opsCountR(), 'teal'], ['إيراد الكشف', fmtN(st.kosf), 'blue'], ['إيراد متنوع', fmtN(st.mixed), 'cyan'], ['إيراد العمليات', fmtN(st.opsRev), 'red'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange'], ['مستحق على الجهات', fmtN(recv), 'cyan'], ['حقوق الأطباء (المستحق)', fmtN(st.due), 'violet'], ['مدفوع للأطباء', fmtN(st.paid), 'lime'], ['المصروفات', fmtN(st.expO), 'gold'], ['الصافي', fmtN(st.net), 'teal'], ['الضريبة', fmtN(tax), 'pink']])
     + `<div class="charts"><div class="panel"><h3>حسب نوع الزيارة</h3>${donut(byCat.map(([k, a]) => ({l: CAT[k], v: sum(a, val), c: CATC[k]})))}</div><div class="panel"><h3>حسب العيادة</h3>${bars(byClinic.slice(0, 10).map(([n, a]) => ({l: n, v: sum(a, val)})), 'clinicrep')}</div></div>`
     + sect('ملخص الزيارات') + tbl(['الزيارة', 'العدد', 'القيمة'], byType.map(([t, a]) => [esc(t), a.length, fmtN(sum(a, val))]), ['الإجمالي', vs.length, fmtN(rev)])
     + sect('حسب نوع الزيارة (نقدي / شركة / لجنة / تأمين)') + tbl(['النوع', 'العدد', 'القيمة', 'تحمل المريض', 'الخصم'], byCat.map(([k, a]) => [tagCat(k), a.length, fmtN(sum(a, val)), fmtN(sum(a, patientShare)), fmtN(sum(a, discountAmt))]))
@@ -1810,17 +1830,21 @@ function cashLedger(from, to) {
   const add = (acc, o) => NK.forEach(k => { acc[k] += +o[k] || 0; });
   days.forEach(d => {
     const dsum = zero(), dn = dayName(d);
+    const docShown = new Set(), dsAll = detailSections(d, d).rows, clinicDocs = new Map();
+    dsAll.forEach(r => { const a = clinicDocs.get(r.c) || []; clinicDocs.set(r.c, a.concat(r.vs || [], r.ops || [])); });
+    const sameClinicDoc = () => true;
     detailSections(d, d).rows.slice().sort((a, b) => ((a.c === 'المركز') - (b.c === 'المركز')) || (rowSerial(a) - rowSerial(b))).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
       const o = {kosf: r.kosf, mixed: r.mixed, rev: r.rev, co: r.co, com: r.com, tax: r.tax, ins: r.ins, amount: 0, due: r.due, fixed: r.kind === 'v' && doc ? +doc.fixed || 0 : 0, paid: r.paid};
       add(dsum, o);
-      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: docRange(r.kind === 'v' ? r.vs : []), co: sum(cov, v => +v.value || 0), pct}});
+      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: (() => { if (docShown.has(r.c)) return ''; docShown.add(r.c); return docRange(clinicDocs.get(r.c) || []); })(), co: sum(cov, v => +v.value || 0), pct}});
     });
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));
     S.data.expenses.filter(e => !e.doctor && e.date === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: e.category || e.notes || '', doc2: e.docNo || '', notes: e.category ? (e.notes || '') : ''}));
+    S.data.operations.filter(o => o.date === d && +o.anesthesia > 0).forEach(o => exps.push({amount: +o.anesthesia || 0, bayan: 'تخدير عملية' + (o.anesthetist ? ' — ' + (/^د\.?\s/.test(o.anesthetist) ? o.anesthetist : 'د. ' + o.anesthetist) : ''), doc2: o.docNo || '', notes: o.operation || ''}));
     const revLines = lines.filter(l => l.kind === 'rev' && l.cells.date === d);
     exps.forEach((x, k) => {
       dsum.amount += x.amount;
@@ -2095,7 +2119,7 @@ const Bars = (() => {
   const stats = () => {
     try {
       const t = today(), vs = visitsIn(t, t), st = statementRows(t, t), sm = c => vs.filter(v => v.category === c).reduce((s, v) => s + (+v.value || 0), 0), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0);
-      return [['🧾 زيارات اليوم', vs.length], ['🩺 الكشف', fmtN(st.kosf)], ['🧩 متنوع', fmtN(st.mixed)], ['🏥 العمليات', fmtN(st.opsRev)], ['💰 إجمالي الإيراد', fmtN(st.dayRev)], ['🏢 الشركات', fmtN(sm('company'))], ['🏛️ اللجنة', fmtN(sm('committee'))], ['🛡️ التأمين', fmtN(sm('insurance'))], ['🏛️ الضريبة', fmtN(tax)], ['💸 المصروفات', fmtN(st.expO)], ['📊 الصافي', fmtN(st.net)]];
+      return [['🧾 زيارات اليوم', vs.length + S.data.operations.filter(o => o.date === t).length], ['🩺 الكشف', fmtN(st.kosf)], ['🧩 متنوع', fmtN(st.mixed)], ['🏥 العمليات', fmtN(st.opsRev)], ['💰 إجمالي الإيراد', fmtN(st.dayRev)], ['🏢 الشركات', fmtN(sm('company'))], ['🏛️ اللجنة', fmtN(sm('committee'))], ['🛡️ التأمين', fmtN(sm('insurance'))], ['🏛️ الضريبة', fmtN(tax)], ['💸 المصروفات', fmtN(st.expO)], ['📊 الصافي', fmtN(st.net)]];
     } catch (e) { return []; }
   };
   const paint = () => { if (!bot) return; const h = stats().map(x => `<span class="dchip">${x[0]}: <b>${x[1]}</b></span>`).join(''); const key = h; if (bot.dataset.k !== key) { bot.dataset.k = key; bot.firstChild.innerHTML = `<div class="dtrack">${h}${h}</div>`; } };

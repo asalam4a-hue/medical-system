@@ -20,17 +20,21 @@ function cashLedger(from, to) {
   const add = (acc, o) => NK.forEach(k => { acc[k] += +o[k] || 0; });
   days.forEach(d => {
     const dsum = zero(), dn = dayName(d);
+    const docShown = new Set(), dsAll = detailSections(d, d).rows, clinicDocs = new Map();
+    dsAll.forEach(r => { const a = clinicDocs.get(r.c) || []; clinicDocs.set(r.c, a.concat(r.vs || [], r.ops || [])); });
+    const sameClinicDoc = () => true;
     detailSections(d, d).rows.slice().sort((a, b) => ((a.c === 'المركز') - (b.c === 'المركز')) || (rowSerial(a) - rowSerial(b))).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
       const o = {kosf: r.kosf, mixed: r.mixed, rev: r.rev, co: r.co, com: r.com, tax: r.tax, ins: r.ins, amount: 0, due: r.due, fixed: r.kind === 'v' && doc ? +doc.fixed || 0 : 0, paid: r.paid};
       add(dsum, o);
-      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: docRange(r.kind === 'v' ? r.vs : []), co: sum(cov, v => +v.value || 0), pct}});
+      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: (() => { if (docShown.has(r.c)) return ''; docShown.add(r.c); return docRange(clinicDocs.get(r.c) || []); })(), co: sum(cov, v => +v.value || 0), pct}});
     });
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));
     S.data.expenses.filter(e => !e.doctor && e.date === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: e.category || e.notes || '', doc2: e.docNo || '', notes: e.category ? (e.notes || '') : ''}));
+    S.data.operations.filter(o => o.date === d && +o.anesthesia > 0).forEach(o => exps.push({amount: +o.anesthesia || 0, bayan: 'تخدير عملية' + (o.anesthetist ? ' — ' + (/^د\.?\s/.test(o.anesthetist) ? o.anesthetist : 'د. ' + o.anesthetist) : ''), doc2: o.docNo || '', notes: o.operation || ''}));
     const revLines = lines.filter(l => l.kind === 'rev' && l.cells.date === d);
     exps.forEach((x, k) => {
       dsum.amount += x.amount;
