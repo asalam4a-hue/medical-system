@@ -92,9 +92,9 @@ async function diag() {
 window.API = {diag, call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody'],opx:['opx'],opset:['opset']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -103,10 +103,12 @@ const FIELDS = {
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   patients:'name,phone',
   companies:'name,fee,contact',
-  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid,operation,anesthetist,anesthetistId,anesthesia,deductAnes,doctorPercent',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
   custody:'date,person,kind,dir,amount,notes,docNo',
-  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
+  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
+  opx:'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
+  opset:'kind,code,name,extra,active'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
@@ -180,7 +182,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs','opx'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');

@@ -31,7 +31,7 @@ const jleaf = cat => { const k = jnorm(cat), i = JLEAVES.findIndex(x => x.al.inc
 function journalLedger(from, to) {
   const ents = [], dates = new Set();
   const mk = (date, ord, o) => { ents.push(Object.assign({date, ord, in: 0, out: 0, co: 0, refund: 0, com: 0, tax: 0, ins: 0, cd: 0, cc: 0, ex: {}, bayan: '', op: '', doc: '', note: ''}, o)); dates.add(date); };
-  const vsAll = S.data.visits.filter(v => v.date <= to), opsAll = S.data.operations.filter(o => o.date <= to);
+  const vsAll = S.data.visits.filter(v => v.date <= to && !isSurg(v)), opsAll = S.data.operations.filter(o => o.date <= to);
   [...new Set([...vsAll.map(v => v.date), ...opsAll.map(o => o.date)])].forEach(d => {
     const vs = vsAll.filter(v => v.date === d), ops = opsAll.filter(o => o.date === d);
     const rev = sum(vs, val) + sum(ops, o => o.value), co = sum(vs.filter(v => v.category === 'company'), val), com = sum(vs.filter(v => v.category === 'committee'), val), ins = sum(vs, discountAmt), tax = sum(vs, v => v.tax);

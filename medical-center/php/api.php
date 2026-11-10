@@ -44,9 +44,9 @@ if (!function_exists('mb_substr')) { function mb_substr($s, $a, $l = null) { $c 
 function jout(array $a): void { echo json_encode($a, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit; }
 function jerr(string $m, ?string $code = null): void { jout(['error' => $m, 'code' => $code]); }
 
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody']];
+const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody'],'opx'=>['opx'],'opset'=>['opset']];
 const FIELDS = [
   'users'=>'username,nationalId,birthDate,perms,isAdmin,active',
   'staff'=>'code,name,nationalId,idPhoto,photo',
@@ -55,10 +55,12 @@ const FIELDS = [
   'operations'=>'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
   'patients'=>'name,phone',
   'companies'=>'name,fee,contact',
-  'visits'=>'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
+  'visits'=>'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,docNo,payPhone,birthDate,paid,operation,anesthetist,anesthetistId,anesthesia,deductAnes,doctorPercent',
   'expenses'=>'date,category,amount,notes,doctor,dueDate,docNo',
   'custody'=>'date,person,kind,dir,amount,notes,docNo',
   'execs'=>'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
+  'opx'=>'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
+  'opset'=>'kind,code,name,extra,active',
 ];
 const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial','anesthesia'];
 const DATES = ['date','hireDate','birthDate','dueDate','execDate'];

@@ -24,7 +24,7 @@ const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange
 const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى','عمليات جراحية'];
 const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
 const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
-const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز'];
+const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز','عمليات جراحية'];
 const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
 
 const SCREENS = [
@@ -39,6 +39,11 @@ const SCREENS = [
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
   {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
+  {k:'opx_data', t:'إدارة المصروفات', i:'💳', c:'orange'},
+  {k:'opx_reg', t:'سجل المصروفات', i:'📒', c:'gold'},
+  {k:'opx_apr', t:'الاعتماد والسداد', i:'✅', c:'lime'},
+  {k:'opx_items', t:'بنود الصرف', i:'🏷️', c:'blue'},
+  {k:'opx_set', t:'إعدادات المصروفات', i:'🛠️', c:'violet'},
   {k:'users', t:'المستخدمين', i:'🔐', c:'pink'},
   {k:'admin', t:'إدارة البرنامج', i:'⚙️', c:'orange'}
 ];
@@ -56,12 +61,13 @@ const REPS = [
   {k:'rep_services', t:'الخدمات والزيارات', i:'💉', c:'pink'},
   {k:'rep_operations', t:'العمليات', i:'🏥', c:'red'},
   {k:'rep_expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'opx_rep', t:'المصروفات التشغيلية', i:'📊', c:'orange'},
   {k:'rep_staff', t:'نشاط مسئولي التسجيل', i:'👥', c:'lime'}
 ];
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[],opx:[],opset:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -253,7 +259,9 @@ function bars(items, click) {
 /* ---------- الحسابات (مطابقة لمعادلات ملف الإكسيل) ---------- */
 const clinicNames = () => S.data.services.filter(s => s.type === 'clinic').map(s => s.name);
 const clinicOf = n => S.data.services.find(s => s.type === 'clinic' && s.name === n);
-const visitsIn = (f, t) => S.data.visits.filter(v => v.date >= f && v.date <= t);
+const isSurg = v => v.visitType === 'عمليات جراحية';
+const visitsIn = (f, t) => S.data.visits.filter(v => v.date >= f && v.date <= t && !isSurg(v));
+function deriveOps() { S.data.operations = (S.opsLegacy || []).concat(S.data.visits.filter(isSurg).map(v => ({id: v.id, _v: 1, serial: v.serial, date: v.date, patient: v.patient, operation: v.operation || v.service, clinic: v.clinic, doctor: v.doctor, doctorId: v.doctorId, value: v.value, doctorPercent: v.doctorPercent, notes: v.notes, anesthetist: v.anesthetist, anesthetistId: v.anesthetistId, anesthesia: v.anesthesia, deductAnes: v.deductAnes, docNo: v.docNo}))); }
 function findDoctor(v) {
   const D = S.data.doctors;
   return D.find(d => d.id === v.doctorId) || D.find(d => d.name === v.doctor && d.clinic === v.clinic) || D.find(d => d.name === v.doctor);
@@ -379,8 +387,9 @@ function startSync() {
 async function loadAll(ents) {
   if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
-    try { const rr = await API.call('list', {entity: e}); S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
+    try { const rr = await API.call('list', {entity: e}); if (e === 'operations') S.opsLegacy = rr.items; else S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
+  deriveOps();
 }
 
 const LOGO = `<svg viewBox="0 0 120 120" aria-label="شعار المركز"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ac9"/><stop offset="1" stop-color="#ff3d9a"/></linearGradient><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ff5d6"/><stop offset="1" stop-color="#2f9bff"/></linearGradient><linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient></defs><g transform="translate(60 60)"><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(0)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(72)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg2)" transform="rotate(144)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(216)" opacity=".85"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(288)" opacity=".85"/><circle r="17" fill="#fff"/><path d="M-4-11h8v7h7v8h-7v7h-8v-7h-7v-8h7z" fill="#ff3d9a"/></g></svg>`;
@@ -390,12 +399,26 @@ function render() {
   clearInterval(clockTimer); S.view = null; S.scope = {}; S.dirty = false; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
-  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  app.innerHTML = `<div class="shell"><aside class="side noprint" id="side">${sideHTML()}</aside><div class="content"><header class="top"><button class="btn sm c-orange menubtn" data-act="sidetoggle">☰</button><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main></div></div>`;
   if (window.Bars) Bars.mount(app);
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = `<div class="panel"><b>الشاشة غير موجودة</b> (${esc(S.screen)})<br><small dir="ltr">build ${window.BUILD || '?'} — screens loaded: ${Object.keys(window.SCREEN_RENDER || {}).length}${(window.__errs || []).length ? '<br>errors: ' + esc(window.__errs.join(' | ')) : ''}</small></div>`;
 }
+function sideHTML() {
+  const it = (k, t, i) => can(k) ? `<button class="si ${S.screen === k ? 'on' : ''}" data-act="sgo" data-s="${k}"><span>${i}</span>${t}</button>` : '';
+  const grp = (t, a) => a.join('').trim() ? `<div class="sh">${t}</div>${a.join('')}` : '';
+  const sc = k => { const x = SCREENS.find(y => y.k === k); return it(k, x.t, x.i); };
+  return `<div class="sbrand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<b>${esc(APPNAME)}</b></div>
+  <button class="si ${S.screen === 'home' ? 'on' : ''}" data-act="sgo" data-s="home"><span>🏠</span>الرئيسية</button>
+  ${grp('العمل اليومي', ['visits', 'patients', 'operations', 'doctors', 'dues', 'services', 'companies', 'staff', 'expenses', 'execs', 'custody'].map(sc))}
+  ${grp('المصروفات التشغيلية', ['opx_data', 'opx_reg', 'opx_apr', 'opx_items'].map(sc))}
+  ${grp('التقارير', [anyRep() ? `<button class="si ${S.screen === 'reports' || /^(rep_|opx_rep)/.test(S.screen) ? 'on' : ''}" data-act="sgo" data-s="reports"><span>📊</span>التقارير</button>` : ''])}
+  ${grp('الإعدادات', [sc('opx_set'), sc('users'), sc('admin')])}
+  <button class="si ${S.screen === 'guide' ? 'on' : ''}" data-act="sgo" data-s="guide"><span>📖</span>دليل الاستخدام</button>`;
+}
+Acts.sgo = el => { S.stack = []; S.screen = el.dataset.s; S.arg = null; render(); scrollTo(0, 0); };
+Acts.sidetoggle = () => { const s = $('#side'); if (s) s.classList.toggle('open'); };
 const pageHead = (t, i, c) => `<div class="pagehead c-${c}"><h1><span class="ico">${i}</span>${esc(t)}</h1></div>`;
 
 /* ---------- شاشة الدخول ---------- */

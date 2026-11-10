@@ -249,6 +249,40 @@ table{font-size:.85rem}th{padding:5px 7px}td{padding:4px 7px}
 
 .bcode{font-family:monospace;letter-spacing:1px;font-size:.78rem}
 
+/* ================= الشكل الجديد: قائمة جانبية داكنة + أكواد برتقالية ================= */
+body{background:#eef2f7}
+.shell{display:flex;align-items:flex-start;min-height:100vh}
+.content{flex:1;min-width:0}
+.side{width:232px;flex:none;position:sticky;top:0;height:100vh;overflow:auto;background:linear-gradient(180deg,#27384d,#1a2533);border-top:4px solid var(--orange);padding:8px 0 48px;z-index:35}
+.side *{color:#fff}
+.side .sbrand{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 10px 14px;cursor:pointer;text-align:center;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:6px}
+.side .sbrand svg,.side .sbrand img{width:54px;height:54px;object-fit:contain}
+.side .sbrand b{font-size:1.05rem;line-height:1.3}
+.side .sh{font-size:.72rem;opacity:.55;padding:12px 16px 4px;letter-spacing:.5px}
+.side .si{display:flex;width:100%;gap:10px;align-items:center;padding:9px 16px;border:0;background:none;text-align:right;cursor:pointer;font-size:.95rem;transition:background .15s}
+.side .si:hover{background:rgba(255,255,255,.09)}
+.side .si.on{background:var(--orange);font-weight:bold}
+.side .si span{width:22px;text-align:center}
+.top{background:#fff;border-bottom:3px solid var(--orange);border-image:none}
+.menubtn{display:none}
+.panel{border-radius:14px;box-shadow:0 2px 10px rgba(30,50,80,.08)}
+.pagehead h1{font-size:1.5rem}
+.ringbox{display:flex;align-items:center;gap:14px}
+.ring{width:74px;height:74px;border-radius:50%;background:conic-gradient(var(--orange) calc(var(--p)*1%),#e3e8ef 0);display:grid;place-items:center;position:relative}
+.ring::before{content:"";position:absolute;inset:9px;background:#fff;border-radius:50%}
+.ring b{position:relative;font-size:1rem}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}.chip{padding:3px 10px;border-radius:99px;background:#eef2f7;font-size:.9rem}
+.steps3{display:flex;gap:8px;margin:6px 0}.steps3 span{flex:1;text-align:center;padding:8px;border-radius:10px;background:#eef2f7;opacity:.6}.steps3 span.on{background:#fff3e6;opacity:1;border:1px solid var(--orange)}
+.num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff}
+@media(max-width:900px){
+  .menubtn{display:inline-block}
+  .side{position:fixed;right:0;top:0;transform:translateX(100%);transition:transform .25s;box-shadow:-6px 0 20px rgba(0,0,0,.3)}
+  .side.open{transform:none}
+  .grid2,.grid3{grid-template-columns:1fr}
+}
+@media print{.side,.menubtn{display:none!important}.shell{display:block}}
+
 </style>
 </head>
 <body>
@@ -349,9 +383,9 @@ async function diag() {
 window.API = {diag, call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody'],opx:['opx'],opset:['opset']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -360,10 +394,12 @@ const FIELDS = {
   operations:'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   patients:'name,phone',
   companies:'name,fee,contact',
-  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
+  visits:'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid,operation,anesthetist,anesthetistId,anesthesia,deductAnes,doctorPercent',
   expenses:'date,category,amount,notes,doctor,dueDate,docNo',
   custody:'date,person,kind,dir,amount,notes,docNo',
-  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
+  execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
+  opx:'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
+  opset:'kind,code,name,extra,active'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
@@ -437,7 +473,7 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs','opx'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');
@@ -539,7 +575,7 @@ const CATC = {cash:'teal', company:'blue', committee:'violet', insurance:'orange
 const VTYPES = ['كشف','استشارة','متنوع','كشف خارجى','عمليات جراحية'];
 const SVTYPE = {clinic:'عيادة', operation:'عملية', radiology:'أشعة', lab:'تحاليل', service:'خدمة'};
 const SVCOLOR = {clinic:'orange', operation:'red', radiology:'cyan', lab:'pink', service:'violet'};
-const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز'];
+const EXTRA_CLINICS = ['الأشعة','التحاليل','المركز','عمليات جراحية'];
 const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصاريف نقل','مرتبات الموظفين والعمال','اجور الأطباء والتمريض','مستلزمات طبيه وأدويه','كهرباء','إيصال مياه','صيانه','بوفيه','أدوات كتابيه','اتصالات وتليفون وانترنت','دعايا','مكافآت','حوافز','نثريات وإكراميات ومصروفات أخرى'];
 
 const SCREENS = [
@@ -554,6 +590,11 @@ const SCREENS = [
   {k:'expenses', t:'المصروفات', i:'💸', c:'gold'},
   {k:'execs', t:'تنفيذ الشركات', i:'📋', c:'cyan'},
   {k:'custody', t:'العهد والسلف', i:'💼', c:'blue'},
+  {k:'opx_data', t:'إدارة المصروفات', i:'💳', c:'orange'},
+  {k:'opx_reg', t:'سجل المصروفات', i:'📒', c:'gold'},
+  {k:'opx_apr', t:'الاعتماد والسداد', i:'✅', c:'lime'},
+  {k:'opx_items', t:'بنود الصرف', i:'🏷️', c:'blue'},
+  {k:'opx_set', t:'إعدادات المصروفات', i:'🛠️', c:'violet'},
   {k:'users', t:'المستخدمين', i:'🔐', c:'pink'},
   {k:'admin', t:'إدارة البرنامج', i:'⚙️', c:'orange'}
 ];
@@ -571,12 +612,13 @@ const REPS = [
   {k:'rep_services', t:'الخدمات والزيارات', i:'💉', c:'pink'},
   {k:'rep_operations', t:'العمليات', i:'🏥', c:'red'},
   {k:'rep_expenses', t:'المصروفات', i:'💸', c:'gold'},
+  {k:'opx_rep', t:'المصروفات التشغيلية', i:'📊', c:'orange'},
   {k:'rep_staff', t:'نشاط مسئولي التسجيل', i:'👥', c:'lime'}
 ];
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[],opx:[],opset:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -768,7 +810,9 @@ function bars(items, click) {
 /* ---------- الحسابات (مطابقة لمعادلات ملف الإكسيل) ---------- */
 const clinicNames = () => S.data.services.filter(s => s.type === 'clinic').map(s => s.name);
 const clinicOf = n => S.data.services.find(s => s.type === 'clinic' && s.name === n);
-const visitsIn = (f, t) => S.data.visits.filter(v => v.date >= f && v.date <= t);
+const isSurg = v => v.visitType === 'عمليات جراحية';
+const visitsIn = (f, t) => S.data.visits.filter(v => v.date >= f && v.date <= t && !isSurg(v));
+function deriveOps() { S.data.operations = (S.opsLegacy || []).concat(S.data.visits.filter(isSurg).map(v => ({id: v.id, _v: 1, serial: v.serial, date: v.date, patient: v.patient, operation: v.operation || v.service, clinic: v.clinic, doctor: v.doctor, doctorId: v.doctorId, value: v.value, doctorPercent: v.doctorPercent, notes: v.notes, anesthetist: v.anesthetist, anesthetistId: v.anesthetistId, anesthesia: v.anesthesia, deductAnes: v.deductAnes, docNo: v.docNo}))); }
 function findDoctor(v) {
   const D = S.data.doctors;
   return D.find(d => d.id === v.doctorId) || D.find(d => d.name === v.doctor && d.clinic === v.clinic) || D.find(d => d.name === v.doctor);
@@ -894,8 +938,9 @@ function startSync() {
 async function loadAll(ents) {
   if (!ents) loadSettings();
   await Promise.all((ents || Object.keys(S.data)).map(async e => {
-    try { const rr = await API.call('list', {entity: e}); S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
+    try { const rr = await API.call('list', {entity: e}); if (e === 'operations') S.opsLegacy = rr.items; else S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
+  deriveOps();
 }
 
 const LOGO = `<svg viewBox="0 0 120 120" aria-label="شعار المركز"><defs><linearGradient id="lg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9ac9"/><stop offset="1" stop-color="#ff3d9a"/></linearGradient><linearGradient id="lg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5ff5d6"/><stop offset="1" stop-color="#2f9bff"/></linearGradient><linearGradient id="lg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset="1" stop-color="#ff8a1f"/></linearGradient></defs><g transform="translate(60 60)"><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(0)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(72)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg2)" transform="rotate(144)"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg1)" transform="rotate(216)" opacity=".85"/><ellipse rx="14" ry="34" cy="-26" fill="url(#lg3)" transform="rotate(288)" opacity=".85"/><circle r="17" fill="#fff"/><path d="M-4-11h8v7h7v8h-7v7h-8v-7h-7v-8h7z" fill="#ff3d9a"/></g></svg>`;
@@ -905,12 +950,26 @@ function render() {
   clearInterval(clockTimer); S.view = null; S.scope = {}; S.dirty = false; sgClose();
   const app = $('#app');
   if (!S.user) return renderLogin(app);
-  app.innerHTML = `<header class="top"><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main>`;
+  app.innerHTML = `<div class="shell"><aside class="side noprint" id="side">${sideHTML()}</aside><div class="content"><header class="top"><button class="btn sm c-orange menubtn" data-act="sidetoggle">☰</button><div class="brand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<span>${esc(APPNAME)}</span></div><div class="grow"></div>${S.screen !== 'home' ? '<button class="btn sm c-blue" data-act="back">↩ رجوع</button><button class="btn sm c-teal" data-act="home">🏠 الرئيسية</button>' : ''}<div class="who"><span>المستخدم:</span><b>${esc(S.user.username)}</b><button class="btn sm c-red" data-act="logout">خروج</button></div></header><main class="main" id="main">${spin()}</main></div></div>`;
   if (window.Bars) Bars.mount(app);
   const f = S.screen === 'home' ? renderHome : window.SCREEN_RENDER && window.SCREEN_RENDER[S.screen];
   if (f) Promise.resolve(f(S.arg)).catch(e => { if (e.code === 'auth') logoutLocal(); else $('#main').innerHTML = `<div class="panel">⚠️ ${esc(e.message)}</div>`; });
   else $('#main').innerHTML = `<div class="panel"><b>الشاشة غير موجودة</b> (${esc(S.screen)})<br><small dir="ltr">build ${window.BUILD || '?'} — screens loaded: ${Object.keys(window.SCREEN_RENDER || {}).length}${(window.__errs || []).length ? '<br>errors: ' + esc(window.__errs.join(' | ')) : ''}</small></div>`;
 }
+function sideHTML() {
+  const it = (k, t, i) => can(k) ? `<button class="si ${S.screen === k ? 'on' : ''}" data-act="sgo" data-s="${k}"><span>${i}</span>${t}</button>` : '';
+  const grp = (t, a) => a.join('').trim() ? `<div class="sh">${t}</div>${a.join('')}` : '';
+  const sc = k => { const x = SCREENS.find(y => y.k === k); return it(k, x.t, x.i); };
+  return `<div class="sbrand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<b>${esc(APPNAME)}</b></div>
+  <button class="si ${S.screen === 'home' ? 'on' : ''}" data-act="sgo" data-s="home"><span>🏠</span>الرئيسية</button>
+  ${grp('العمل اليومي', ['visits', 'patients', 'operations', 'doctors', 'dues', 'services', 'companies', 'staff', 'expenses', 'execs', 'custody'].map(sc))}
+  ${grp('المصروفات التشغيلية', ['opx_data', 'opx_reg', 'opx_apr', 'opx_items'].map(sc))}
+  ${grp('التقارير', [anyRep() ? `<button class="si ${S.screen === 'reports' || /^(rep_|opx_rep)/.test(S.screen) ? 'on' : ''}" data-act="sgo" data-s="reports"><span>📊</span>التقارير</button>` : ''])}
+  ${grp('الإعدادات', [sc('opx_set'), sc('users'), sc('admin')])}
+  <button class="si ${S.screen === 'guide' ? 'on' : ''}" data-act="sgo" data-s="guide"><span>📖</span>دليل الاستخدام</button>`;
+}
+Acts.sgo = el => { S.stack = []; S.screen = el.dataset.s; S.arg = null; render(); scrollTo(0, 0); };
+Acts.sidetoggle = () => { const s = $('#side'); if (s) s.classList.toggle('open'); };
 const pageHead = (t, i, c) => `<div class="pagehead c-${c}"><h1><span class="ico">${i}</span>${esc(t)}</h1></div>`;
 
 /* ---------- شاشة الدخول ---------- */
@@ -1047,7 +1106,7 @@ const stripTags = h => String(h).replace(/<[^>]+>/g, ' ');
 function crud(cfg) {
   (window.CRUDS = window.CRUDS || {})[cfg.ent] = cfg;
   return async function () {
-    if (!can(cfg.k)) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
+    if (!can(cfg.k) && !(S.surgOnly && can('operations'))) { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; return; }
     const main = $('#main'); let editing = null, q = '';
     const fields = cfg.fields, plain = fields.filter(f => !f.grp), grps = cfg.groups || {};
     const defaults = () => Object.assign({}, cfg.defaults ? cfg.defaults() : {});
@@ -1055,13 +1114,14 @@ function crud(cfg) {
     const rows = () => {
       let list = S.data[cfg.ent].slice();
       if (cfg.dated) { const {from, to} = getRange(); list = list.filter(r => r.date >= from && r.date <= to); }
+      if (cfg.filter) list = list.filter(cfg.filter);
       if (cfg.extraRows) list = list.concat(cfg.extraRows());
       if (q) list = list.filter(r => JSON.stringify(r).toLowerCase().includes(q));
       return (cfg.sort ? list.sort(cfg.sort) : list.reverse());
     };
     const listHTML = () => {
       const list = rows(); const cols = cfg.cols;
-      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${r._op ? `<button type="button" class="btn sm c-red" data-act="openop" data-id="${r.id}">🏥 فتح في العمليات</button>` : `<input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button>`}</td></tr>`).join('');
+      const body = list.map((r, ri) => `<tr>${cols.map(c => `<td>${c.f(r, ri)}</td>`).join('')}<td>${r._op ? `<button type="button" class="btn sm c-red" data-act="opconv" data-id="${r.id}">🔄 تحويل لزيارة</button>` : `<input type="checkbox" class="rowsel" data-id="${r.id}"> ${cfg.ent === 'visits' ? `<button class="btn sm c-lime" data-act="receipt" data-id="${r.id}" title="إيصال كاشير">🧾</button> ` : ''}<button class="btn sm c-teal" data-act="prow" data-e="${cfg.ent}" data-id="${r.id}" title="طباعة البند">🖨️</button> <button class="btn sm c-blue" data-act="edit" data-id="${r.id}">✏️</button> <button class="btn sm c-red" data-act="del" data-id="${r.id}">🗑️</button>`}</td></tr>`).join('');
       const foot = cols.some(c => c.sum) ? `<tfoot><tr>${cols.map((c, i) => `<td>${c.sum ? fmtN(list.reduce((s, r) => s + (+c.sum(r) || 0), 0)) : (i === 0 ? `الإجمالي (${list.length})` : '')}</td>`).join('')}<td></td></tr></tfoot>` : '';
       return `<div class="tbl-wrap"><table><thead><tr>${cols.map(c => `<th>${c.h}</th>`).join('')}<th><input type="checkbox" class="selall" title="تحديد الكل"></th></tr></thead><tbody>${body || `<tr><td colspan="${cols.length + 1}" class="empty">لا توجد بيانات${cfg.dated ? ' في هذه الفترة' : ''}</td></tr>`}</tbody>${foot}</table></div>`;
     };
@@ -1073,7 +1133,7 @@ function crud(cfg) {
     };
     const showGroups = () => { const v = readForm(frm()); Object.keys(grps).forEach(g => $(`[data-grp="${g}"]`, frm()).classList.toggle('hidden', !grps[g].show(v))); };
     const draw = () => {
-      main.innerHTML = `${pageHead(cfg.t, cfg.i, cfg.c)}${cfg.dated ? rangeBar() : ''}${frmHTML()}<div class="bar noprint"><input type="text" id="srch" placeholder="🔎 بحث…" value="${esc(q)}">${window.exportButtons}${cfg.tools ? cfg.tools() : ''}<button type="button" class="btn sm c-red" data-act="delsel">🗑️ حذف المحدد</button><button type="button" class="btn sm c-red" data-act="delall">🗑️ حذف الكل</button></div><div id="lst">${listHTML()}</div>`;
+      main.innerHTML = `${pageHead(cfg.ent === 'visits' && S.surgOnly ? 'العمليات الجراحية' : cfg.t, cfg.i, cfg.c)}${cfg.dated ? rangeBar() : ''}${frmHTML()}<div class="bar noprint"><input type="text" id="srch" placeholder="🔎 بحث…" value="${esc(q)}">${window.exportButtons}${cfg.tools ? cfg.tools() : ''}<button type="button" class="btn sm c-red" data-act="delsel">🗑️ حذف المحدد</button><button type="button" class="btn sm c-red" data-act="delall">🗑️ حذف الكل</button></div><div id="lst">${listHTML()}</div>`;
       reset(); hydrateImgs(main);
       $('#srch').oninput = e => { q = e.target.value.trim().toLowerCase(); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); };
       frm().addEventListener('change', ev => { showGroups(); cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing}); });
@@ -1204,15 +1264,8 @@ SCREEN_RENDER.custody = crud({k: 'custody', ent: 'custody', t: 'العهد وا�
 
 /* ---------- العمليات ---------- */
 const opsShare = f => { const c = opCalc({value: getv(f, 'value'), doctorPercent: getv(f, 'doctorPercent'), anesthesia: getv(f, 'anesthesia'), deductAnes: ($('[name=deductAnes]', f) || {}).checked}); setv(f, '_share', fmtN(c.surgeon)); };
-SCREEN_RENDER.operations = crud({k: 'operations', ent: 'operations', t: 'العمليات', i: '🏥', c: 'red', add: 'عملية جديدة', dated: true,
-  fields: [{k: 'date', l: 'التاريخ', t: 'date', req: 1}, {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'operation', l: 'العملية', req: 1, sg: 'opnames'}, {k: 'docNo', l: 'رقم المستند'}, {k: '_doc', l: 'الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'value', l: 'قيمة العملية', t: 'num', req: 1}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num'}, {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num'}, {k: '_share', l: 'نصيب الطبيب', t: 'ro'}, {k: 'notes', l: 'ملاحظات', t: 'area'}],
-  cols: [{h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العملية', f: r => esc(r.operation)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}${isOn(r.deductAnes) ? ' (مخصوم)' : ''}` : ''}, {h: 'نصيب الطبيب', f: r => fmtN(opCalc(r).surgeon), sum: r => opCalc(r).surgeon}, {h: 'ملاحظات', f: r => esc(r.notes)}],
-  sort: (a, b) => b.date.localeCompare(a.date),
-  defaults: () => ({date: today()}),
-  collect: raw => { docNameCheck(raw); const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : ''; o.clinic = d ? d.clinic : ''; const a = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = a ? a.id : ''; o.anesthetist = a ? a.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; return o; },
-  fill: r => Object.assign({}, r, {deductAnes: isOn(r.deductAnes), _anes: r.anesthetistId || (S.data.doctors.find(d => d.name === r.anesthetist) || {}).id || '', _doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
-  onChange: (n, f) => { if (n === 'operation') { const sv = S.data.services.find(x => x.type === 'operation' && x.name === getv(f, 'operation')); if (sv && sv.price && !getv(f, 'value')) setv(f, 'value', sv.price); } if (n === '_doc') { const d = S.data.doctors.find(x => x.id === getv(f, '_doc')); if (d) setv(f, 'doctorPercent', d.opPercent || 0); } if (['_doc', 'value', 'doctorPercent', 'anesthesia', 'deductAnes', '*'].includes(n)) opsShare(f); }
-});
+/* العمليات الجراحية = زيارات من نوع «عمليات جراحية» (تظهر هنا وفي الزيارات) */
+SCREEN_RENDER.operations = async function () { S.surgOnly = true; return SCREEN_RENDER.visits(); };
 
 /* ---------- الزيارات ---------- */
 function visitAuto(f, why) {
@@ -1256,7 +1309,7 @@ function visitLast(f, ctx) {
   const lv = lastVisitOf(getv(f, 'patient'), getv(f, 'phone'), ctx.editing, getv(f, 'date'));
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
-SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
+const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
   groups: {op: {title: '🏥 بيانات العملية الجراحية', show: v => v.visitType === 'عمليات جراحية'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
@@ -1276,19 +1329,11 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     {k: 'operation', l: 'العملية', sg: 'opnames', grp: 'op'}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs', grp: 'op'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num', grp: 'op'},
     {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير', grp: 'op'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num', grp: 'op'}
   ],
-  extraRows: () => { const {from, to} = getRange(); return S.data.operations.filter(o => o.date >= from && o.date <= to).map(o => ({id: o.id, _op: true, date: o.date, patient: o.patient, clinic: o.clinic || ((S.data.doctors.find(d => d.id === o.doctorId) || {}).clinic || ''), doctor: o.doctor, visitType: 'عمليات جراحية', service: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', serial: ''})); },
-  saveFn: async (rec, editing) => {
-    if (rec.visitType !== 'عمليات جراحية') return API.call('save', {entity: 'visits', record: rec});
-    const op = {date: rec.date, patient: rec.patient, operation: rec.operation || rec.service, clinic: rec.clinic, doctor: rec.doctor, doctorId: rec.doctorId, value: rec.value, doctorPercent: rec.doctorPercent, notes: rec.notes || '', anesthetist: rec.anesthetist || '', anesthetistId: rec.anesthetistId || '', anesthesia: rec.anesthesia || 0, deductAnes: rec.deductAnes ? '1' : '', docNo: rec.docNo || ''};
-    if (!op.operation) throw new Error('اسم العملية مطلوب');
-    const old = editing ? S.data.operations.find(x => x.id === editing) : null;
-    if (editing && !old && S.data.visits.find(x => x.id === editing)) await API.call('delete', {entity: 'visits', id: editing});
-    const r = await API.call('save', {entity: 'operations', record: Object.assign(old ? {id: old.id} : {}, op)});
-    await loadAll(['operations']); toast('🏥 سُجّلت كعملية جراحية (تُحتسب زيارة)'); return r;
-  },
-  cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
+  filter: r => !S.surgOnly || r.visitType === 'عمليات جراحية',
+  extraRows: () => { const {from, to} = getRange(); return (S.opsLegacy || []).filter(o => o.date >= from && o.date <= to).map(o => ({id: o.id, _op: true, date: o.date, patient: o.patient, clinic: o.clinic || '', doctor: o.doctor, visitType: 'عمليات جراحية', service: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', serial: ''})); },
+  cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'تخدير', f: r => +r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}` : ''}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: 'كشف', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: S.surgOnly ? 'عمليات جراحية' : 'كشف', clinic: S.surgOnly ? 'عمليات جراحية' : '', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
@@ -1296,7 +1341,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
     o.payMethod = ''; o.payRef = ''; o.payPhone = '';
-    { const an = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = an ? an.id : ''; o.anesthetist = an ? an.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; if (o.visitType !== 'عمليات جراحية') { o.operation = ''; o.anesthesia = 0; o.doctorPercent = 0; o.anesthetist = ''; o.anesthetistId = ''; o.deductAnes = ''; } }
+    { const an = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = an ? an.id : ''; o.anesthetist = an ? an.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; if (o.visitType === 'عمليات جراحية') { o.operation = o.operation || o.service; if (!o.operation) throw new Error('اسم العملية مطلوب'); } if (o.visitType !== 'عمليات جراحية') { o.operation = ''; o.anesthesia = 0; o.doctorPercent = 0; o.anesthetist = ''; o.anesthetistId = ''; o.deductAnes = ''; } }
     return o;
   },
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor && d.clinic === r.clinic) || S.data.doctors.find(d => d.name === r.doctor) || {}).id || '', _day: dayName(r.date)}),
@@ -1329,6 +1374,7 @@ SCREEN_RENDER.visits = crud({k: 'visits', ent: 'visits', tools: () => '<button t
   }
 });
 
+SCREEN_RENDER.visits = async function () { if (S.screen !== 'operations') S.surgOnly = false; return _visitsCrud(); };
 /* ---------- المستخدمين والصلاحيات ---------- */
 const PERM_ITEMS = [...SCREENS.filter(s => s.k !== 'admin').map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];
 SCREEN_RENDER.users = crud({k: 'users', ent: 'users', t: 'المستخدمين والصلاحيات', i: '🔐', c: 'pink', add: 'مستخدم جديد',
@@ -1413,7 +1459,12 @@ Acts.bulkvisits = () => {
   });
 };
 
-Acts.openop = el => { const id = el.dataset.id; nav('operations'); setTimeout(() => { if (S.view && S.view.edit) S.view.edit(id); }, 450); };
+Acts.opconv = el => guard(el, async () => {
+  const o = (S.opsLegacy || []).find(x => x.id === el.dataset.id); if (!o) return;
+  const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor);
+  await API.call('save', {entity: 'visits', record: {date: o.date, patient: o.patient, clinic: o.clinic || 'عمليات جراحية', doctor: o.doctor, doctorId: o.doctorId || (d ? d.id : ''), visitType: 'عمليات جراحية', service: o.operation, operation: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', notes: o.notes || '', doctorPercent: o.doctorPercent, anesthetist: o.anesthetist || '', anesthetistId: o.anesthetistId || '', anesthesia: o.anesthesia || 0, deductAnes: o.deductAnes || ''}});
+  await API.call('delete', {entity: 'operations', id: o.id}); await loadAll(['visits', 'operations']); toast('تم التحويل إلى زيارة'); S.view && S.view.refresh && S.view.refresh();
+});
 
 </script>
 <script>
@@ -1566,9 +1617,13 @@ function detailSections(from, to) {
 function bodyClinics(name) {
   const {from, to} = getRange(), all = visitsIn(from, to);
   if (!name) return clinicsOverview(from, to, all);
-  const vs = all.filter(v => v.clinic === name), acc = accounts(from, to).filter(r => r.clinic === name), days = [...groupBy(vs, v => v.date)].sort();
-  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(acc, r => r.right)), 'violet']])
-    + sect('الأطباء') + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب'], acc.map(r => [L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right)]), ['الإجمالي', sum(acc, r => r.visits), fmtN(sum(acc, r => r.total)), fmtN(sum(acc, r => r.tax)), fmtN(sum(acc, r => r.right))])
+  const vs = S.data.visits.filter(v => v.date >= from && v.date <= to && v.clinic === name), cops = opsIn(from, to).filter(o => o.clinic === name), accAll = accounts(from, to), days = [...groupBy(vs, v => v.date)].sort();
+  const docs = [...new Set(vs.map(v => v.doctor || '—'))].sort((a, b) => a.localeCompare(b, 'ar')).map(dn => {
+    const dv = vs.filter(v => (v.doctor || '—') === dn), nv = dv.filter(v => !isSurg(v)), ar = accAll.find(r => r.clinic === name && r.name === dn);
+    return {n: dn, cnt: dv.length, tot: sum(dv, val), tax: sum(dv, v => v.tax), right: (ar ? ar.right : 0) + sum(cops.filter(o => (o.doctor || '—') === dn), o => opCalc(o).surgeon)};
+  });
+  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(docs, r => r.right)), 'violet']])
+    + sect('الأطباء') + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب'], docs.map(r => [r.n === '—' ? '—' : L.doctor(r.n), r.cnt, fmtN(r.tot), fmtN(r.tax), fmtN(r.right)]), ['الإجمالي', sum(docs, r => r.cnt), fmtN(sum(docs, r => r.tot)), fmtN(sum(docs, r => r.tax)), fmtN(sum(docs, r => r.right))])
     + sect('يوماً بيوم') + tbl(['اليوم', 'الزيارات', 'الإيراد'], days.map(([d, a]) => [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val))]))
     + sect('الزيارات') + tbl(visitHeads, visitRows(vs), visitFoot(vs));
 }
@@ -1833,7 +1888,7 @@ function cashLedger(from, to) {
     const docShown = new Set(), dsAll = detailSections(d, d).rows, clinicDocs = new Map();
     dsAll.forEach(r => { const a = clinicDocs.get(r.c) || []; clinicDocs.set(r.c, a.concat(r.vs || [], r.ops || [])); });
     const sameClinicDoc = () => true;
-    detailSections(d, d).rows.slice().sort((a, b) => ((a.c === 'المركز') - (b.c === 'المركز')) || (rowSerial(a) - rowSerial(b))).forEach(r => {
+    detailSections(d, d).rows.filter(r => r.kind !== 'a').slice().sort((a, b) => ((a.c === 'المركز') - (b.c === 'المركز')) || (rowSerial(a) - rowSerial(b))).forEach(r => {
       const doc = r.kind === 'v' ? (r.vs[0] && findDoctor(r.vs[0])) : (S.data.doctors.find(x => x.name === r.d) || null);
       const pct = doc ? (r.kind === 'v' ? +doc.percent || 0 : (r.kind === 'o' ? +doc.opPercent || 0 : '')) : '';
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
@@ -1844,7 +1899,6 @@ function cashLedger(from, to) {
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));
     S.data.expenses.filter(e => !e.doctor && e.date === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: e.category || e.notes || '', doc2: e.docNo || '', notes: e.category ? (e.notes || '') : ''}));
-    S.data.operations.filter(o => o.date === d && +o.anesthesia > 0).forEach(o => exps.push({amount: +o.anesthesia || 0, bayan: 'تخدير عملية' + (o.anesthetist ? ' — ' + (/^د\.?\s/.test(o.anesthetist) ? o.anesthetist : 'د. ' + o.anesthetist) : ''), doc2: o.docNo || '', notes: o.operation || ''}));
     const revLines = lines.filter(l => l.kind === 'rev' && l.cells.date === d);
     exps.forEach((x, k) => {
       dsum.amount += x.amount;
@@ -1931,7 +1985,7 @@ const jleaf = cat => { const k = jnorm(cat), i = JLEAVES.findIndex(x => x.al.inc
 function journalLedger(from, to) {
   const ents = [], dates = new Set();
   const mk = (date, ord, o) => { ents.push(Object.assign({date, ord, in: 0, out: 0, co: 0, refund: 0, com: 0, tax: 0, ins: 0, cd: 0, cc: 0, ex: {}, bayan: '', op: '', doc: '', note: ''}, o)); dates.add(date); };
-  const vsAll = S.data.visits.filter(v => v.date <= to), opsAll = S.data.operations.filter(o => o.date <= to);
+  const vsAll = S.data.visits.filter(v => v.date <= to && !isSurg(v)), opsAll = S.data.operations.filter(o => o.date <= to);
   [...new Set([...vsAll.map(v => v.date), ...opsAll.map(o => o.date)])].forEach(d => {
     const vs = vsAll.filter(v => v.date === d), ops = opsAll.filter(o => o.date === d);
     const rev = sum(vs, val) + sum(ops, o => o.value), co = sum(vs.filter(v => v.category === 'company'), val), com = sum(vs.filter(v => v.category === 'committee'), val), ins = sum(vs, discountAmt), tax = sum(vs, v => v.tax);
@@ -2045,6 +2099,235 @@ SCREEN_RENDER.rep_settle = async function () {
   }};
   draw();
 };
+
+</script>
+<script>
+/* ============ المصروفات التشغيلية: إدارة البيانات / السجل / الاعتماد والسداد / بنود الصرف / التقارير / الإعدادات / الدليل ============ */
+'use strict';
+const OPX_ST = {draft: 'مسودة', wait: 'بانتظار الاعتماد', ok: 'معتمد', no: 'مرفوض'};
+const OPX_KIND = {
+  resp: {t: 'المسؤولون', xl: 'الإدارة / الوظيفة', p: 'RSP-', i: '👤'},
+  dept: {t: 'الإدارات', xl: 'ملاحظات', p: 'DPT-', i: '🏛️'},
+  center: {t: 'مراكز التكلفة', xl: 'الإدارة', p: 'CC-', i: '🧮'},
+  method: {t: 'طرق السداد', xl: 'ملاحظات', p: 'PM-', i: '💳'},
+  item: {t: 'بنود الصرف', xl: 'التصنيف', p: 'BND-', i: '🏷️'}
+};
+const OPX_DEF = {
+  dept: [['الإدارة المالية', ''], ['الإدارة الطبية', ''], ['الإدارة العامة', '']],
+  center: [['مركز التكلفة الرئيسي', 'الإدارة المالية']],
+  method: [['نقدي', ''], ['تحويل بنكي', ''], ['شيك', ''], ['محفظة إلكترونية', '']],
+  item: [['مستلزمات مكتبية', 'مكتبية'], ['صيانة', 'تشغيلية'], ['خدمات', 'تشغيلية']]
+};
+const opset = k => S.data.opset.filter(x => x.kind === k && !(x.active === false || x.active === 'false' || x.active === '0'));
+const opsetNames = k => opset(k).map(x => x.name);
+const opxPays = r => { try { const a = JSON.parse(r.pays || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } };
+const opxPaid = r => opxPays(r).reduce((t, p) => t + (+p.amount || 0), 0);
+const opxAppr = r => r.status === 'ok' ? (+r.amount || 0) : 0;
+const opxRest = r => r.status === 'ok' ? Math.max(0, (+r.amount || 0) - opxPaid(r)) : 0;
+const opxLate = r => r.status === 'ok' && r.dueDate && validDate(r.dueDate) && r.dueDate < today() && opxRest(r) > 0.005;
+const opxStTag = r => `<span class="tag c-${{draft: 'blue', wait: 'cyan', ok: 'lime', no: 'red'}[r.status] || 'blue'}">${OPX_ST[r.status] || OPX_ST.wait}</span>`;
+const opxPayTag = r => { if (r.status !== 'ok') return '<span class="muted">—</span>'; const p = opxPaid(r), rest = opxRest(r); return rest <= 0.005 ? '<span class="tag c-lime">مدفوع كلياً</span>' : (p > 0 ? '<span class="tag c-orange">مدفوع جزئياً</span>' : '<span class="tag c-red">غير مدفوع</span>') + (opxLate(r) ? ' <span class="tag c-pink">متأخر</span>' : ''); };
+const opxCfg = (name, d) => { const x = S.data.opset.find(r => r.kind === 'cfg' && r.code === name); return x ? x.name : d; };
+const opxPrefix = () => opxCfg('prefix', 'EX-');
+const opxNext = () => { const p = opxPrefix(); let m = 0; S.data.opx.forEach(r => { const mt = String(r.no || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); }); return p + String(m + 1).padStart(4, '0'); };
+const opxF = () => (S.opf = S.opf || {st: '', dept: '', item: '', pay: '', q: ''});
+const opxList = () => {
+  const {from, to} = getRange(), f = opxF(), q = f.q.trim().toLowerCase();
+  return S.data.opx.filter(r => r.date >= from && r.date <= to && (!f.st || r.status === f.st) && (!f.dept || r.dept === f.dept) && (!f.item || r.item === f.item)
+    && (!f.pay || (f.pay === 'late' ? opxLate(r) : f.pay === 'paid' ? r.status === 'ok' && opxRest(r) <= 0.005 : f.pay === 'part' ? r.status === 'ok' && opxPaid(r) > 0 && opxRest(r) > 0.005 : r.status === 'ok' && opxPaid(r) === 0))
+    && (!q || JSON.stringify(r).toLowerCase().includes(q))).sort((a, b) => b.date.localeCompare(a.date) || String(b.no).localeCompare(String(a.no)));
+};
+const opxTot = rs => ({appr: sum(rs, opxAppr), paid: sum(rs.filter(r => r.status === 'ok'), opxPaid), rest: sum(rs, opxRest), wait: rs.filter(r => r.status === 'wait').length, late: rs.filter(opxLate).length, total: sum(rs, r => +r.amount || 0)});
+const opxRing = t => { const p = t.appr > 0 ? Math.round(t.paid / t.appr * 100) : 0; return `<div class="ringbox"><div class="ring" style="--p:${Math.min(100, p)}"><b>${p}%</b></div><div><b>نسبة السداد</b><br><small>${fmtN(t.paid)} من ${fmtN(t.appr)}</small></div></div>`; };
+const opxKpis = (t, extra) => kpiRow([['المعتمد', fmtN(t.appr), 'orange'], ['المدفوع', fmtN(t.paid), 'lime'], ['المتبقي', fmtN(t.rest), 'red'], ['بانتظار الاعتماد', t.wait, 'cyan'], ['متأخرة في السداد', t.late, 'pink']].concat(extra || []));
+const opxDeny = () => { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; };
+
+/* القوائم الافتراضية (تُنشأ مرة واحدة عند أول فتح) */
+async function opxSeed() {
+  if (S.opxSeeded || S.data.opset.length || !(S.user && (S.user.isAdmin || can('opx_set')))) return; S.opxSeeded = true;
+  try {
+    for (const k of Object.keys(OPX_DEF)) { let n = 0; for (const [name, extra] of OPX_DEF[k]) await API.call('save', {entity: 'opset', record: {kind: k, code: OPX_KIND[k].p + String(++n).padStart(3, '0'), name, extra, active: true}}); }
+    await API.call('save', {entity: 'opset', record: {kind: 'cfg', code: 'prefix', name: 'EX-', extra: '', active: true}});
+    await loadAll(['opset']);
+  } catch (e) {}
+}
+
+/* ---------- إدارة البيانات (إدخال/تعديل المصروف) ---------- */
+SCREEN_RENDER.opx_data = async function (a) { await opxSeed(); return _opxData(a); };
+const _opxData = crud({k: 'opx_data', ent: 'opx', t: 'إدارة المصروفات التشغيلية', i: '💳', c: 'orange', add: 'مصروف جديد', dated: true,
+  fields: [
+    {k: 'no', l: 'رقم المصروف (تلقائي)', t: 'ro'}, {k: 'date', l: 'تاريخ المصروف', t: 'date', req: 1},
+    {k: 'dept', l: 'الإدارة', t: 'sel', req: 1, opts: () => ['', ...opsetNames('dept')].map(x => ({v: x, l: x || '— اختر الإدارة —'}))},
+    {k: 'item', l: 'بند الصرف', t: 'sel', req: 1, opts: () => ['', ...opsetNames('item')].map(x => ({v: x, l: x || '— اختر البند —'}))},
+    {k: 'center', l: 'مركز التكلفة', t: 'sel', opts: () => ['', ...opsetNames('center')].map(x => ({v: x, l: x || '— اختر —'}))},
+    {k: 'vendor', l: 'المورد / المستفيد'}, {k: 'invoiceNo', l: 'مرجع الفاتورة'}, {k: 'dueDate', l: 'تاريخ الاستحقاق', t: 'date'},
+    {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'status', l: 'حالة الاعتماد', t: 'sel', opts: () => Object.keys(OPX_ST).map(k => ({v: k, l: OPX_ST[k]}))},
+    {k: 'desc', l: 'البيان', t: 'area'}, {k: 'attach', l: 'المرفق (فاتورة / مستند)', t: 'img'},
+    {k: '_h', t: 'html', html: () => '<input type="hidden" name="pays"><input type="hidden" name="approvedBy"><input type="hidden" name="approvedAt">'}],
+  cols: [{h: 'رقم المصروف', f: r => `<b>${esc(r.no)}</b>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.item)}, {h: 'الإدارة', f: r => esc(r.dept)}, {h: 'المورد', f: r => esc(r.vendor)}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'الاعتماد', f: opxStTag}, {h: 'السداد', f: opxPayTag}, {h: 'المدفوع', f: r => fmtN(opxPaid(r)), sum: opxPaid}, {h: 'المتبقي', f: r => fmtN(opxRest(r)), sum: opxRest}, {h: 'المرفق', f: r => thumb(r.attach)}],
+  sort: (a, b) => b.date.localeCompare(a.date) || String(b.no).localeCompare(String(a.no)),
+  defaults: () => ({no: opxNext(), date: today(), status: 'wait'}),
+  collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.no = raw.no || opxNext(); if (o.status === 'ok' && !o.approvedBy) { o.approvedBy = S.user.username; o.approvedAt = today(); } return o; },
+  validate: (r, ed) => { const old = ed ? S.data.opx.find(x => x.id === ed) : null; if (old && +r.amount < opxPaid(old)) return 'المبلغ أقل من المدفوع فعلياً (' + fmtN(opxPaid(old)) + ')'; if (!(+r.amount > 0)) return 'اكتب مبلغاً صحيحاً'; return ''; }
+});
+
+/* ---------- عرض بطاقة المصروف + الاعتماد + السداد ---------- */
+async function opxSave(r, patch) { await API.call('save', {entity: 'opx', record: Object.assign({}, r, patch)}); await loadAll(['opx']); S.view && S.view.refresh && await S.view.refresh(); }
+Acts.opxview = el => {
+  const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return;
+  const ps = opxPays(r), t = opxTot([r]);
+  const m = modal(`<h3>🧾 مصروف ${esc(r.no)} — ${esc(r.item)} ${opxStTag(r)}</h3>
+    ${kpiRow([['قيمة المصروف', fmtN(r.amount), 'orange'], ['المدفوع', fmtN(opxPaid(r)), 'lime'], ['المتبقي', fmtN(opxRest(r)), 'red']])}
+    <table><tbody><tr><th>التاريخ</th><td>${esc(r.date)}</td><th>الاستحقاق</th><td>${esc(r.dueDate) || '—'}</td></tr><tr><th>الإدارة</th><td>${esc(r.dept)}</td><th>مركز التكلفة</th><td>${esc(r.center) || '—'}</td></tr><tr><th>المورد</th><td>${esc(r.vendor) || '—'}</td><th>مرجع الفاتورة</th><td>${esc(r.invoiceNo) || '—'}</td></tr><tr><th>البيان</th><td colspan="3">${esc(r.desc) || '—'}</td></tr><tr><th>السداد</th><td>${opxPayTag(r)}</td><th>الاعتماد</th><td>${r.approvedBy ? esc(r.approvedBy) + ' — ' + esc(r.approvedAt) : '—'}</td></tr></tbody></table>
+    ${r.attach ? `<div class="imgfld" style="margin:8px 0">${thumb(r.attach)}</div>` : ''}
+    <h4>جدول الدفعات</h4><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>الطريقة</th><th>المرجع</th><th>بواسطة</th></tr></thead><tbody>${ps.map(p => `<tr><td>${esc(p.date)}</td><td>${fmtN(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.ref)}</td><td>${esc(p.by)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">لا توجد دفعات</td></tr>'}</tbody></table>
+    <h4>مسار الإجراء</h4><div class="steps3"><span class="on">① تسجيل المصروف<br><small>${esc(r.date)}</small></span><span class="${r.status === 'ok' ? 'on' : ''}">② اعتماد المصروف<br><small>${r.status === 'ok' ? esc(r.approvedAt) : OPX_ST[r.status] || ''}</small></span><span class="${ps.length ? 'on' : ''}">③ تسجيل السداد<br><small>${ps.length ? fmtN(opxPaid(r)) : '—'}</small></span></div>
+    <div class="actions">${r.status === 'wait' && can('opx_apr') ? `<button class="btn c-lime" data-act="opxappr" data-v="ok" data-id="${r.id}">✅ اعتماد</button><button class="btn c-red" data-act="opxappr" data-v="no" data-id="${r.id}">❌ رفض</button>` : ''}${r.status === 'ok' && opxRest(r) > 0 && can('opx_apr') ? `<button class="btn c-orange" data-act="opxpay" data-id="${r.id}">💰 تسجيل سداد</button>` : ''}<button class="btn c-teal" data-act="opxprint" data-id="${r.id}">🖨️ طباعة البطاقة</button><button class="btn ghost" id="mc">إغلاق</button></div>`);
+  $('#mc', m).onclick = () => m.remove(); hydrateImgs(m);
+};
+Acts.opxappr = el => guard(el, async () => {
+  const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return; const ok = el.dataset.v === 'ok';
+  if (!ok && !await confirmBox('رفض هذا المصروف؟')) return;
+  await opxSave(r, {status: ok ? 'ok' : 'no', approvedBy: S.user.username, approvedAt: today()}); document.querySelectorAll('.modal').forEach(x => x.remove()); toast(ok ? 'تم اعتماد المصروف ✔' : 'تم رفض المصروف');
+});
+Acts.opxpay = el => {
+  const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return; const rest = opxRest(r);
+  document.querySelectorAll('.modal').forEach(x => x.remove());
+  const m = modal(`<h3>💰 تسجيل سداد — ${esc(r.no)} (${esc(r.item)})</h3><p class="muted">المتبقي: <b>${fmtN(rest)}</b></p><div class="grid">${fieldHTML({k: 'pamt', l: 'المبلغ المسدد', t: 'num'}, rest)}${fieldHTML({k: 'pdate', l: 'تاريخ السداد', t: 'date'}, today())}${fieldHTML({k: 'pmeth', l: 'طريقة السداد', t: 'sel', opts: () => opsetNames('method').map(x => ({v: x, l: x}))}, '')}${fieldHTML({k: 'pref', l: 'مرجع السند / الإيصال'}, '')}</div><div class="actions"><button class="btn c-lime" id="pok">✅ تسجيل</button><button class="btn ghost" id="pcl">إلغاء</button></div>`);
+  $('#pcl', m).onclick = () => m.remove();
+  $('#pok', m).onclick = e => guard(e.target, async () => {
+    const v = readForm(m), amt = +v.pamt || 0; if (amt <= 0) throw new Error('اكتب مبلغاً صحيحاً'); if (amt > rest + 0.005) throw new Error('المبلغ أكبر من المتبقي (' + fmtN(rest) + ')'); if (!validDate(v.pdate)) throw new Error('التاريخ yyyy/mm/dd');
+    const ps = opxPays(r).concat([{id: Date.now().toString(36), date: v.pdate, amount: amt, method: v.pmeth || '', ref: v.pref || '', by: S.user.username}]);
+    await opxSave(r, {pays: JSON.stringify(ps)}); m.remove(); toast('تم تسجيل السداد ✔');
+  });
+};
+Acts.opxprint = el => {
+  const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return;
+  printDoc('بطاقة مصروف ' + r.no, r.item, `<table><tbody><tr><th>الرقم</th><td>${esc(r.no)}</td><th>التاريخ</th><td>${esc(r.date)}</td></tr><tr><th>البند</th><td>${esc(r.item)}</td><th>الإدارة</th><td>${esc(r.dept)}</td></tr><tr><th>المورد</th><td>${esc(r.vendor)}</td><th>مرجع الفاتورة</th><td>${esc(r.invoiceNo)}</td></tr><tr><th>قيمة المصروف</th><td>${fmtN(r.amount)}</td><th>الاعتماد</th><td>${esc(OPX_ST[r.status])}</td></tr><tr><th>المدفوع</th><td>${fmtN(opxPaid(r))}</td><th>المتبقي</th><td>${fmtN(opxRest(r))}</td></tr><tr><th>البيان</th><td colspan="3">${esc(r.desc)}</td></tr></tbody></table><h4>الدفعات</h4><table><thead><tr><th>التاريخ</th><th>المبلغ</th><th>الطريقة</th><th>المرجع</th></tr></thead><tbody>${opxPays(r).map(p => `<tr><td>${esc(p.date)}</td><td>${fmtN(p.amount)}</td><td>${esc(p.method)}</td><td>${esc(p.ref)}</td></tr>`).join('')}</tbody></table>`, false);
+};
+document.addEventListener('change', e => { const k = e.target && e.target.dataset && e.target.dataset.opf; if (k) { opxF()[k] = e.target.value; S.view && S.view.refresh && S.view.refresh(); } });
+Acts.opxclr = () => { S.opf = null; S.view && S.view.refresh(); };
+
+/* ---------- سجل المصروفات ---------- */
+SCREEN_RENDER.opx_reg = async function () {
+  if (!can('opx_reg')) return opxDeny(); await opxSeed();
+  const main = $('#main');
+  const draw = () => {
+    const rs = opxList(), t = opxTot(rs), f = opxF(), sel = (k, label, opts) => `<select data-opf="${k}" title="${label}"><option value="">${label}: الكل</option>${opts.map(o => `<option value="${esc(o.v)}" ${f[k] === o.v ? 'selected' : ''}>${esc(o.l)}</option>`).join('')}</select>`;
+    main.innerHTML = `${pageHead('سجل المصروفات التشغيلية', '📒', 'orange')}${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div>
+    <div class="bar noprint">${sel('st', 'الاعتماد', Object.keys(OPX_ST).map(k => ({v: k, l: OPX_ST[k]})))}${sel('pay', 'السداد', [{v: 'unpaid', l: 'غير مدفوع'}, {v: 'part', l: 'مدفوع جزئياً'}, {v: 'paid', l: 'مدفوع كلياً'}, {v: 'late', l: 'متأخر'}])}${sel('dept', 'الإدارة', opsetNames('dept').map(x => ({v: x, l: x})))}${sel('item', 'البند', opsetNames('item').map(x => ({v: x, l: x})))}<input type="text" data-opf="q" placeholder="🔎 بحث برقم المصروف أو المورد…" value="${esc(f.q)}"><button class="btn sm ghost" data-act="opxclr">مسح الفلتر</button>${window.exportButtons}<button class="btn sm c-orange" data-act="go" data-s="opx_data">➕ مصروف جديد</button></div>
+    ${tbl(['رقم المصروف', 'التاريخ', 'البند', 'الإدارة', 'المبلغ', 'الاعتماد', 'السداد', 'المدفوع', 'المتبقي', 'عرض'], rs.map(r => [`<b>${esc(r.no)}</b>`, esc(r.date), esc(r.item), esc(r.dept), fmtN(r.amount), opxStTag(r), opxPayTag(r), fmtN(opxPaid(r)), fmtN(opxRest(r)), `<button class="btn sm c-blue" data-act="opxview" data-id="${r.id}">👁</button>`]), ['الإجمالي (' + rs.length + ')', '', '', '', fmtN(t.total), '', '', fmtN(t.paid), fmtN(t.rest), ''])}`;
+  };
+  S.view = {refresh: draw, exportData: () => [{name: 'المصروفات التشغيلية', rows: [['الرقم', 'التاريخ', 'البند', 'الإدارة', 'المبلغ', 'الاعتماد', 'المدفوع', 'المتبقي'], ...opxList().map(r => [r.no, r.date, r.item, r.dept, +r.amount || 0, OPX_ST[r.status], opxPaid(r), opxRest(r)])]}]}; draw();
+};
+
+/* ---------- الاعتماد والسداد ---------- */
+SCREEN_RENDER.opx_apr = async function () {
+  if (!can('opx_apr')) return opxDeny(); await opxSeed();
+  const main = $('#main');
+  const draw = () => {
+    const {from, to} = getRange(), all = S.data.opx.filter(r => r.date >= from && r.date <= to), t = opxTot(all), tab = S.opxTab || 'appr';
+    const tabs = `<div class="seg"><button class="c-orange ${tab === 'appr' ? 'on' : ''}" data-act="opxtab2" data-v="appr">✅ الاعتمادات (${t.wait})</button><button class="c-lime ${tab === 'pay' ? 'on' : ''}" data-act="opxtab2" data-v="pay">💰 الدفعات</button></div>`;
+    let body;
+    if (tab === 'appr') {
+      const w = all.filter(r => r.status === 'wait'), ok = all.filter(r => r.status === 'ok');
+      body = sect('بانتظار الاعتماد') + tbl(['رقم المصروف', 'التاريخ', 'البند', 'الإدارة', 'المبلغ', 'إجراء'], w.map(r => [`<b>${esc(r.no)}</b>`, esc(r.date), esc(r.item), esc(r.dept), fmtN(r.amount), `<button class="btn sm c-lime" data-act="opxappr" data-v="ok" data-id="${r.id}">✅ اعتماد</button> <button class="btn sm c-red" data-act="opxappr" data-v="no" data-id="${r.id}">❌ رفض</button> <button class="btn sm c-blue" data-act="opxview" data-id="${r.id}">👁</button>`]))
+        + sect('قائمة متابعة السداد') + tbl(['المصروف', 'المعتمد', 'المدفوع', 'المتبقي', 'الاستحقاق', 'حالة السداد', 'إجراء'], ok.map(r => [`<b>${esc(r.no)}</b> — ${esc(r.item)}`, fmtN(opxAppr(r)), fmtN(opxPaid(r)), fmtN(opxRest(r)), esc(r.dueDate), opxPayTag(r), (opxRest(r) > 0 ? `<button class="btn sm c-orange" data-act="opxpay" data-id="${r.id}">💰 سداد</button> ` : '') + `<button class="btn sm c-blue" data-act="opxview" data-id="${r.id}">👁</button>`]), ['الإجمالي', fmtN(t.appr), fmtN(t.paid), fmtN(t.rest), '', '', '']);
+    } else {
+      const ps = []; all.forEach(r => opxPays(r).forEach(p => ps.push({r, p}))); ps.sort((a, b) => b.p.date.localeCompare(a.p.date));
+      body = tbl(['التاريخ', 'المصروف', 'البند', 'المبلغ', 'الطريقة', 'المرجع', 'بواسطة'], ps.map(({r, p}) => [esc(p.date), esc(r.no), esc(r.item), fmtN(p.amount), esc(p.method), esc(p.ref), esc(p.by)]), ['الإجمالي', '', '', fmtN(sum(ps, x => x.p.amount)), '', '', '']);
+    }
+    main.innerHTML = `${pageHead('الاعتماد والسداد', '✅', 'lime')}${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div><div class="bar noprint">${tabs}</div>${body}<div class="panel accent c-cyan"><b>قاعدة العمل:</b> الاعتماد لا يعني السداد. لا يمكن تسجيل دفعة إلا بعد اعتماد المصروف، ولا يمكن أن تزيد الدفعات عن قيمته.</div>`;
+  };
+  S.view = {refresh: draw}; draw();
+};
+Acts.opxtab2 = el => { S.opxTab = el.dataset.v; S.view.refresh(); };
+
+/* ---------- القوائم (بنود الصرف / الإدارات / مراكز التكلفة / طرق السداد / المسؤولون) ---------- */
+function opSetEdit(kind, id, after) {
+  const K = OPX_KIND[kind], r = id ? S.data.opset.find(x => x.id === id) : null;
+  let code = r ? r.code : ''; if (!code) { let m = 0; S.data.opset.filter(x => x.kind === kind).forEach(x => { const mt = String(x.code || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); }); code = K.p + String(m + 1).padStart(3, '0'); }
+  const m = modal(`<h3>${r ? '✏️ تعديل' : '➕ إضافة'} — ${esc(K.t)}</h3><div class="grid">${fieldHTML({k: 'code', l: 'الرمز'}, code)}${fieldHTML({k: 'name', l: 'الاسم', req: 1}, r ? r.name : '')}${fieldHTML({k: 'extra', l: K.xl}, r ? r.extra : '')}${fieldHTML({k: 'active', l: 'الحالة', t: 'chk', l2: 'نشط'}, r ? !(r.active === false || r.active === 'false' || r.active === '0') : true)}</div><div class="actions"><button class="btn c-lime" id="sok">💾 حفظ</button><button class="btn ghost" id="scl">إلغاء</button></div>`);
+  $('#scl', m).onclick = () => m.remove();
+  $('#sok', m).onclick = e => guard(e.target, async () => {
+    const v = readForm(m); if (!String(v.name || '').trim()) throw new Error('الاسم مطلوب');
+    await API.call('save', {entity: 'opset', record: Object.assign(r ? {id: r.id} : {}, {kind, code: v.code, name: String(v.name).trim(), extra: v.extra || '', active: !!v.active})});
+    await loadAll(['opset']); m.remove(); toast('تم الحفظ ✔'); after && after();
+  });
+}
+function opSetMgr(kind) {
+  const K = OPX_KIND[kind], rows = () => S.data.opset.filter(x => x.kind === kind);
+  const m = modal(`<h3>${K.i} إدارة ${esc(K.t)}</h3><div id="sml"></div><div class="actions"><button class="btn c-orange" id="sad">➕ إضافة</button><button class="btn ghost" id="scl">إغلاق</button></div>`);
+  const draw = () => { $('#sml', m).innerHTML = `<table><thead><tr><th>الرمز</th><th>الاسم</th><th>${esc(K.xl)}</th><th>الحالة</th><th></th></tr></thead><tbody>${rows().map(r => `<tr><td>${esc(r.code)}</td><td>${esc(r.name)}</td><td>${esc(r.extra)}</td><td>${r.active === false || r.active === 'false' || r.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>'}</td><td><button class="btn sm c-blue" data-e="${r.id}">✏️</button> <button class="btn sm c-red" data-d="${r.id}">🗑️</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">لا توجد بيانات</td></tr>'}</tbody></table>`; };
+  draw();
+  m.addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.e) opSetEdit(kind, b.dataset.e, () => { draw(); S.view && S.view.refresh && S.view.refresh(); });
+    if (b.dataset.d && await confirmBox('حذف هذا العنصر؟')) await guard(null, async () => { await API.call('delete', {entity: 'opset', id: b.dataset.d}); await loadAll(['opset']); draw(); S.view && S.view.refresh && S.view.refresh(); });
+  });
+  $('#scl', m).onclick = () => m.remove(); $('#sad', m).onclick = () => opSetEdit(kind, null, () => { draw(); S.view && S.view.refresh && S.view.refresh(); });
+}
+Acts.opsetmgr = el => opSetMgr(el.dataset.v);
+Acts.opsetadd = el => opSetEdit(el.dataset.v, null, () => S.view && S.view.refresh && S.view.refresh());
+Acts.opsetedit = el => opSetEdit(el.dataset.v, el.dataset.id, () => S.view && S.view.refresh && S.view.refresh());
+Acts.opsetdel = async el => { if (!await confirmBox('حذف هذا العنصر؟')) return; await guard(null, async () => { await API.call('delete', {entity: 'opset', id: el.dataset.id}); await loadAll(['opset']); S.view.refresh(); }); };
+Acts.opxitemrep = el => { S.opf = {st: '', dept: '', item: el.dataset.v, pay: '', q: ''}; S.rng.mode = 'all'; nav('opx_reg'); };
+
+SCREEN_RENDER.opx_items = async function () {
+  if (!can('opx_items')) return opxDeny(); await opxSeed();
+  const main = $('#main');
+  const draw = () => {
+    const items = S.data.opset.filter(x => x.kind === 'item');
+    main.innerHTML = `${pageHead('بنود الصرف', '🏷️', 'blue')}<div class="bar noprint"><button class="btn c-orange" data-act="opsetadd" data-v="item">➕ إضافة بند</button></div>
+    ${tbl(['رمز البند', 'اسم البند', 'التصنيف', 'الحالة', 'المعتمد', 'المدفوع', 'المتبقي', 'إجراء'], items.map(x => { const t = opxTot(S.data.opx.filter(r => r.item === x.name)); return [esc(x.code), `<b>${esc(x.name)}</b>`, esc(x.extra), x.active === false || x.active === 'false' || x.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>', fmtN(t.appr), fmtN(t.paid), fmtN(t.rest), `<button class="btn sm c-teal" data-act="opxitemrep" data-v="${esc(x.name)}" title="عرض مصروفات البند">📄</button> <button class="btn sm c-blue" data-act="opsetedit" data-v="item" data-id="${x.id}">✏️</button> <button class="btn sm c-red" data-act="opsetdel" data-id="${x.id}">🗑️</button>`]; }))}
+    <div class="panel accent c-cyan">إيقاف البند يمنع استخدامه في المصروفات الجديدة ويحافظ على السجلات السابقة. جميع التعديلات تُحفظ في Google Sheets.</div>`;
+  };
+  S.view = {refresh: draw}; draw();
+};
+
+/* ---------- الإعدادات ---------- */
+SCREEN_RENDER.opx_set = async function () {
+  if (!can('opx_set')) return opxDeny(); await opxSeed();
+  const main = $('#main');
+  const draw = () => {
+    const card = k => { const K = OPX_KIND[k], a = S.data.opset.filter(x => x.kind === k); return `<div class="panel accent c-${{resp: 'teal', dept: 'violet', center: 'blue', method: 'orange'}[k]}"><h3>${K.i} ${esc(K.t)} <span class="tag c-blue">${a.length}</span></h3><div class="chips">${a.slice(0, 6).map(x => `<span class="chip">${esc(x.name)}</span>`).join('') || '<span class="muted">لا توجد بيانات</span>'}</div><div class="actions"><button class="btn sm c-orange" data-act="opsetmgr" data-v="${k}">⚙️ إدارة ${esc(K.t)}</button></div></div>`; };
+    main.innerHTML = `${pageHead('إعدادات المصروفات التشغيلية', '⚙️', 'violet')}<div class="grid2">${card('resp')}${card('dept')}${card('center')}${card('method')}
+    <div class="panel accent c-gold"><h3>🔧 إعدادات النظام</h3><div class="grid">${fieldHTML({k: 'pfx', l: 'بادئة رقم المصروف'}, opxPrefix())}<div class="fld"><label>الرقم التالي</label><input type="text" readonly value="${esc(opxNext())}"></div></div><div class="actions"><button class="btn sm c-lime" data-act="opxpfx">💾 حفظ البادئة</button></div><small class="muted">لا يُعتمد المصروف تلقائياً؛ يلزم اعتماد قبل تسجيل أي سداد.</small></div></div>`;
+  };
+  S.view = {refresh: draw}; draw();
+};
+Acts.opxpfx = el => guard(el, async () => {
+  const v = (($('[name=pfx]') || {}).value || '').trim() || 'EX-', old = S.data.opset.find(r => r.kind === 'cfg' && r.code === 'prefix');
+  await API.call('save', {entity: 'opset', record: Object.assign(old ? {id: old.id} : {}, {kind: 'cfg', code: 'prefix', name: v, extra: '', active: true})}); await loadAll(['opset']); toast('تم الحفظ ✔'); S.view.refresh();
+});
+
+/* ---------- التقارير ---------- */
+SCREEN_RENDER.opx_rep = repScreen('opx_rep', 'تقارير المصروفات التشغيلية', '📊', 'orange', () => {
+  const {from, to} = getRange(), all = S.data.opx.filter(r => r.date >= from && r.date <= to), tab = S.opxRep || 'item', t = opxTot(all);
+  const tabs = `<div class="seg noprint">${[['item', 'حسب البند', 'orange'], ['dept', 'حسب الإدارة', 'blue'], ['unpaid', 'غير المدفوع', 'red'], ['wait', 'بانتظار الاعتماد', 'cyan']].map(([k, l, c]) => `<button class="c-${c} ${tab === k ? 'on' : ''}" data-act="opxrtab" data-v="${k}">${l}</button>`).join('')}</div>`;
+  const grp = key => { const g = [...groupBy(all.filter(r => r.status === 'ok'), r => r[key] || '—')].sort((a, b) => a[0].localeCompare(b[0], 'ar')); const tt = opxTot(all.filter(r => r.status === 'ok')); return tbl([key === 'item' ? 'البند' : 'الإدارة', 'المعتمد', 'المدفوع', 'المتبقي'], g.map(([n, a]) => { const x = opxTot(a); return [esc(n), fmtN(x.appr), fmtN(x.paid), fmtN(x.rest)]; }), ['الإجمالي', fmtN(tt.appr), fmtN(tt.paid), fmtN(tt.rest)]); };
+  let body;
+  if (tab === 'item' || tab === 'dept') body = sect(tab === 'item' ? 'تقرير المصروفات حسب البند' : 'تقرير المصروفات حسب الإدارة') + grp(tab);
+  else if (tab === 'unpaid') { const u = all.filter(r => r.status === 'ok' && opxRest(r) > 0.005); body = sect('المعتمد غير المدفوع / المدفوع جزئياً') + tbl(['المصروف', 'البند', 'الاستحقاق', 'المعتمد', 'المدفوع', 'المتبقي', 'الحالة'], u.map(r => [esc(r.no), esc(r.item), esc(r.dueDate), fmtN(opxAppr(r)), fmtN(opxPaid(r)), fmtN(opxRest(r)), opxPayTag(r)]), ['الإجمالي', '', '', fmtN(sum(u, opxAppr)), fmtN(sum(u, opxPaid)), fmtN(sum(u, opxRest)), '']); }
+  else { const w = all.filter(r => r.status === 'wait'); body = sect('بانتظار الاعتماد') + tbl(['المصروف', 'التاريخ', 'البند', 'الإدارة', 'المبلغ'], w.map(r => [esc(r.no), esc(r.date), esc(r.item), esc(r.dept), fmtN(r.amount)]), ['الإجمالي', '', '', '', fmtN(sum(w, r => +r.amount || 0))]); }
+  return opxKpis(t) + `<div class="panel">${opxRing(t)}<small class="muted">نطاق التقرير: المصروفات المعتمدة فقط في الجداول الأولى.</small></div>` + tabs + body;
+});
+Acts.opxrtab = el => { S.opxRep = el.dataset.v; S.view.refresh(); };
+
+/* ---------- دليل الاستخدام + هيكل العمل ---------- */
+SCREEN_RENDER.guide = () => {
+  const st = [['1', 'تهيئة القوائم', 'من الإعدادات أضف الإدارات ومراكز التكلفة وطرق السداد والمسؤولين، ومن بنود الصرف أضف البنود.', 'opx_set', '⚙️ إعدادات المصروفات', 'violet'],
+    ['2', 'تسجيل المصروف', 'من إدارة المصروفات اختر الإدارة والبند وأدخل المبلغ والمورد وأرفق الفاتورة ثم احفظ.', 'opx_data', '💳 مصروف جديد', 'orange'],
+    ['3', 'مراجعة المستندات', 'راجع الفاتورة والمرفقات في سجل المصروفات قبل الاعتماد.', 'opx_reg', '📒 سجل المصروفات', 'gold'],
+    ['4', 'توثيق الاعتماد', 'من الاعتماد والسداد اعتمد المصروف أو ارفضه — يُسجَّل المعتمِد والتاريخ.', 'opx_apr', '✅ الاعتماد والسداد', 'lime'],
+    ['5', 'تسجيل الدفعات', 'سجّل الدفعات الفعلية (كلية أو جزئية) بطريقة السداد ومرجع السند.', 'opx_apr', '💰 تسجيل الدفعات', 'teal'],
+    ['6', 'متابعة التقارير', 'استخدم التقارير حسب البند والإدارة وغير المدفوع وبانتظار الاعتماد.', 'opx_rep', '📊 التقارير', 'pink']];
+  $('#main').innerHTML = `${pageHead('دليل الاستخدام وهيكل العمل', '📖', 'blue')}<div class="panel accent c-orange"><b>هيكل العمل:</b> الإدارة ← مركز التكلفة ← بند الصرف ← المصروف ← الاعتماد ← السداد ← التقارير</div>
+  <div class="grid3">${st.map(s => `<div class="panel accent c-${s[5]}"><h3><span class="num">${s[0]}</span> ${s[1]}</h3><p>${s[2]}</p>${can(s[3]) || s[3] === 'opx_rep' && can('opx_rep') ? `<button class="btn sm c-${s[5]}" data-act="go" data-s="${s[3]}">${s[4]}</button>` : ''}</div>`).join('')}</div>
+  <div class="panel accent c-cyan"><b>قاعدة العمل:</b> الاعتماد لا يعني السداد. كل عملية منفصلة، وكل إضافة أو تعديل أو حذف يُحفظ فوراً في Google Sheets ويظهر لكل المستخدمين.</div>
+  <div class="sect"><h2>الوحدات الأخرى للبرنامج</h2></div><div class="grid2"><div class="panel"><b>🩺 الزيارات والعمليات:</b> كل عملية جراحية تُسجَّل كزيارة (مسلسل وباركود وإيصال)، وتظهر في تقارير العيادات والأطباء.</div><div class="panel"><b>🏦 التقارير المالية:</b> حركة الخزينة، حسابات الأطباء، الإجماليات بالتفصيل، تقرير اللجنة وتحليل الإيرادات.</div></div>`;
+};
+Acts.go = Acts.go || (el => nav(el.dataset.s));
 
 </script>
 <script>

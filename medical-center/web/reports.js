@@ -147,9 +147,13 @@ function detailSections(from, to) {
 function bodyClinics(name) {
   const {from, to} = getRange(), all = visitsIn(from, to);
   if (!name) return clinicsOverview(from, to, all);
-  const vs = all.filter(v => v.clinic === name), acc = accounts(from, to).filter(r => r.clinic === name), days = [...groupBy(vs, v => v.date)].sort();
-  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(acc, r => r.right)), 'violet']])
-    + sect('الأطباء') + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب'], acc.map(r => [L.doctor(r.name), r.visits, fmtN(r.total), fmtN(r.tax), fmtN(r.right)]), ['الإجمالي', sum(acc, r => r.visits), fmtN(sum(acc, r => r.total)), fmtN(sum(acc, r => r.tax)), fmtN(sum(acc, r => r.right))])
+  const vs = S.data.visits.filter(v => v.date >= from && v.date <= to && v.clinic === name), cops = opsIn(from, to).filter(o => o.clinic === name), accAll = accounts(from, to), days = [...groupBy(vs, v => v.date)].sort();
+  const docs = [...new Set(vs.map(v => v.doctor || '—'))].sort((a, b) => a.localeCompare(b, 'ar')).map(dn => {
+    const dv = vs.filter(v => (v.doctor || '—') === dn), nv = dv.filter(v => !isSurg(v)), ar = accAll.find(r => r.clinic === name && r.name === dn);
+    return {n: dn, cnt: dv.length, tot: sum(dv, val), tax: sum(dv, v => v.tax), right: (ar ? ar.right : 0) + sum(cops.filter(o => (o.doctor || '—') === dn), o => opCalc(o).surgeon)};
+  });
+  return kpiRow([['الزيارات', vs.length, 'teal'], ['الإيراد', fmtN(sum(vs, val)), 'orange'], ['الضريبة', fmtN(sum(vs, v => v.tax)), 'pink'], ['حقوق الأطباء', fmtN(sum(docs, r => r.right)), 'violet']])
+    + sect('الأطباء') + tbl(['الطبيب', 'الزيارات', 'الإيراد', 'الضريبة', 'حق الطبيب'], docs.map(r => [r.n === '—' ? '—' : L.doctor(r.n), r.cnt, fmtN(r.tot), fmtN(r.tax), fmtN(r.right)]), ['الإجمالي', sum(docs, r => r.cnt), fmtN(sum(docs, r => r.tot)), fmtN(sum(docs, r => r.tax)), fmtN(sum(docs, r => r.right))])
     + sect('يوماً بيوم') + tbl(['اليوم', 'الزيارات', 'الإيراد'], days.map(([d, a]) => [`${dayName(d)} ${d}`, a.length, fmtN(sum(a, val))]))
     + sect('الزيارات') + tbl(visitHeads, visitRows(vs), visitFoot(vs));
 }

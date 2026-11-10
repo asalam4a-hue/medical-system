@@ -3,9 +3,9 @@
  * قاعدة البيانات: Google Sheets (ورقة لكل شاشة) — الصور: Google Drive (مجلد خاص)
  * نفس أوامر api.js: status, register, login, me, logout, list, save, delete, upload, file
  */
-var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs'];
+var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs', 'opx', 'opset'];
 var LOOKUP = ['doctors', 'services', 'patients', 'companies'];
-var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], custody: ['custody']};
+var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], opx: ['opx'], opset: ['opset'], custody: ['custody']};
 var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
@@ -14,10 +14,12 @@ var FIELDS = {
   operations: 'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   patients: 'name,phone',
   companies: 'name,fee,contact',
-  visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid',
+  visits: 'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,docNo,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,payPhone,birthDate,paid,operation,anesthetist,anesthetistId,anesthesia,deductAnes,doctorPercent',
   expenses: 'date,category,amount,notes,doctor,dueDate,docNo',
   custody: 'date,person,kind,dir,amount,notes,docNo',
-  execs: 'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor'
+  execs: 'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
+  opx: 'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
+  opset: 'kind,code,name,extra,active'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate', 'execDate'];
@@ -91,7 +93,7 @@ function findRow_(sh, id) {
 }
 
 /* ---------- أوراق مقروءة بأسماء الشاشات (تتحدث تلقائياً مع كل إدخال/تعديل/حذف) ---------- */
-var SHEETN = {staff: 'الموظفون', doctors: 'الأطباء', services: 'الخدمات', operations: 'العمليات', patients: 'المرضى', companies: 'الشركات', visits: 'الزيارات', expenses: 'المصروفات', custody: 'العهد والسلف', execs: 'تنفيذ الشركات', users: 'المستخدمون'};
+var SHEETN = {staff: 'الموظفون', doctors: 'الأطباء', services: 'الخدمات', operations: 'العمليات', patients: 'المرضى', companies: 'الشركات', visits: 'الزيارات', expenses: 'المصروفات', custody: 'العهد والسلف', execs: 'تنفيذ الشركات', opx: 'المصروفات التشغيلية', opset: 'قوائم المصروفات', users: 'المستخدمون'};
 var LABELS = {code: 'الكود', name: 'الاسم', nationalId: 'الرقم القومي', idPhoto: 'صورة البطاقة', photo: 'الصورة', clinic: 'العيادة', phone: 'الهاتف', syndicatePhoto: 'صورة النقابة', hireDate: 'تاريخ التعيين', percent: 'النسبة %', fixed: 'ثابت', opPercent: 'نسبة العمليات %', type: 'النوع', price: 'القيمة', tax: 'الضريبة', abbr: 'الاختصار', date: 'التاريخ', patient: 'المريض', operation: 'العملية', doctor: 'الطبيب', doctorId: 'كود الطبيب', value: 'القيمة', doctorPercent: 'نسبة الطبيب %', notes: 'ملاحظات', anesthetist: 'طبيب التخدير', anesthetistId: 'كود التخدير', anesthesia: 'أجر التخدير', deductAnes: 'خصم التخدير', fee: 'قيمة الكشف', contact: 'جهة الاتصال', serial: 'م', visitType: 'الزيارة', service: 'البيان', category: 'النوع', company: 'الشركة', formNo: 'رقم النموذج', formPhoto: 'صورة النموذج', cardNo: 'رقم الكارنية', cardPhoto: 'صورة الكارنية', patientPct: 'تحمل المريض %', discount: 'الخصم %', payMethod: 'طريقة الدفع', payRef: 'مرجع', payPhone: 'هاتف الدفع', birthDate: 'تاريخ الميلاد', paid: 'المدفوع', amount: 'المبلغ', dueDate: 'تاريخ الاستحقاق', docNo: 'رقم المستند', person: 'الشخص', kind: 'النوع', dir: 'الاتجاه', approvalNo: 'رقم الموافقة', approvalProc: 'الإجراء', required: 'المطلوب', done: 'تم', execDate: 'تاريخ التنفيذ', username: 'المستخدم', isAdmin: 'مدير', active: 'فعّال', perms: 'الصلاحيات', lastLogin: 'آخر دخول', registeredBy: 'سجّله', createdAt: 'وقت الإنشاء'};
 var CATL = {cash: 'نقدي', company: 'شركة', insurance: 'تأمين', committee: 'لجنة'};
 var MIRROR_OFF = false;
@@ -284,7 +286,7 @@ function route_(b) {
     if (A === 'reset') return withLock_(function () {
       if (String(b.confirm || '') !== 'حذف الكل') throw new ApiError('اكتب عبارة التأكيد: حذف الكل');
       PropertiesService.getScriptProperties().setProperty('ctr_visits', String(peekCounter_('visits', 'serial')));
-      ['patients', 'operations', 'visits', 'expenses', 'custody', 'execs'].forEach(function (x) { wipe_(x); });
+      ['patients', 'operations', 'visits', 'expenses', 'custody', 'execs', 'opx'].forEach(function (x) { wipe_(x); });
       return {ok: true};
     });
   }
