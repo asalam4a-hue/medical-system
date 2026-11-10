@@ -44,7 +44,7 @@ function bodyDaily() {
   const {from, to} = getRange(), vs = visitsIn(from, to), ex = expIn(from, to), acc = accounts(from, to);
   const rev = sum(vs, val) + opsRevenue(from, to), tax = sum(vs, v => v.tax), exp = sum(ex, x => x.amount), dues = sum(acc, r => r.right + r.ops), dayRev = rev, st = statementRows(from, to);
   const shares = sum(vs, patientShare), cash = sum(vs.filter(v => (v.category || 'cash') === 'cash'), val) + shares;
-  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs.filter(v => v.category === 'committee'), val);
+  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs, comAmt);
   const byType = VTYPES.map(t => [t, vs.filter(v => v.visitType === t)]);
   const byCat = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
   const byClinic = [...groupBy(vs, v => v.clinic)].sort((a, b) => sum(b[1], val) - sum(a[1], val));
@@ -88,7 +88,7 @@ function clinicsOverview(from, to, all) {
   ops.forEach(o => slot(o.clinic).ops.push(o));
   const rows = [...g.values()].map(x => {
     const kosf = sum(x.vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(x.vs.filter(v => v.visitType === 'متنوع'), val) + sum(x.ops, o => o.value), total = kosf + mixed;
-    const co = sum(x.vs.filter(v => v.category === 'company'), val), ins = sum(x.vs, discountAmt), com = sum(x.vs.filter(v => v.category === 'committee'), val), tax = sum(x.vs, v => v.tax);
+    const co = sum(x.vs.filter(v => v.category === 'company'), val), ins = sum(x.vs, discountAmt), com = sum(x.vs, comAmt), tax = sum(x.vs, v => v.tax);
     return Object.assign(x, {kosf, mixed, total, co, ins, com, tax, net: total - co - ins - com});
   }).sort((a, b) => a.c.localeCompare(b.c, 'ar'));
   const T = k => sum(rows, r => r[k]);
@@ -118,7 +118,7 @@ function detailSections(from, to) {
   ops.forEach(o => { const oc = opCalc(o), x = slot('عمليات', o.doctor || '—', 'o'); x.ops.push(o); x.due += oc.surgeon; if (oc.anes > 0 && (o.anesthetist || o.anesthetistId)) { const an = slot('تخدير العمليات', o.anesthetist || '—', 'a'); an.ops.push(o); an.due += oc.anes; } });
   const order = {v: 0, o: 1, a: 2};
   const rows = [...g.values()].sort((a, b) => order[a.kind] - order[b.kind] || a.c.localeCompare(b.c, 'ar') || a.d.localeCompare(b.d, 'ar')).map(x => {
-    if (x.kind === 'v') { const kosf = sum(x.vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(x.vs.filter(v => v.visitType === 'متنوع'), val); return Object.assign(x, {kosf, mixed, rev: kosf + mixed, co: sum(x.vs.filter(v => v.category === 'company'), val), ins: sum(x.vs, discountAmt), com: sum(x.vs.filter(v => v.category === 'committee'), val), tax: sum(x.vs, v => v.tax)}); }
+    if (x.kind === 'v') { const kosf = sum(x.vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(x.vs.filter(v => v.visitType === 'متنوع'), val); return Object.assign(x, {kosf, mixed, rev: kosf + mixed, co: sum(x.vs.filter(v => v.category === 'company'), val), ins: sum(x.vs, discountAmt), com: sum(x.vs, comAmt), tax: sum(x.vs, v => v.tax)}); }
     if (x.kind === 'o') { const t = sum(x.ops, o => o.value); return Object.assign(x, {kosf: 0, mixed: t, rev: t, co: 0, ins: 0, com: 0, tax: 0}); }
     return Object.assign(x, {kosf: 0, mixed: 0, rev: 0, co: 0, ins: 0, com: 0, tax: 0});
   });
@@ -231,8 +231,8 @@ SCREEN_RENDER.rep_staff = repScreen('rep_staff', 'نشاط مسئولي التس
 
 /* ---------- تقرير اللجنة: زيارات نوع اللجنة (اليوم، التاريخ، الاسم، الزيارة، الطبيب، القيمة، المرفق) ---------- */
 function bodyCommittee() {
-  const {from, to} = getRange(), vs = visitsIn(from, to).filter(v => v.category === 'committee').sort((a, b) => (a.date + String(1e6 + (a.serial || 0))).localeCompare(b.date + String(1e6 + (b.serial || 0))));
-  return kpiRow([['عدد زيارات اللجنة', vs.length, 'violet'], ['إجمالي اللجنة', fmtN(sum(vs, val)), 'teal']])
-    + tbl(['اليوم', 'التاريخ', 'الاسم', 'الزيارة', 'الطبيب المعالج', 'القيمة', 'المرفق (صورة)'], vs.map(v => [dayName(v.date), esc(v.date), L.patient(v.patient), esc(v.visitType + (v.service ? ' — ' + v.service : '')), L.doctor(v.doctor), fmtN(val(v)), thumb(v.formPhoto || v.cardPhoto)]), ['', '', '', '', `الإجمالي (${vs.length})`, fmtN(sum(vs, val)), '']);
+  const {from, to} = getRange(), vs = visitsIn(from, to).filter(v => comAmt(v) > 0).sort((a, b) => (a.date + String(1e6 + (a.serial || 0))).localeCompare(b.date + String(1e6 + (b.serial || 0))));
+  return kpiRow([['عدد زيارات اللجنة', vs.length, 'violet'], ['إجمالي اللجنة', fmtN(sum(vs, comAmt)), 'teal']])
+    + tbl(['اليوم', 'التاريخ', 'الاسم', 'الزيارة', 'الطبيب المعالج', 'القيمة', 'المرفق (صورة)'], vs.map(v => [dayName(v.date), esc(v.date), L.patient(v.patient), esc(v.visitType + (v.service ? ' — ' + v.service : '')), L.doctor(v.doctor), fmtN(comAmt(v)), thumb(v.formPhoto || v.cardPhoto)]), ['', '', '', '', `الإجمالي (${vs.length})`, fmtN(sum(vs, comAmt)), '']);
 }
 SCREEN_RENDER.rep_committee = repScreen('rep_committee', 'تقرير اللجنة', '🏛️', 'violet', bodyCommittee);

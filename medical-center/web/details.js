@@ -13,7 +13,7 @@ const byTable = (title, arr, kf, linker) => { const g = [...groupBy(arr, kf)].so
 function statementRows(from, to) {
   const vs = visitsIn(from, to), acc = accounts(from, to), opsRev = opsRevenue(from, to);
   const kosf = sum(vs.filter(v => v.visitType !== 'متنوع'), val), mixed = sum(vs.filter(v => v.visitType === 'متنوع'), val), dayRev = kosf + mixed + opsRev;
-  const co = sum(vs.filter(v => v.category === 'company'), val), ins = sum(vs, discountAmt), com = sum(vs.filter(v => v.category === 'committee'), val), tax = sum(vs, v => v.tax);
+  const co = sum(vs.filter(v => v.category === 'company'), val), ins = sum(vs, discountAmt), com = sum(vs, comAmt), tax = sum(vs, v => v.tax);
   const due = sum(acc, r => r.right + r.ops), paid = docPaid(from, to), expO = expOther(from, to), net = dayRev - co - ins - com - paid - expO;
   return {rows: [['إيراد الكشف', kosf], ['إيراد متنوع', mixed], ['إيراد العمليات', opsRev], ['إجمالي إيراد اليوم', dayRev], ['الشركات', -co], ['التأمين (قيمة نسبة الخصم فقط)', -ins], ['اللجنة', -com], ['المدفوع للأطباء فعلياً', -paid], ['المصروفات (بخلاف الأطباء)', -expO], ['الصافي', net], ['الضريبة', tax]],
     memo: [['مستحقات الأطباء (إجمالي المستحق)', due], ['المدفوع منها', paid], ['المتبقي بدون صرف (غير مخصوم من الصافي)', due - paid]], net, tax, dayRev, kosf, mixed, opsRev, due, paid, expO, gross: kosf + mixed};
@@ -57,7 +57,7 @@ function bodyTotals() {
   const {from, to} = getRange(), vs = visitsIn(from, to), ex = expIn(from, to), ops = opsIn(from, to), acc = accounts(from, to), st = statementRows(from, to);
   const cats = Object.keys(CAT).map(k => [k, vs.filter(v => (v.category || 'cash') === k)]);
   const shares = sum(vs, patientShare), cash = sum(cats[0][1], val) + shares;
-  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs.filter(v => v.category === 'committee'), val);
+  const recv = sum(vs.filter(v => v.category === 'company'), coDue) + sum(vs.filter(v => v.category === 'insurance'), v => val(v) - discountAmt(v)) + sum(vs, comAmt);
   const clinicNamesUsed = [...new Set(vs.map(v => v.clinic || '—'))].sort((a, b) => sum(vs.filter(v => (v.clinic || '—') === b), val) - sum(vs.filter(v => (v.clinic || '—') === a), val));
   const clinicRows = [];
   clinicNamesUsed.forEach(n => {

@@ -217,7 +217,7 @@ function visitLast(f, ctx) {
   setv(f, '_lastDate', lv ? lv.date : ''); setv(f, '_lastType', lv ? `${lv.visitType}${lv.service ? ' — ' + lv.service : ''} (${lv.clinic || ''})` : '');
 }
 const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type="button" class="btn sm c-lime" data-act="bulkvisits">👥 إضافة مجمّعة</button><button type="button" class="btn sm c-violet" data-act="turns">🔢 أدوار المرضى</button>', keep: ['date', 'patient', 'phone', 'category', 'company', 'cardNo', 'nationalId', 'birthDate', 'patientPct', 'discount', 'formNo'], t: 'الزيارات', i: '🩺', c: 'teal', add: 'زيارة جديدة', dated: true,
-  groups: {op: {title: '🏥 بيانات العملية الجراحية', show: v => v.visitType === 'عمليات جراحية'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
+  groups: {rem: {title: '⏳ المتبقي من الزيارة النقدية', show: v => v.category === 'cash' && v.visitType !== 'عمليات جراحية' && (+v.value || 0) - (+v.paid || 0) > 0 && v.paid !== '' && v.paid != null}, op: {title: '🏥 بيانات العملية الجراحية', show: v => v.visitType === 'عمليات جراحية'}, co: {title: '🏢 بيانات الشركة', show: v => v.category === 'company'}, ins: {title: '🛡️ بيانات التأمين', show: v => v.category === 'insurance'}},
   fields: [
     {k: 'serial', l: 'المسلسل (تلقائي)', t: 'ro'}, {k: '_day', l: 'اليوم', t: 'ro'}, {k: 'date', l: 'تاريخ الزيارة', t: 'date', req: 1},
     {k: 'patient', l: 'اسم المريض', req: 1, sg: 'patients'}, {k: 'phone', l: 'رقم التليفون', num: 1},
@@ -233,6 +233,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
     {k: 'birthDate', l: 'تاريخ الميلاد', t: 'date', grp: 'co'}, {k: 'cardNo', l: 'رقم الكارنية', grp: 'co', sg: 'visits.cardNo'}, {k: 'cardPhoto', l: 'صورة الكارنية', t: 'img', grp: 'co'}, {k: 'nationalId', l: 'الرقم القومي', num: 1, grp: 'co'},
     {k: '_cofee', l: 'قيمة كشف الشركة (أساس الحساب)', t: 'ro', grp: 'co'}, {k: 'patientPct', l: 'نسبة تحمل المريض %', t: 'num', grp: 'co'}, {k: '_req', l: 'المبلغ المطلوب من المريض', t: 'ro', grp: 'co'},
     {k: '_lastDate', l: 'آخر تاريخ زيارة (تلقائي)', t: 'ro', grp: 'co'}, {k: '_lastType', l: 'نوع آخر زيارة (تلقائي)', t: 'ro', grp: 'co'},
+    {k: 'remTo', l: 'يُسجَّل المتبقي على', t: 'seg', w: 'full', opts: [{v: '', l: '⏳ آجل (على المريض)', c: 'orange'}, {v: 'committee', l: '🏛️ لجنة', c: 'violet'}, {v: 'insurance', l: '🛡️ تأمين', c: 'blue'}], grp: 'rem'},
     {k: 'operation', l: 'العملية', sg: 'opnames', grp: 'op'}, {k: '_anes', l: 'تخدير — اسم الطبيب', t: 'docpick', sg: 'alldocs', grp: 'op'}, {k: 'anesthesia', l: 'تخدير — القيمة', t: 'num', grp: 'op'},
     {k: 'deductAnes', l: 'خصم التخدير من أجر العملية', t: 'chk', l2: 'احسب حساب الطبيب بعد خصم قيمة التخدير', grp: 'op'}, {k: 'doctorPercent', l: 'نسبة الطبيب %', t: 'num', grp: 'op'}
   ],
@@ -247,7 +248,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
     o.doctorId = d ? d.id : ''; o.doctor = d ? d.name : '';
     if (o.category !== 'company') { ['company', 'formNo', 'formPhoto', 'cardNo', 'cardPhoto', 'nationalId', 'birthDate'].forEach(k => o[k] = ''); o.patientPct = 0; }
     if (o.category !== 'insurance') o.discount = 0;
-    o.payMethod = ''; o.payRef = ''; o.payPhone = '';
+    o.payMethod = ''; o.payRef = ''; o.payPhone = ''; if (o.category !== 'cash' || !(restV(o) > 0)) o.remTo = '';
     { const an = S.data.doctors.find(x => x.id === raw._anes); o.anesthetistId = an ? an.id : ''; o.anesthetist = an ? an.name : ''; o.deductAnes = raw.deductAnes ? '1' : ''; if (o.visitType === 'عمليات جراحية') { o.operation = o.operation || o.service; if (!o.operation) throw new Error('اسم العملية مطلوب'); } if (o.visitType !== 'عمليات جراحية') { o.operation = ''; o.anesthesia = 0; o.doctorPercent = 0; o.anesthetist = ''; o.anesthetistId = ''; o.deductAnes = ''; } }
     return o;
   },

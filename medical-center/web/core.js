@@ -284,7 +284,7 @@ function accounts(from, to) {
     let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (v.doctor || '—'), d ? d.clinic : v.clinic); map.set(key, r); }
     const val = +v.value || 0, tx = +v.tax || 0; r.visits++;
     if (v.visitType === 'كشف') r.kosf += val; if (v.visitType === 'متنوع') r.mixed += val; if (v.visitType === 'استشارة') r.consult++;
-    if (v.category === 'committee') r.committee += val; if (v.category === 'company') r.company += val; if (v.category === 'insurance') r.insurance += val;
+    r.committee += comAmt(v); if (v.category === 'company') r.company += val; if (v.category === 'insurance') r.insurance += val; else if (v.remTo === 'insurance') r.insurance += xfer(v);
     r.total += val; r.tax += tx;
     const dm = r.dayMap.get(v.date) || {rev: 0, tax: 0}; dm.rev += val; dm.tax += tx; r.dayMap.set(v.date, dm);
   }
@@ -329,10 +329,13 @@ const isCash = v => (v.category || 'cash') === 'cash';
 const cashRev = a => a.filter(isCash).reduce((s, v) => s + (+v.value || 0), 0);
 const patientShare = v => v.category === 'company' ? coShare(v) : 0;
 /* مديونية المريض: المستحق عليه = (كاش: القيمة | شركة: نصيب المريض | تأمين: الصافي بعد الخصم | لجنة: 0) — والمدفوع الفارغ = مسدد بالكامل */
-const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v);
+const restV = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, (+v.value || 0) - (+v.paid || 0));
+const xfer = v => v.category === 'cash' && (v.remTo === 'committee' || v.remTo === 'insurance') ? restV(v) : 0;
+const comAmt = v => v.category === 'committee' ? ((v.paid === '' || v.paid == null) ? (+v.value || 0) : restV(v)) : (v.remTo === 'committee' ? xfer(v) : 0);
+const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v) - (v.remTo === 'committee' ? xfer(v) : 0);
 const owedOf = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, dueOf(v) - (+v.paid || 0));
 const paidOf = v => (v.paid === '' || v.paid == null) ? dueOf(v) : (+v.paid || 0);
-const discountAmt = v => v.category === 'insurance' ? (+v.value || 0) * (+v.discount || 0) / 100 : 0;
+const discountAmt = v => v.category === 'insurance' ? (+v.value || 0) * (+v.discount || 0) / 100 : (v.remTo === 'insurance' ? xfer(v) : 0);
 
 /* ---------- شريط التاريخ المشترك ---------- */
 const getRange = () => { const r = S.rng; if (r.mode === 'all') return {from: '0000/00/00', to: '9999/99/99'}; return r.mode === 'today' ? {from: today(), to: today()} : r.mode === 'day' ? {from: r.a, to: r.a} : {from: r.a <= r.b ? r.a : r.b, to: r.a <= r.b ? r.b : r.a}; };
@@ -475,7 +478,7 @@ function renderHome() {
     S.data.operations.filter(x => x.date >= from && x.date <= to && x.clinic).forEach(x => { const dn = x.doctor || '', k = x.clinic + '\u0001' + dn, o = cm.get(k) || {n: x.clinic, d: dn, cnt: 0, rev: 0}; o.cnt++; o.rev += +x.value || 0; cm.set(k, o); });
     const clin = [...cm.values()];
     clin.sort((a, b) => b.rev - a.rev || b.cnt - a.cnt); const mx = Math.max(1, ...clin.map(c => c.rev));
-    const kp = [['عدد الزيارات', vs.length + opsCountR(), 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.filter(v => v.category === 'committee').reduce((t, v) => t + (+v.value || 0), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
+    const kp = [['عدد الزيارات', vs.length + opsCountR(), 'teal', '🧾'], ['إيراد الكشف', fmtN(st.kosf), 'blue', '🩺'], ['إيراد متنوع', fmtN(st.mixed), 'cyan', '🧩'], ['إيراد العمليات', fmtN(st.opsRev), 'red', '🏥'], ['إجمالي إيراد اليوم', fmtN(st.dayRev), 'orange', '💰'], ['حقوق الأطباء (المستحق)', fmtN(dues), 'violet', '👨‍⚕️'], ['مدفوع للأطباء', fmtN(st.paid), 'lime', '💵'], ['المصروفات', fmtN(exp), 'gold', '💸'], ['الصافي', fmtN(st.net), 'teal', '📊'], ['الضريبة', fmtN(tax), 'pink', '🏛️'], ['إجمالي اللجنة', fmtN(vs.reduce((t, v) => t + comAmt(v), 0)), 'violet', '🏛️'], ['إجمالي الشركات', fmtN(vs.filter(v => v.category === 'company').reduce((t, v) => t + (+v.value || 0), 0)), 'blue', '🏢']];
     const catData = Object.keys(CAT).map(k => ({l: CAT[k], v: vs.filter(v => (v.category || 'cash') === k).reduce((s, v) => s + (+v.value || 0), 0), c: CATC[k]}));
     const tiles = SCREENS.filter(s => can(s.k)).map(s => ({...s, n: s.k === 'visits' ? vs.length : null}));
     if (anyRep()) tiles.push({k: 'reports', t: 'التقارير', i: '📊', c: 'violet'});
