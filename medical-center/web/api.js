@@ -28,7 +28,7 @@ function ensureUrl() {
     } catch (e) {}
   })();
 }
-const WRITES = new Set(['bulk_save','sync_sheets','save','delete','upload','restore','reset','master_save','master_restore','settings_save']);
+const WRITES = new Set(['bulk_save','sync_sheets','save','delete','upload','restore','reset','resetvisits','master_save','master_restore','settings_save']);
 async function call(action, payload){
   const body = Object.assign({action, token, client: window.AndroidBridge ? 'الأندرويد' : 'الويب'}, payload||{});
   let res;
@@ -167,7 +167,7 @@ const Local = {
     if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true}; }
     if (A === 'presence') { if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); return {list: Object.entries(db.presence || {}).map(([id, v]) => Object.assign({id}, v))}; }
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
-    if (['settings_save','backup','restore','reset','master_save','master_restore','master_info'].includes(A)) {
+    if (['settings_save','backup','restore','reset','resetvisits','master_save','master_restore','master_info'].includes(A)) {
       if (!me.isAdmin) return fail('للمدير فقط', 'forbidden');
       const snap = () => { const d = {}; ENT.forEach(x => d[x] = JSON.parse(JSON.stringify(db.rec[x] || []))); return {app: 'medical-center', ver: 1, at: new Date().toISOString(), settings: this.settings(db), data: d}; };
       const restore = bk => {
@@ -182,7 +182,8 @@ const Local = {
       if (A === 'master_save') { db.master = snap(); this.save(db); return {at: db.master.at}; }
       if (A === 'master_restore') { if (!db.master) return fail('لا توجد نسخة ماستر محفوظة'); const m = JSON.parse(JSON.stringify(db.master)), er = restore(m); return er ? fail(er) : {ok: true}; }
       if (A === 'restore') { const er = restore(b.backup); return er ? fail(er) : {ok: true}; }
-      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = Math.max(db.ctr.visits || 0, (db.rec.visits || []).reduce((m, x) => Math.max(m, x.serial || 0), 0)); ['patients','operations','visits','expenses','custody','execs','opx'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
+      if (A === 'resetvisits') { if (!me.isAdmin) return fail('للمدير فقط'); db.rec.visits = []; db.ctr = db.ctr || {}; db.ctr.visits = 0; this.save(db); return {ok: true}; }
+      if (A === 'reset') { if (String(b.confirm || '') !== 'حذف الكل') return fail('اكتب عبارة التأكيد: حذف الكل'); db.ctr = db.ctr || {}; db.ctr.visits = 0; ['patients','operations','visits','expenses','custody','execs','opx'].forEach(x => { db.rec[x] = []; }); this.save(db); return {ok: true}; }
     }
     const e = b.entity;
     if (A === 'sync_sheets') return me.isAdmin ? {ok: true, counts: {}} : fail('للمدير فقط', 'forbidden');

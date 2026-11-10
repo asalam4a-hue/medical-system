@@ -261,7 +261,7 @@ function route_(b) {
   }
   if (A === 'logout') { cache.remove('t_' + sha_(tk)); return {ok: true}; }
 
-  if (['settings_save', 'backup', 'restore', 'reset', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {
+  if (['settings_save', 'backup', 'restore', 'reset', 'resetvisits', 'master_save', 'master_restore', 'master_info'].indexOf(A) >= 0) {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     if (A === 'settings_save') return withLock_(function () {
       var o = {appName: String(b.appName || '').trim().slice(0, 80), centerName: String(b.centerName || '').trim().slice(0, 80), phone: String(b.phone || '').trim().slice(0, 60), logo: /^[0-9a-f]{18}$/.test(String(b.logo || '')) ? String(b.logo) : '', azkAudio: String(b.azkAudio || '').split(',').filter(function (x) { return /^[0-9a-f]{18}$/.test(x); }).slice(0, 10).join(',')};
@@ -283,9 +283,13 @@ function route_(b) {
       var js = sh.getRange(1, 1, sh.getLastRow(), 1).getValues().map(function (r) { return String(r[0]); }).join('');
       restoreSnapshot_(JSON.parse(js)); return {ok: true};
     });
+    if (A === 'resetvisits') return withLock_(function () {
+      if (!me.isAdmin) throw new ApiError('للمدير فقط');
+      PropertiesService.getScriptProperties().setProperty('ctr_visits', '0'); wipe_('visits'); return {ok: true};
+    });
     if (A === 'reset') return withLock_(function () {
       if (String(b.confirm || '') !== 'حذف الكل') throw new ApiError('اكتب عبارة التأكيد: حذف الكل');
-      PropertiesService.getScriptProperties().setProperty('ctr_visits', String(peekCounter_('visits', 'serial')));
+      PropertiesService.getScriptProperties().setProperty('ctr_visits', '0');
       ['patients', 'operations', 'visits', 'expenses', 'custody', 'execs', 'opx'].forEach(function (x) { wipe_(x); });
       return {ok: true};
     });

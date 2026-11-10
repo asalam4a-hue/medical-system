@@ -68,7 +68,14 @@ async function delMany(ids, what) {
 }
 document.addEventListener('change', e => { if (e.target.classList && e.target.classList.contains('selall')) document.querySelectorAll('#lst .rowsel').forEach(c => { c.checked = e.target.checked; }); });
 Acts.delsel = () => S.view && S.view.ids && delMany([...document.querySelectorAll('#lst .rowsel:checked')].map(c => c.dataset.id), 'السجلات المحددة');
-Acts.delall = () => S.view && S.view.ids && delMany(S.view.ids(), 'كل السجلات المعروضة' + (S.view.ent === 'visits' ? ' في الفترة المحددة' : ''));
+Acts.delall = async () => {
+  if (!S.view || !S.view.ids) return;
+  if (S.view.ent === 'visits' && !S.surgOnly && S.user && S.user.isAdmin) {
+    if (!await confirmBox('سيتم حذف كل الزيارات (كل الفترات) نهائياً ويبدأ المسلسل من 1 تلقائياً. هل أنت متأكد؟')) return;
+    return guard(null, async () => { await API.call('resetvisits', {}); await loadAll(['visits', 'operations']); toast('تم حذف كل الزيارات — المسلسل يبدأ من 1'); S.view.refresh(); S.view.reset && S.view.reset(); });
+  }
+  return delMany(S.view.ids(), 'كل السجلات المعروضة' + (S.view.ent === 'visits' ? ' في الفترة المحددة' : ''));
+};
 Acts.edit = el => S.view && S.view.edit(el.dataset.id);
 Acts.del = el => S.view && S.view.del(el.dataset.id);
 Acts.frmnew = () => S.view && S.view.reset();
