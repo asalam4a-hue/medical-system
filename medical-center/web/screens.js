@@ -179,11 +179,10 @@ function visitAuto(f, why) {
   const clinic = getv(f, 'clinic'), vt = getv(f, 'visitType'), cat = getv(f, 'category'), svc = getv(f, 'service');
   const c = clinicOf(clinic), sv = S.data.services.find(s => s.name === svc && s.type !== 'clinic');
   if (why === 'clinic' || why === 'visitType') { setv(f, 'tax', vt === 'كشف' && c ? c.tax || 0 : 0); }
-  if (['clinic', 'visitType', 'category', 'company', 'service'].includes(why)) {
-    let val = null;
-    if (sv && why === 'service') val = sv.price;
-    else if ((vt === 'كشف' || vt === 'استشارة') && c) val = c.price;
-    if (val != null && (why !== 'service' || sv)) setv(f, 'value', val);
+  /* القيمة: تلقائية عند اختيار «كشف» (سعر العيادة)، وأي بند آخر تُكتب القيمة يدوياً */
+  if (['clinic', 'visitType'].includes(why)) {
+    if (vt === 'كشف' && c) setv(f, 'value', c.price);
+    else if (why === 'visitType' && vt !== 'عمليات جراحية') setv(f, 'value', '');
   }
   const co = S.data.companies.find(x => x.name === getv(f, 'company')), fee = co && co.fee > 0 && vt === 'كشف' ? co.fee : (+getv(f, 'value') || 0);
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
