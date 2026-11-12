@@ -332,6 +332,8 @@ const patientShare = v => v.category === 'company' ? coShare(v) : 0;
 const restV = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, (+v.value || 0) - (+v.paid || 0));
 const xfer = v => v.category === 'cash' && (v.remTo === 'committee' || v.remTo === 'insurance') ? restV(v) : 0;
 const comAmt = v => v.category === 'committee' ? ((v.paid === '' || v.paid == null) ? (+v.value || 0) : restV(v)) : (v.remTo === 'committee' ? xfer(v) : 0);
+const cashOf = v => Math.max(0, (+v.value || 0) - comAmt(v) - coAmt(v) - discountAmt(v) - owedOf(v));
+const partyRem = v => comAmt(v) + coAmt(v) + discountAmt(v) + owedOf(v);
 const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v) - (v.remTo === 'committee' ? xfer(v) : 0);
 const owedOf = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, dueOf(v) - (+v.paid || 0));
 const paidOf = v => (v.paid === '' || v.paid == null) ? dueOf(v) : (+v.paid || 0);
