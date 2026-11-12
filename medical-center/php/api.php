@@ -32,7 +32,7 @@ function gas_call($GAS, $payload) {
   return [$out, $err, $code];
 }
 if ($GAS !== '' && preg_match('#^https://script\.google\.com/#', $GAS) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-  list($out, $err, $code) = gas_call($GAS, file_get_contents('php://input', false, null, 0, 9000000));
+  list($out, $err, $code) = gas_call($GAS, file_get_contents("php://input", false, null, 0, 48000000));
   if ($out === false || $out === null) { echo json_encode(['error' => 'الاستضافة لا تستطيع الوصول لجوجل: ' . $err], JSON_UNESCAPED_UNICODE); exit; }
   if (!is_array(json_decode($out, true))) { echo json_encode(['error' => 'جوجل أعاد صفحة وليس بيانات (HTTP ' . $code . ') — اجعل نشر السكريبت "أي شخص" وانشر إصداراً جديداً'], JSON_UNESCAPED_UNICODE); exit; }
   echo $out; exit;
@@ -52,7 +52,7 @@ const FIELDS = [
   'staff'=>'code,name,nationalId,idPhoto,photo',
   'doctors'=>'code,name,clinic,phone,nationalId,idPhoto,syndicatePhoto,photo,hireDate,percent,fixed,opPercent',
   'services'=>'type,name,price,tax,abbr',
-  'operations'=>'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes',
+  'operations'=>'date,patient,operation,clinic,doctor,doctorId,value,doctorPercent,notes,anesthetist,anesthetistId,anesthesia,deductAnes,docNo',
   'patients'=>'name,phone',
   'companies'=>'name,fee,contact',
   'visits'=>'serial,date,patient,phone,clinic,doctor,doctorId,visitType,service,value,tax,category,company,formNo,formPhoto,cardNo,cardPhoto,nationalId,patientPct,discount,notes,payMethod,payRef,docNo,payPhone,birthDate,paid,operation,anesthetist,anesthetistId,anesthesia,deductAnes,doctorPercent,remTo',
@@ -65,6 +65,7 @@ const FIELDS = [
 const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial','anesthesia'];
 const DATES = ['date','hireDate','birthDate','dueDate','execDate'];
 const AUTO = ['staff'=>'code','doctors'=>'code','visits'=>'serial'];
+const CLEAR = ['patients','operations','visits','expenses','custody','execs','opx'];
 
 if (!is_dir($DATA)) { @mkdir($DATA, 0700, true); }
 if (!is_dir($DATA . '/uploads')) { @mkdir($DATA . '/uploads', 0700, true); }
@@ -80,9 +81,11 @@ try {
     CREATE TABLE IF NOT EXISTS files(id TEXT PRIMARY KEY, mime TEXT);
     CREATE TABLE IF NOT EXISTS tokens(token TEXT PRIMARY KEY, uid TEXT, exp INTEGER);
     CREATE TABLE IF NOT EXISTS fails(u TEXT PRIMARY KEY, n INTEGER, t INTEGER);
-    CREATE TABLE IF NOT EXISTS counters(k TEXT PRIMARY KEY, v INTEGER);");
+    CREATE TABLE IF NOT EXISTS counters(k TEXT PRIMARY KEY, v INTEGER);
+    CREATE TABLE IF NOT EXISTS kv(k TEXT PRIMARY KEY, v TEXT);
+    CREATE TABLE IF NOT EXISTS presence(uid TEXT PRIMARY KEY, at INTEGER, page TEXT, client TEXT);");
 
-  $raw = file_get_contents('php://input', false, null, 0, 9000000);
+  $raw = file_get_contents("php://input", false, null, 0, 48000000);
   $b = json_decode($raw ?: '', true);
   if (!is_array($b)) jerr('طلب غير صالح');
   handle($db, $b);
@@ -116,10 +119,28 @@ function putRec(PDO $db, string $e, array $rec): void {
 function pub(array $u): array { unset($u['hash']); return $u; }
 function nextCounter(PDO $db, string $e, string $f): int {
   $st = $db->prepare('SELECT v FROM counters WHERE k=?'); $st->execute([$e]); $v = $st->fetchColumn();
-  if ($v === false) { $v = 0; foreach (getAll($db, $e) as $r) $v = max($v, (int)($r[$f] ?? 0)); }
+  $v = ($v === false) ? 0 : (int)$v; foreach (getAll($db, $e) as $r) $v = max($v, (int)($r[$f] ?? 0));
   $v = (int)$v + 1;
   $db->prepare('INSERT INTO counters(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v')->execute([$e, $v]);
   return $v;
+}
+function kvGet(PDO $db, string $k) { $st = $db->prepare('SELECT v FROM kv WHERE k=?'); $st->execute([$k]); $v = $st->fetchColumn(); return $v === false ? null : $v; }
+function kvSet(PDO $db, string $k, string $v): void { $db->prepare('INSERT INTO kv(k,v) VALUES(?,?) ON CONFLICT(k) DO UPDATE SET v=excluded.v')->execute([$k, $v]); }
+function settingsGet(PDO $db): array { $d = ['appName' => 'برنامج إدارة المركز الطبي', 'centerName' => '', 'phone' => '', 'logo' => '', 'azkAudio' => '']; $j = json_decode((string)kvGet($db, 'settings'), true); return is_array($j) ? array_merge($d, $j) : $d; }
+function fileExists(PDO $db, string $id): bool { $st = $db->prepare('SELECT 1 FROM files WHERE id=?'); $st->execute([$id]); return (bool)$st->fetchColumn(); }
+function snapshot(PDO $db): array { $d = []; foreach (ENT as $x) $d[$x] = getAll($db, $x); return ['app' => 'medical-center', 'ver' => 1, 'at' => gmdate('c'), 'settings' => settingsGet($db), 'data' => $d]; }
+function restoreSnap(PDO $db, $bk): string {
+  if (!is_array($bk) || ($bk['app'] ?? '') !== 'medical-center' || !is_array($bk['data'] ?? null)) return 'ملف النسخة الاحتياطية غير صالح';
+  $ok = false; foreach (($bk['data']['users'] ?? []) as $u) if (!empty($u['isAdmin']) && !empty($u['active'])) $ok = true;
+  if (!$ok) return 'النسخة لا تحتوي على مدير فعّال';
+  $db->exec('BEGIN IMMEDIATE');
+  try {
+    foreach (ENT as $x) { $db->prepare('DELETE FROM records WHERE entity=?')->execute([$x]); foreach (($bk['data'][$x] ?? []) as $r) { if (is_array($r)) { if (empty($r['id'])) $r['id'] = rid(); putRec($db, $x, $r); } } }
+    $db->exec('DELETE FROM counters');
+    if (isset($bk['settings'])) kvSet($db, 'settings', json_encode($bk['settings'], JSON_UNESCAPED_UNICODE));
+    $db->exec('COMMIT');
+  } catch (Throwable $e) { $db->exec('ROLLBACK'); throw $e; }
+  return '';
 }
 function seedData(PDO $db): void {
   $f = __DIR__ . '/seed.json'; if (!is_file($f)) return; $S = json_decode((string)file_get_contents($f), true); if (!is_array($S)) return;
@@ -134,6 +155,7 @@ function handle(PDO $db, array $b): void {
   $A = (string)($b['action'] ?? '');
   $users = getAll($db, 'users');
   if ($A === 'status') jout(['hasUsers' => count($users) > 0]);
+  if ($A === 'settings') jout(['settings' => settingsGet($db)]);
 
   if ($A === 'register') {
     $u = trim((string)($b['username'] ?? '')); $p = (string)($b['password'] ?? '');
@@ -176,6 +198,45 @@ function handle(PDO $db, array $b): void {
   if ($A === 'me') jout(['user' => pub($me)]);
   if ($A === 'logout') { $db->prepare('DELETE FROM tokens WHERE token=?')->execute([$tk]); jout(['ok' => true]); }
 
+  if ($A === 'ping') { $db->prepare('INSERT INTO presence(uid,at,page,client) VALUES(?,?,?,?) ON CONFLICT(uid) DO UPDATE SET at=excluded.at,page=excluded.page,client=excluded.client')->execute([$me['id'], time() * 1000, mb_substr((string)($b['page'] ?? ''), 0, 60), mb_substr((string)($b['client'] ?? ''), 0, 20)]); jout(['ok' => true]); }
+  if (in_array($A, ['presence', 'settings_save', 'backup', 'restore', 'reset', 'resetvisits', 'master_save', 'master_restore', 'master_info', 'sync_sheets', 'bulk_save'], true)) {
+    if (empty($me['isAdmin'])) jerr('للمدير فقط', 'forbidden');
+    if ($A === 'presence') { $o = []; foreach ($db->query('SELECT uid,at,page,client FROM presence') as $r) $o[] = ['id' => $r['uid'], 'at' => (int)$r['at'], 'page' => $r['page'], 'client' => $r['client']]; jout(['list' => $o]); }
+    if ($A === 'sync_sheets') jout(['ok' => true, 'counts' => new stdClass()]);
+    if ($A === 'settings_save') {
+      $aud = array_slice(array_values(array_filter(explode(',', (string)($b['azkAudio'] ?? '')), fn($x) => $x !== '' && preg_match('/^[0-9a-f]{18}$/', $x) && fileExists($db, $x))), 0, 10);
+      $lg = (string)($b['logo'] ?? ''); if (!($lg !== '' && preg_match('/^[0-9a-f]{18}$/', $lg) && fileExists($db, $lg))) $lg = '';
+      $st = ['appName' => mb_substr(trim((string)($b['appName'] ?? '')), 0, 80), 'centerName' => mb_substr(trim((string)($b['centerName'] ?? '')), 0, 80), 'phone' => mb_substr(trim((string)($b['phone'] ?? '')), 0, 60), 'logo' => $lg, 'azkAudio' => implode(',', $aud)];
+      kvSet($db, 'settings', json_encode($st, JSON_UNESCAPED_UNICODE)); jout(['settings' => settingsGet($db)]);
+    }
+    if ($A === 'backup') jout(['backup' => snapshot($db)]);
+    if ($A === 'master_info') { $m = json_decode((string)kvGet($db, 'master'), true); jout(['at' => is_array($m) ? ($m['at'] ?? '') : '']); }
+    if ($A === 'master_save') { $sn = snapshot($db); kvSet($db, 'master', json_encode($sn, JSON_UNESCAPED_UNICODE)); jout(['at' => $sn['at']]); }
+    if ($A === 'master_restore') { $m = json_decode((string)kvGet($db, 'master'), true); if (!is_array($m)) jerr('لا توجد نسخة ماستر محفوظة'); $er = restoreSnap($db, $m); if ($er) jerr($er); jout(['ok' => true]); }
+    if ($A === 'restore') { $er = restoreSnap($db, $b['backup'] ?? null); if ($er) jerr($er); jout(['ok' => true]); }
+    if ($A === 'resetvisits') { $db->exec("DELETE FROM records WHERE entity='visits'"); $db->exec("DELETE FROM counters WHERE k='visits'"); jout(['ok' => true]); }
+    if ($A === 'reset') {
+      if ((string)($b['confirm'] ?? '') !== 'حذف الكل') jerr('اكتب عبارة التأكيد: حذف الكل');
+      foreach (CLEAR as $x) $db->prepare('DELETE FROM records WHERE entity=?')->execute([$x]); $db->exec("DELETE FROM counters WHERE k='visits'"); jout(['ok' => true]);
+    }
+    if ($A === 'bulk_save') {
+      $e2 = (string)($b['entity'] ?? ''); if ($e2 === 'users' || !in_array($e2, ENT, true)) jerr('كيان غير مسموح');
+      $kf = array_values(array_filter(explode(',', (string)($b['key'] ?? '')))); $seen = [];
+      $kk = function ($r) use ($kf) { return implode('|', array_map(fn($k) => (string)($r[$k] ?? ''), $kf)); };
+      if ($kf) foreach (getAll($db, $e2) as $r) $seen[$kk($r)] = 1;
+      $added = 0; $skipped = 0; $db->exec('BEGIN IMMEDIATE');
+      foreach (is_array($b['records'] ?? null) ? $b['records'] : [] as $src) {
+        if (!is_array($src)) { $skipped++; continue; } $out = [];
+        foreach (explode(',', FIELDS[$e2]) as $k) { if (!array_key_exists($k, $src)) continue; $v = $src[$k]; $out[$k] = in_array($k, NUMS, true) ? (is_numeric($v) ? $v + 0 : 0) : mb_substr(trim(is_scalar($v) ? (string)$v : ''), 0, 500); }
+        if (trim((string)($out['name'] ?? $out['date'] ?? $out['category'] ?? $out['type'] ?? '')) === '') { $skipped++; continue; }
+        if ($kf) { $key = $kk($out); if (isset($seen[$key])) { $skipped++; continue; } $seen[$key] = 1; }
+        if (isset(AUTO[$e2])) $out[AUTO[$e2]] = nextCounter($db, $e2, AUTO[$e2]);
+        putRec($db, $e2, array_merge(['id' => rid(), 'createdAt' => gmdate('c'), 'registeredBy' => $me['username']], $out)); $added++;
+      }
+      $db->exec('COMMIT'); jout(['added' => $added, 'skipped' => $skipped]);
+    }
+  }
+
   $e = (string)($b['entity'] ?? '');
   if (in_array($A, ['list', 'save', 'delete'], true) && !in_array($e, ENT, true)) jerr('كيان غير معروف');
 
@@ -186,7 +247,9 @@ function handle(PDO $db, array $b): void {
     $from = !empty($b['from']) ? (string)$b['from'] : null; $to = !empty($b['to']) ? (string)$b['to'] : null;
     $items = getAll($db, $e, $from, $to);
     if ($e === 'users') $items = array_map('pub', $items);
-    jout(['items' => $items]);
+    $out = ['items' => $items];
+    if (isset(AUTO[$e])) { $st = $db->prepare('SELECT v FROM counters WHERE k=?'); $st->execute([$e]); $c = (int)$st->fetchColumn(); foreach (getAll($db, $e) as $r) $c = max($c, (int)($r[AUTO[$e]] ?? 0)); $out['ctr'] = $c; }
+    jout($out);
   }
 
   if ($A === 'save' || $A === 'delete') {
@@ -203,11 +266,12 @@ function handle(PDO $db, array $b): void {
 
   if ($A === 'upload') {
     $mime = (string)($b['mime'] ?? ''); $data = (string)($b['data'] ?? '');
-    if (!in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) jerr('يسمح بالصور فقط');
-    if (strlen($data) > 5500000) jerr('الصورة كبيرة جداً');
-    $bin = base64_decode($data, true); if ($bin === false || strlen($bin) < 12) jerr('الصورة تالفة');
+    $AUD = ['audio/mpeg','audio/mp3','audio/mp4','audio/x-m4a','audio/aac','audio/ogg','audio/wav','audio/webm']; $isAud = in_array($mime, $AUD, true);
+    if (!$isAud && !in_array($mime, ['image/jpeg', 'image/png', 'image/webp'], true)) jerr('نوع الملف غير مسموح');
+    if (strlen($data) > ($isAud ? 32000000 : 5500000)) jerr('الملف كبير جداً');
+    $bin = base64_decode($data, true); if ($bin === false || strlen($bin) < 12) jerr('الملف تالف');
     $isJpg = substr($bin, 0, 3) === "\xFF\xD8\xFF"; $isPng = substr($bin, 0, 8) === "\x89PNG\r\n\x1a\n"; $isWebp = substr($bin, 0, 4) === 'RIFF' && substr($bin, 8, 4) === 'WEBP';
-    if (!($isJpg || $isPng || $isWebp)) jerr('الملف ليس صورة صالحة');
+    if (!$isAud && !($isJpg || $isPng || $isWebp)) jerr('الملف ليس صورة صالحة');
     $can = !empty($me['isAdmin']); foreach (['staff','doctors','visits','patients','operations','companies','expenses'] as $p) if (has($me, $p)) $can = true;
     if (!$can) jerr('غير مصرح', 'forbidden');
     $id = rid(); file_put_contents($GLOBALS['DATA'] . '/uploads/' . $id . '.bin', $bin);
