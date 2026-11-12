@@ -34,7 +34,7 @@ function journalLedger(from, to) {
   const vsAll = S.data.visits.filter(v => v.date <= to && !isSurg(v)), opsAll = S.data.operations.filter(o => o.date <= to);
   [...new Set([...vsAll.map(v => v.date), ...opsAll.map(o => o.date)])].forEach(d => {
     const vs = vsAll.filter(v => v.date === d), ops = opsAll.filter(o => o.date === d);
-    const rev = sum(vs, val) + sum(ops, o => o.value), co = sum(vs.filter(v => v.category === 'company'), val), com = sum(vs, comAmt), ins = sum(vs, discountAmt), tax = sum(vs, v => v.tax);
+    const rev = sum(vs, val) + sum(ops, o => o.value), co = sum(vs, coAmt), com = sum(vs, comAmt), ins = sum(vs, discountAmt), tax = sum(vs, v => v.tax);
     mk(d, 0, {bayan: 'إيرادات العيادة', op: 'إيراد', note: `${vs.length} زيارة${ops.length ? ' + ' + ops.length + ' عملية' : ''}`, in: rev - co - com - ins, co, com, ins, tax});
   });
   S.data.expenses.filter(e => e.date <= to).forEach(e => {

@@ -69,7 +69,7 @@ const Bars = (() => {
   const stats = () => {
     try {
       const t = today(), vs = visitsIn(t, t), st = statementRows(t, t), sm = c => vs.filter(v => v.category === c).reduce((s, v) => s + (+v.value || 0), 0), tax = vs.reduce((s, v) => s + (+v.tax || 0), 0);
-      return [['🧾 زيارات اليوم', vs.length + S.data.operations.filter(o => o.date === t).length], ['🩺 الكشف', fmtN(st.kosf)], ['🧩 متنوع', fmtN(st.mixed)], ['🏥 العمليات', fmtN(st.opsRev)], ['💰 إجمالي الإيراد', fmtN(st.dayRev)], ['🏢 الشركات', fmtN(sm('company'))], ['🏛️ اللجنة', fmtN(vs.reduce((s, v) => s + comAmt(v), 0))], ['🛡️ التأمين', fmtN(sm('insurance'))], ['🏛️ الضريبة', fmtN(tax)], ['💸 المصروفات', fmtN(st.expO)], ['📊 الصافي', fmtN(st.net)]];
+      return [['🧾 زيارات اليوم', vs.length + S.data.operations.filter(o => o.date === t).length], ['🩺 الكشف', fmtN(st.kosf)], ['🧩 متنوع', fmtN(st.mixed)], ['🏥 العمليات', fmtN(st.opsRev)], ['💰 إجمالي الإيراد', fmtN(st.dayRev)], ['🏢 الشركات', fmtN(vs.reduce((s, v) => s + coAmt(v), 0))], ['🏛️ اللجنة', fmtN(vs.reduce((s, v) => s + comAmt(v), 0))], ['🛡️ التأمين', fmtN(vs.reduce((s, v) => s + discountAmt(v), 0))], ['🏛️ الضريبة', fmtN(tax)], ['💸 المصروفات', fmtN(st.expO)], ['📊 الصافي', fmtN(st.net)]];
     } catch (e) { return []; }
   };
   const paint = () => { if (!bot) return; const h = stats().map(x => `<span class="dchip">${x[0]}: <b>${x[1]}</b></span>`).join(''); const key = h; if (bot.dataset.k !== key) { bot.dataset.k = key; bot.firstChild.innerHTML = `<div class="dtrack">${h}${h}</div>`; } };
