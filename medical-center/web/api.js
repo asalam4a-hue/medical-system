@@ -45,6 +45,7 @@ async function call(action, payload){
     const post = async (url, gas) => {
       const r = await fetch(url, {method: 'POST', redirect: 'follow', headers: {'Content-Type': gas ? 'text/plain;charset=utf-8' : 'application/json'}, body: JSON.stringify(body)});
       const t = await r.text(); let j; try { j = JSON.parse(t); } catch (e) { throw new Error('استجابة غير صالحة (' + (r.status || '') + ') — ' + (/<html|<!doctype/i.test(t) ? 'جوجل أعاد صفحة وليس بيانات: تأكد أن النشر "أي شخص" وأنه إصدار جديد' : t.slice(0, 80))); }
+      if (j && j.error === 'أمر غير معروف') j.error = 'الخادم المنشور قديم ولا يدعم هذا الأمر — حدّث ملف الخادم (Code.gs في Google أو api.php في الاستضافة) ثم انشر نسخة جديدة';
       return j;
     };
     const native = !!(window.AndroidBridge && window.AndroidBridge.httpPost);

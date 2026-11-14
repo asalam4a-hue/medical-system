@@ -284,14 +284,14 @@ function accounts(from, to) {
     let r = map.get(key); if (!r) { r = emptyAcc(key, d, d ? d.name : (v.doctor || '—'), d ? d.clinic : v.clinic); map.set(key, r); }
     const val = +v.value || 0, tx = +v.tax || 0; r.visits++;
     if (v.visitType === 'كشف') r.kosf += val; if (v.visitType === 'متنوع') r.mixed += val; if (v.visitType === 'استشارة') r.consult++;
-    r.committee += comAmt(v); if ((v.category === 'committee' || v.category === 'insurance') && hasPaid(v)) r.padd = (r.padd || 0) + (+v.paid || 0); if (v.category === 'company') r.company += coAmt(v); if (v.category === 'insurance') r.insurance += val; else if (v.remTo === 'insurance') r.insurance += xfer(v);
+    r.committee += comAmt(v); if (v.category === 'company') r.company += coAmt(v); if (v.category === 'insurance') r.insurance += hasPaid(v) ? restV(v) : val; else if (v.remTo === 'insurance') r.insurance += xfer(v);
     r.total += val; r.tax += tx;
     const dm = r.dayMap.get(v.date) || {rev: 0, tax: 0}; dm.rev += val; dm.tax += tx; r.dayMap.set(v.date, dm);
   }
   for (const r of map.values()) {
     const pct = r.doc ? +r.doc.percent || 0 : 0, fx = r.doc ? +r.doc.fixed || 0 : 0;
     for (const dm of r.dayMap.values()) { const due = (dm.rev - dm.tax) * pct / 100; r.due += due; r.fixed += fx; r.right += Math.max(fx, due); }
-    r.cash = r.kosf + r.mixed - r.committee - r.company - r.insurance + (r.padd || 0);
+    r.cash = r.kosf + r.mixed - r.committee - r.company - r.insurance;
   }
   for (const o of S.data.operations.filter(o => o.date >= from && o.date <= to)) {
     const d = S.data.doctors.find(x => x.id === o.doctorId) || S.data.doctors.find(x => x.name === o.doctor);
@@ -331,15 +331,15 @@ const patientShare = v => v.category === 'company' ? coShare(v) : 0;
 /* مديونية المريض: المستحق عليه = (كاش: القيمة | شركة: نصيب المريض | تأمين: الصافي بعد الخصم | لجنة: 0) — والمدفوع الفارغ = مسدد بالكامل */
 const restV = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, (+v.value || 0) - (+v.paid || 0));
 const xfer = v => v.category === 'cash' && (v.remTo === 'committee' || v.remTo === 'insurance') ? restV(v) : 0;
-const comAmt = v => v.category === 'committee' ? (+v.value || 0) : (v.remTo === 'committee' ? xfer(v) : 0);
-const cashOf = v => (v.category === 'committee' || v.category === 'insurance') && hasPaid(v) ? (+v.paid || 0) : v.category === 'committee' ? 0 : Math.max(0, (+v.value || 0) - comAmt(v) - coAmt(v) - discountAmt(v) - owedOf(v));
+const comAmt = v => v.category === 'committee' ? (hasPaid(v) ? restV(v) : (+v.value || 0)) : (v.remTo === 'committee' ? xfer(v) : 0);
+const cashOf = v => v.category === 'committee' ? (hasPaid(v) ? (+v.paid || 0) : 0) : Math.max(0, (+v.value || 0) - comAmt(v) - coAmt(v) - discountAmt(v) - owedOf(v));
 const partyRem = v => comAmt(v) + coAmt(v) + discountAmt(v) + owedOf(v);
 const dueOf = v => v.category === 'company' ? coShare(v) : v.category === 'committee' ? 0 : (+v.value || 0) - discountAmt(v) - (v.remTo === 'committee' ? xfer(v) : 0);
 const owedOf = v => (v.paid === '' || v.paid == null) ? 0 : Math.max(0, dueOf(v) - (+v.paid || 0));
 const paidOf = v => (v.paid === '' || v.paid == null) ? dueOf(v) : (+v.paid || 0);
 const hasPaid = v => !(v.paid === '' || v.paid == null);
 const coAmt = v => v.category !== 'company' ? 0 : (hasPaid(v) ? restV(v) : (+v.value || 0));
-const discountAmt = v => v.category === 'insurance' ? ((+v.value || 0) * (+v.discount || 0) / 100) : (v.remTo === 'insurance' ? xfer(v) : 0);
+const discountAmt = v => v.category === 'insurance' ? (hasPaid(v) ? restV(v) : (+v.value || 0) * (+v.discount || 0) / 100) : (v.remTo === 'insurance' ? xfer(v) : 0);
 
 /* ---------- شريط التاريخ المشترك ---------- */
 const getRange = () => { const r = S.rng; if (r.mode === 'all') return {from: '0000/00/00', to: '9999/99/99'}; return r.mode === 'today' ? {from: today(), to: today()} : r.mode === 'day' ? {from: r.a, to: r.a} : {from: r.a <= r.b ? r.a : r.b, to: r.a <= r.b ? r.b : r.a}; };
