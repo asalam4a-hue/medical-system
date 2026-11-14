@@ -1294,7 +1294,7 @@ function visitAuto(f, why) {
   }
   const co = S.data.companies.find(x => x.name === getv(f, 'company')), fee = co && co.fee > 0 && vt === 'كشف' ? co.fee : (+getv(f, 'value') || 0);
   setv(f, '_cofee', fmtN(fee)); setv(f, '_req', fmtN(cat === 'company' ? fee * (+getv(f, 'patientPct') || 0) / 100 : 0));
-  { const pv = getv(f, 'paid'), due = dueOf({category: cat, value: getv(f, 'value'), patientPct: getv(f, 'patientPct'), discount: getv(f, 'discount'), company: getv(f, 'company'), visitType: vt}); setv(f, '_rem', ['company'].includes(cat) && pv !== '' ? fmtN(Math.max(0, (+getv(f, 'value') || 0) - (+pv || 0))) : cat === 'committee' ? fmtN(+getv(f, 'value') || 0) : cat === 'insurance' && pv !== '' ? fmtN(Math.max(0, (+getv(f, 'value') || 0) - (+pv || 0))) : pv === '' ? fmtN(0) : fmtN(Math.max(0, due - (+pv || 0)))); }
+  { const pv = getv(f, 'paid'), due = dueOf({category: cat, value: getv(f, 'value'), patientPct: getv(f, 'patientPct'), discount: getv(f, 'discount'), company: getv(f, 'company'), visitType: vt}); setv(f, '_rem', ['company', 'committee', 'insurance'].includes(cat) && pv !== '' ? fmtN(Math.max(0, (+getv(f, 'value') || 0) - (+pv || 0))) : cat === 'committee' ? fmtN(+getv(f, 'value') || 0) : cat === 'insurance' && pv !== '' ? fmtN(Math.max(0, (+getv(f, 'value') || 0) - (+pv || 0))) : pv === '' ? fmtN(0) : fmtN(Math.max(0, due - (+pv || 0)))); }
   const dsc = (+getv(f, 'value') || 0) * (+getv(f, 'discount') || 0) / 100; setv(f, '_net', fmtN((+getv(f, 'value') || 0) - dsc));
 }
 function visitBanner(f, ctx) {
