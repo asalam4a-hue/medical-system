@@ -29,7 +29,7 @@ function cashLedger(from, to) {
       const cov = r.kind === 'v' ? r.vs.filter(v => v.category === 'company') : [];
       const o = {kosf: r.kosf, mixed: r.mixed, rev: r.rev, co: r.co, com: r.com, tax: r.tax, ins: r.ins, amount: 0, due: r.due, fixed: r.kind === 'v' && doc ? +doc.fixed || 0 : 0, paid: r.paid};
       add(dsum, o);
-      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: (() => { if (docShown.has(r.c)) return ''; docShown.add(r.c); return docRange(clinicDocs.get(r.c) || []); })(), co: sum(cov, v => +v.value || 0), pct}});
+      lines.push({kind: 'rev', o, cells: {day: dn, date: d, spec: r.c, doctor: r.d === '—' ? '' : r.d, doc1: (() => { if (docShown.has(r.c)) return ''; docShown.add(r.c); return docRange(clinicDocs.get(r.c) || []); })(), co: sum(cov, coAmt), pct}});
     });
     const exps = [];
     S.data.expenses.filter(e => e.doctor && payDay(e) === d).forEach(e => exps.push({amount: +e.amount || 0, bayan: 'د. ' + String(e.doctor).replace(/^د\.?\s*/, ''), doc2: e.docNo || '', notes: e.notes || ''}));
