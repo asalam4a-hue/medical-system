@@ -304,6 +304,8 @@ let cfgDone = null;
 function ensureUrl() {
   if (cfgDone) return cfgDone;
   return cfgDone = (async () => {
+    const userUrl = () => { try { const u = localStorage.getItem('mc_url_user'); return u && GAS_RE.test(u) ? u : ''; } catch (e) { return ''; } };
+    if (MODE === 'php' && userUrl()) { window.API_URL = userUrl(); return; }   /* رابط يحدده المستخدم له الأولوية على server.json */
     if (!window.API_URL || MODE !== 'php') return;
     try { const c = localStorage.getItem('mc_url'); if (c && GAS_RE.test(c)) window.API_URL = c; } catch (e) {}
     try {
@@ -957,7 +959,7 @@ async function syncOnce() {
 function staleBanner(stale) {
   let b = document.getElementById('stale'); if (!stale) { b && b.remove(); return; } if (b) return;
   b = document.createElement('div'); b.id = 'stale'; b.className = 'noprint'; b.style.cssText = 'position:sticky;top:0;z-index:99;background:#c0392b;color:#fff;padding:8px 12px;text-align:center;font-weight:bold';
-  b.textContent = '⚠️ خادم Google المرتبط بهذا البرنامج قديم: المدفوع والمتبقي وبنود الإعدادات لن تُحفظ صحيحة. الصق Code.gs الجديد في Apps Script ثم Deploy ← Manage deployments ← New version.'; document.body.prepend(b);
+  b.textContent = '⚠️ خادم Google المرتبط بهذا البرنامج قديم: المدفوع والمتبقي وبنود الإعدادات لن تُحفظ صحيحة. الصق Code.gs الجديد في Apps Script ثم Deploy ← Manage deployments ← New version. إذا أنشأت Deployment جديداً برابط جديد فاضغط الزر لإدخاله.  '; const bt = document.createElement('button'); bt.textContent = '🔗 تغيير رابط الخادم'; bt.style.cssText = 'margin-inline-start:8px;padding:3px 10px;border-radius:6px;border:0;font-weight:bold;cursor:pointer'; bt.onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_url_user') || window.API_URL || ''; } catch (e) { return window.API_URL || ''; } })(); const u = (prompt('الصق رابط النشر الجديد (ينتهي بـ /exec):', cur) || '').trim(); if (!u) return; if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u)) return alert('الرابط غير صحيح: يجب أن يبدأ بـ https://script.google.com/macros/s/ وينتهي بـ /exec'); try { localStorage.setItem('mc_url_user', u); } catch (e) {} location.reload(); }; b.appendChild(bt); document.body.prepend(b);
 }
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);

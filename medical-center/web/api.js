@@ -13,6 +13,8 @@ let cfgDone = null;
 function ensureUrl() {
   if (cfgDone) return cfgDone;
   return cfgDone = (async () => {
+    const userUrl = () => { try { const u = localStorage.getItem('mc_url_user'); return u && GAS_RE.test(u) ? u : ''; } catch (e) { return ''; } };
+    if (MODE === 'php' && userUrl()) { window.API_URL = userUrl(); return; }   /* رابط يحدده المستخدم له الأولوية على server.json */
     if (!window.API_URL || MODE !== 'php') return;
     try { const c = localStorage.getItem('mc_url'); if (c && GAS_RE.test(c)) window.API_URL = c; } catch (e) {}
     try {
