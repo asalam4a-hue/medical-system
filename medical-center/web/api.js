@@ -165,7 +165,7 @@ const Local = {
     const me = tk && tk.exp > Date.now() && (db.rec.users || []).find(x => x.id === tk.id && x.active);
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
-    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true}; }
+    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true, ver: 5}; }
     if (A === 'presence') { if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); return {list: Object.entries(db.presence || {}).map(([id, v]) => Object.assign({id}, v))}; }
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
     if (['settings_save','backup','restore','reset','resetvisits','master_save','master_restore','master_info'].includes(A)) {

@@ -386,7 +386,7 @@ let syncSig = '';
 const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
 async function syncOnce() {
   if (!S.user || document.hidden || S.busy) return;
-  API.call('ping', {page: curTitle()}).catch(e => { if (e.code === 'auth') logoutLocal(); });
+  API.call('ping', {page: curTitle()}).then(r => staleBanner(!r || !(r.ver >= 5))).catch(e => { if (e.code === 'auth') logoutLocal(); });
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
   try {
@@ -400,10 +400,16 @@ async function syncOnce() {
     }
   } catch (e) { if (e.code === 'auth') logoutLocal(); }
 }
+/* الخادم المنشور أقدم من البرنامج: حقول جديدة (المدفوع/المتبقي/الإعدادات) تُهمَل ويظهر «أمر غير معروف» */
+function staleBanner(stale) {
+  let b = document.getElementById('stale'); if (!stale) { b && b.remove(); return; } if (b) return;
+  b = document.createElement('div'); b.id = 'stale'; b.className = 'noprint'; b.style.cssText = 'position:sticky;top:0;z-index:99;background:#c0392b;color:#fff;padding:8px 12px;text-align:center;font-weight:bold';
+  b.textContent = '⚠️ خادم Google المرتبط بهذا البرنامج قديم: المدفوع والمتبقي وبنود الإعدادات لن تُحفظ صحيحة. الصق Code.gs الجديد في Apps Script ثم Deploy ← Manage deployments ← New version.'; document.body.prepend(b);
+}
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000); setTimeout(syncOnce, 2500);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
   window.addEventListener('online', () => syncOnce());
 }

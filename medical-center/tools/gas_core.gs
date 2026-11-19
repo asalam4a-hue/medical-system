@@ -253,7 +253,7 @@ function route_(b) {
   if (!me) throw new ApiError('انتهت الجلسة، سجل الدخول من جديد', 'auth');
   me.perms = me.perms || [];
   if (A === 'me') return {user: pub_(me)};
-  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true}; }
+  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true, ver: 5}; }
   if (A === 'presence') {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     var pl = []; getAll_('users').forEach(function (u) { var v = cache.get('p_' + u.id); if (v) { try { var o = JSON.parse(v); o.id = u.id; pl.push(o); } catch (x) {} } });

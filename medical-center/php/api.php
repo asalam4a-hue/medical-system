@@ -198,7 +198,7 @@ function handle(PDO $db, array $b): void {
   if ($A === 'me') jout(['user' => pub($me)]);
   if ($A === 'logout') { $db->prepare('DELETE FROM tokens WHERE token=?')->execute([$tk]); jout(['ok' => true]); }
 
-  if ($A === 'ping') { $db->prepare('INSERT INTO presence(uid,at,page,client) VALUES(?,?,?,?) ON CONFLICT(uid) DO UPDATE SET at=excluded.at,page=excluded.page,client=excluded.client')->execute([$me['id'], time() * 1000, mb_substr((string)($b['page'] ?? ''), 0, 60), mb_substr((string)($b['client'] ?? ''), 0, 20)]); jout(['ok' => true]); }
+  if ($A === 'ping') { $db->prepare('INSERT INTO presence(uid,at,page,client) VALUES(?,?,?,?) ON CONFLICT(uid) DO UPDATE SET at=excluded.at,page=excluded.page,client=excluded.client')->execute([$me['id'], time() * 1000, mb_substr((string)($b['page'] ?? ''), 0, 60), mb_substr((string)($b['client'] ?? ''), 0, 20)]); jout(['ok' => true, 'ver' => 5]); }
   if (in_array($A, ['presence', 'settings_save', 'backup', 'restore', 'reset', 'resetvisits', 'master_save', 'master_restore', 'master_info', 'sync_sheets', 'bulk_save'], true)) {
     if (empty($me['isAdmin'])) jerr('للمدير فقط', 'forbidden');
     if ($A === 'presence') { $o = []; foreach ($db->query('SELECT uid,at,page,client FROM presence') as $r) $o[] = ['id' => $r['uid'], 'at' => (int)$r['at'], 'page' => $r['page'], 'client' => $r['client']]; jout(['list' => $o]); }
