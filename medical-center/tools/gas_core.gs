@@ -19,7 +19,7 @@ var FIELDS = {
   custody: 'date,person,kind,dir,amount,notes,docNo',
   execs: 'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
   opx: 'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
-  opset: 'kind,code,name,extra,active'
+  opset: 'kind,ref,name,extra,active'
 };
 var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate', 'execDate'];

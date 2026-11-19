@@ -39,14 +39,14 @@ function crud(cfg) {
       frm().addEventListener('change', ev => { showGroups(); cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing}); });
       frm().addEventListener('input', ev => { if (ev.target.matches('[data-sg],input[type=number],[data-dt]')) cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing, typing: true}); });
       frm().onsubmit = ev => { ev.preventDefault(); const more = !!(ev.submitter && ev.submitter.dataset.more); guard(ev.submitter || $('button[type=submit]', frm()), async () => {
-        const raw = readForm(frm()); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
+        const raw = readForm(frm()); if (cfg.before) await cfg.before(raw); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
         for (const f of fields) if (f.req && !String(rec[f.k] == null ? raw[f.k] : rec[f.k]).trim()) throw new Error(`حقل "${f.l}" مطلوب`);
         for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
         if (cfg.validate) { const m = cfg.validate(rec, editing); if (m) throw new Error(m); }
         if (editing) rec.id = editing;
         const r = cfg.saveFn ? await cfg.saveFn(rec, editing) : await API.call('save', {entity: cfg.ent, record: rec});
         if (cfg.after) await cfg.after(r.record, rec);
-        await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
+        if (!upsertLocal(cfg.ent, r.record)) await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
       }); };
     };
     const refreshList = () => { const rb = $('[data-rangebar]'); if (rb) rb.outerHTML = rangeBar(); const l = $('#lst'); if (l) { l.innerHTML = listHTML(); hydrateImgs(l); } };
@@ -241,6 +241,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
   cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'المدفوع (نقدي)', f: r => r._op ? '' : fmtN(cashOf(r)), sum: r => r._op ? 0 : cashOf(r)}, {h: 'المتبقي', f: r => r._op ? '' : fmtN(partyRem(r)), sum: r => r._op ? 0 : partyRem(r)}, {h: 'تخدير', f: r => +r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}` : ''}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: S.surgOnly ? 'عمليات جراحية' : 'كشف', clinic: S.surgOnly ? 'عمليات جراحية' : '', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
+  before: docAutoReg,
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
@@ -263,10 +264,11 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
         await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
         toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة (مقرّبة لأقرب 10): ' + fmtN(req));
       } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
-      await loadAll(['visits']);
+      if (req > 0 || old) await loadAll(['visits']);
     } catch (e) {}
     const p = S.data.patients.find(x => x.name === sent.patient);
-    try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
+    /* المريض يُسجَّل في الخلفية دون انتظار */
+    if (!p || (sent.phone && p.phone !== sent.phone)) API.call('save', {entity: 'patients', record: p ? Object.assign({}, p, {phone: sent.phone}) : {name: sent.patient, phone: sent.phone}}).then(r => upsertLocal('patients', r.record)).catch(() => {});
   },
   onChange: (n, f, ctx) => {
     if (n === '*') { visitLast(f, ctx); visitAuto(f, '*'); return; }

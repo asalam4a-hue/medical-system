@@ -400,7 +400,7 @@ const FIELDS = {
   custody:'date,person,kind,dir,amount,notes,docNo',
   execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
   opx:'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
-  opset:'kind,code,name,extra,active'
+  opset:'kind,ref,name,extra,active'
 };
 const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
@@ -646,10 +646,17 @@ function confirmBox(msg) {
 }
 const spin = () => '<div class="spinner"></div>';
 async function guard(btn, fn) {
-  if (btn) btn.disabled = true;
+  if (btn) btn.disabled = true; S.busy = (S.busy || 0) + 1;
   try { return await fn(); }
   catch (e) { if (e.code === 'auth') { logoutLocal(); } toast(e.message || 'حدث خطأ', true); }
-  finally { if (btn) btn.disabled = false; }
+  finally { S.busy = Math.max(0, (S.busy || 1) - 1); if (btn) btn.disabled = false; }
+}
+/* تحديث محلي فوري بعد الحفظ بدل إعادة تحميل القائمة كاملة من الخادم */
+function upsertLocal(ent, rec) {
+  const arr = S.data[ent]; if (!rec || !rec.id || !Array.isArray(arr)) return false;
+  const i = arr.findIndex(x => x.id === rec.id); if (i >= 0) arr[i] = Object.assign({}, arr[i], rec); else arr.push(rec);
+  if (ent === 'visits') { if (+rec.serial) S.ctr.visits = Math.max(S.ctr.visits || 0, +rec.serial); deriveOps(); }
+  return true;
 }
 
 /* ---------- الصور ---------- */
@@ -752,6 +759,14 @@ document.addEventListener('change', e => {
   const form = t.closest('form'), cl = form ? ($('[name=clinic]', form) || {}).value : '', h = $('input[type=hidden]', t.closest('.docpick')), d = docResolve(t.value, cl);
   h.value = d ? d.id : ''; h.dispatchEvent(new Event('change', {bubbles: true}));
 });
+/* طبيب غير مسجل: يُسجَّل تلقائياً في شاشة الأطباء ثم يُربط بالزيارة */
+async function docAutoReg(raw) {
+  for (const k of ['_doc', '_anes']) {
+    const n = String(raw[k + 'n'] || '').trim(); if (!n || raw[k]) continue;
+    let d = docResolve(n, raw.clinic); if (!d) { const r = await API.call('save', {entity: 'doctors', record: {name: n, clinic: k === '_doc' ? (raw.clinic || '') : 'التخدير', percent: 0, fixed: 0, opPercent: 0}}); d = r.record; upsertLocal('doctors', d); toast('تم تسجيل الطبيب «' + n + '» في شاشة الأطباء — أكمل نسبته لاحقاً'); }
+    raw[k] = d.id;
+  }
+}
 const docNameCheck = raw => { for (const k of ['_doc', '_anes']) if (raw[k + 'n'] && !raw[k]) throw new Error('اسم الطبيب غير مسجل في شاشة الأطباء: ' + raw[k + 'n']); };
 const comboCheck = (v, list, label) => { if (v && !list.includes(v)) throw new Error(label + ' غير موجود — اختر من القائمة المقترحة'); };
 
@@ -766,6 +781,7 @@ const SG = {
   vtypes: () => uniq([...S.data.visits.map(v => v.visitType), ...VTYPES]),
   alldocs: () => uniq(S.data.doctors.map(d => d.name)),
   clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : '', ds = S.data.doctors.filter(d => !cl || d.clinic === cl), names = ds.map(d => d.name); return uniq([...S.data.visits.filter(v => !cl || v.clinic === cl).map(v => v.doctor), ...names]).filter(x => names.includes(x)); },
+  opx_dept: () => opsetNames('dept'), opx_item: () => opsetNames('item'), opx_center: () => opsetNames('center'), opx_method: () => opsetNames('method'), opx_vendor: () => uniq(S.data.opx.map(r => r.vendor)),
   custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
@@ -922,7 +938,7 @@ Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, 
 let syncSig = '';
 const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
 async function syncOnce() {
-  if (!S.user || document.hidden) return;
+  if (!S.user || document.hidden || S.busy) return;
   API.call('ping', {page: curTitle()}).catch(e => { if (e.code === 'auth') logoutLocal(); });
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
@@ -940,7 +956,7 @@ async function syncOnce() {
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
   window.addEventListener('online', () => syncOnce());
 }
@@ -1148,14 +1164,14 @@ function crud(cfg) {
       frm().addEventListener('change', ev => { showGroups(); cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing}); });
       frm().addEventListener('input', ev => { if (ev.target.matches('[data-sg],input[type=number],[data-dt]')) cfg.onChange && cfg.onChange(ev.target.name, frm(), {editing, typing: true}); });
       frm().onsubmit = ev => { ev.preventDefault(); const more = !!(ev.submitter && ev.submitter.dataset.more); guard(ev.submitter || $('button[type=submit]', frm()), async () => {
-        const raw = readForm(frm()); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
+        const raw = readForm(frm()); if (cfg.before) await cfg.before(raw); let rec = cfg.collect ? cfg.collect(raw) : Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
         for (const f of fields) if (f.req && !String(rec[f.k] == null ? raw[f.k] : rec[f.k]).trim()) throw new Error(`حقل "${f.l}" مطلوب`);
         for (const f of fields) if (f.t === 'date' && rec[f.k] && !validDate(rec[f.k])) throw new Error(`"${f.l}": الصيغة yyyy/mm/dd`);
         if (cfg.validate) { const m = cfg.validate(rec, editing); if (m) throw new Error(m); }
         if (editing) rec.id = editing;
         const r = cfg.saveFn ? await cfg.saveFn(rec, editing) : await API.call('save', {entity: cfg.ent, record: rec});
         if (cfg.after) await cfg.after(r.record, rec);
-        await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
+        if (!upsertLocal(cfg.ent, r.record)) await loadAll([cfg.ent]); toast('تم الحفظ ✔'); $('#lst').innerHTML = listHTML(); hydrateImgs($('#lst')); reset(); if (more && cfg.keep) { setForm(frm(), Object.fromEntries(cfg.keep.filter(k => raw[k] !== undefined).map(k => [k, raw[k]]))); showGroups(); cfg.onChange && cfg.onChange('*', frm(), {editing: null}); cfg.onChange && cfg.onChange('patient', frm(), {editing: null}); }
       }); };
     };
     const refreshList = () => { const rb = $('[data-rangebar]'); if (rb) rb.outerHTML = rangeBar(); const l = $('#lst'); if (l) { l.innerHTML = listHTML(); hydrateImgs(l); } };
@@ -1350,6 +1366,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
   cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'المدفوع (نقدي)', f: r => r._op ? '' : fmtN(cashOf(r)), sum: r => r._op ? 0 : cashOf(r)}, {h: 'المتبقي', f: r => r._op ? '' : fmtN(partyRem(r)), sum: r => r._op ? 0 : partyRem(r)}, {h: 'تخدير', f: r => +r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}` : ''}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
   defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: S.surgOnly ? 'عمليات جراحية' : 'كشف', clinic: S.surgOnly ? 'عمليات جراحية' : '', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
+  before: docAutoReg,
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
     const d = S.data.doctors.find(x => x.id === raw._doc); const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_')));
@@ -1372,10 +1389,11 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
         await API.call('save', {entity: 'visits', record: old ? Object.assign({}, old, base) : base});
         toast('تمت إضافة زيارة «المركز — متنوع — نسبة شركات» بقيمة (مقرّبة لأقرب 10): ' + fmtN(req));
       } else if (old) await API.call('delete', {entity: 'visits', id: old.id});
-      await loadAll(['visits']);
+      if (req > 0 || old) await loadAll(['visits']);
     } catch (e) {}
     const p = S.data.patients.find(x => x.name === sent.patient);
-    try { if (!p) await API.call('save', {entity: 'patients', record: {name: sent.patient, phone: sent.phone}}); else if (sent.phone && p.phone !== sent.phone) await API.call('save', {entity: 'patients', record: Object.assign({}, p, {phone: sent.phone})}); await loadAll(['patients']); } catch (e) {}
+    /* المريض يُسجَّل في الخلفية دون انتظار */
+    if (!p || (sent.phone && p.phone !== sent.phone)) API.call('save', {entity: 'patients', record: p ? Object.assign({}, p, {phone: sent.phone}) : {name: sent.patient, phone: sent.phone}}).then(r => upsertLocal('patients', r.record)).catch(() => {});
   },
   onChange: (n, f, ctx) => {
     if (n === '*') { visitLast(f, ctx); visitAuto(f, '*'); return; }
@@ -2143,7 +2161,7 @@ const opxRest = r => r.status === 'ok' ? Math.max(0, (+r.amount || 0) - opxPaid(
 const opxLate = r => r.status === 'ok' && r.dueDate && validDate(r.dueDate) && r.dueDate < today() && opxRest(r) > 0.005;
 const opxStTag = r => `<span class="tag c-${{draft: 'blue', wait: 'cyan', ok: 'lime', no: 'red'}[r.status] || 'blue'}">${OPX_ST[r.status] || OPX_ST.wait}</span>`;
 const opxPayTag = r => { if (r.status !== 'ok') return '<span class="muted">—</span>'; const p = opxPaid(r), rest = opxRest(r); return rest <= 0.005 ? '<span class="tag c-lime">مدفوع كلياً</span>' : (p > 0 ? '<span class="tag c-orange">مدفوع جزئياً</span>' : '<span class="tag c-red">غير مدفوع</span>') + (opxLate(r) ? ' <span class="tag c-pink">متأخر</span>' : ''); };
-const opxCfg = (name, d) => { const x = S.data.opset.find(r => r.kind === 'cfg' && r.code === name); return x ? x.name : d; };
+const opxCfg = (name, d) => { const x = S.data.opset.find(r => r.kind === 'cfg' && r.ref === name); return x ? x.name : d; };
 const opxPrefix = () => opxCfg('prefix', 'EX-');
 const opxNext = () => { const p = opxPrefix(); let m = 0; S.data.opx.forEach(r => { const mt = String(r.no || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); }); return p + String(m + 1).padStart(4, '0'); };
 const opxF = () => (S.opf = S.opf || {st: '', dept: '', item: '', pay: '', q: ''});
@@ -2158,12 +2176,34 @@ const opxRing = t => { const p = t.appr > 0 ? Math.round(t.paid / t.appr * 100) 
 const opxKpis = (t, extra) => kpiRow([['المعتمد', fmtN(t.appr), 'orange'], ['المدفوع', fmtN(t.paid), 'lime'], ['المتبقي', fmtN(t.rest), 'red'], ['بانتظار الاعتماد', t.wait, 'cyan'], ['متأخرة في السداد', t.late, 'pink']].concat(extra || []));
 const opxDeny = () => { $('#main').innerHTML = '<div class="panel">⛔ لا تملك صلاحية فتح هذه الشاشة</div>'; };
 
+/* أي قيمة جديدة تُكتب في الإدارة / البند / مركز التكلفة / طريقة السداد تُضاف تلقائياً للقوائم */
+async function opxEnsure(kind, name, extra) {
+  name = String(name || '').trim(); if (!name || S.data.opset.some(x => x.kind === kind && x.name === name)) return;
+  let m = 0; S.data.opset.filter(x => x.kind === kind).forEach(x => { const mt = String(x.ref || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); });
+  const r = await API.call('save', {entity: 'opset', record: {kind, ref: OPX_KIND[kind].p + String(m + 1).padStart(3, '0'), name, extra: extra || '', active: true}}); upsertLocal('opset', r.record);
+}
+async function opxEnsureAll(v) { await opxEnsure('dept', v.dept); await opxEnsure('item', v.item); await opxEnsure('center', v.center, v.dept); }
+/* إضافة مصروف سريعة (نافذة) من أي شاشة مصروفات */
+Acts.opxnew = () => {
+  const f = (k, l, extra, val) => fieldHTML(Object.assign({k, l}, extra || {}), val == null ? '' : val);
+  const m = modal(`<h3>➕ مصروف جديد</h3><div class="grid">${f('date', 'تاريخ المصروف', {t: 'date'}, today())}${f('dept', 'الإدارة', {req: 1, sg: 'opx_dept'})}${f('item', 'بند الصرف', {req: 1, sg: 'opx_item'})}${f('center', 'مركز التكلفة', {sg: 'opx_center'})}${f('vendor', 'المورد / المستفيد', {sg: 'opx_vendor'})}${f('invoiceNo', 'مرجع الفاتورة')}${f('dueDate', 'تاريخ الاستحقاق', {t: 'date'})}${f('amount', 'المبلغ', {t: 'num', req: 1})}${f('desc', 'البيان', {t: 'area'})}</div><p class="muted">اكتب أي إدارة أو بند جديد وسيُضاف تلقائياً للقوائم.</p><div class="actions"><button class="btn c-lime" id="qok">💾 حفظ</button><button class="btn ghost" id="qcl">إلغاء</button></div>`);
+  $('#qcl', m).onclick = () => m.remove();
+  $('#qok', m).onclick = e => guard(e.target, async () => {
+    const v = readForm(m); if (!String(v.dept || '').trim() || !String(v.item || '').trim()) throw new Error('الإدارة وبند الصرف مطلوبان'); if (!(+v.amount > 0)) throw new Error('اكتب مبلغاً صحيحاً'); if (!validDate(v.date)) throw new Error('تاريخ المصروف: الصيغة yyyy/mm/dd');
+    await opxEnsureAll(v);
+    const rec = {no: opxNext(), date: v.date, dept: String(v.dept).trim(), item: String(v.item).trim(), center: v.center || '', vendor: v.vendor || '', invoiceNo: v.invoiceNo || '', dueDate: v.dueDate || '', amount: +v.amount, desc: v.desc || '', status: 'wait', pays: '', attach: ''};
+    const r = await API.call('save', {entity: 'opx', record: rec}); upsertLocal('opx', r.record); m.remove(); toast('تم حفظ المصروف ✔'); S.view && S.view.refresh && S.view.refresh();
+  });
+};
+const opxAddBtn = '<button class="btn c-orange" data-act="opxnew">➕ مصروف جديد</button>';
+
 /* القوائم الافتراضية (تُنشأ مرة واحدة عند أول فتح) */
 async function opxSeed() {
   if (S.opxSeeded || S.data.opset.length || !(S.user && (S.user.isAdmin || can('opx_set')))) return; S.opxSeeded = true;
   try {
-    for (const k of Object.keys(OPX_DEF)) { let n = 0; for (const [name, extra] of OPX_DEF[k]) await API.call('save', {entity: 'opset', record: {kind: k, code: OPX_KIND[k].p + String(++n).padStart(3, '0'), name, extra, active: true}}); }
-    await API.call('save', {entity: 'opset', record: {kind: 'cfg', code: 'prefix', name: 'EX-', extra: '', active: true}});
+    const recs = []; for (const k of Object.keys(OPX_DEF)) { let n = 0; for (const [name, extra] of OPX_DEF[k]) recs.push({kind: k, ref: OPX_KIND[k].p + String(++n).padStart(3, '0'), name, extra, active: true}); }
+    recs.push({kind: 'cfg', ref: 'prefix', name: 'EX-', extra: '', active: true});
+    if (S.user.isAdmin) await API.call('bulk_save', {entity: 'opset', records: recs, key: 'kind,name'}); else for (const r of recs) await API.call('save', {entity: 'opset', record: r});
     await loadAll(['opset']);
   } catch (e) {}
 }
@@ -2173,22 +2213,23 @@ SCREEN_RENDER.opx_data = async function (a) { await opxSeed(); return _opxData(a
 const _opxData = crud({k: 'opx_data', ent: 'opx', t: 'إدارة المصروفات التشغيلية', i: '💳', c: 'orange', add: 'مصروف جديد', dated: true,
   fields: [
     {k: 'no', l: 'رقم المصروف (تلقائي)', t: 'ro'}, {k: 'date', l: 'تاريخ المصروف', t: 'date', req: 1},
-    {k: 'dept', l: 'الإدارة', t: 'sel', req: 1, opts: () => ['', ...opsetNames('dept')].map(x => ({v: x, l: x || '— اختر الإدارة —'}))},
-    {k: 'item', l: 'بند الصرف', t: 'sel', req: 1, opts: () => ['', ...opsetNames('item')].map(x => ({v: x, l: x || '— اختر البند —'}))},
-    {k: 'center', l: 'مركز التكلفة', t: 'sel', opts: () => ['', ...opsetNames('center')].map(x => ({v: x, l: x || '— اختر —'}))},
-    {k: 'vendor', l: 'المورد / المستفيد'}, {k: 'invoiceNo', l: 'مرجع الفاتورة'}, {k: 'dueDate', l: 'تاريخ الاستحقاق', t: 'date'},
+    {k: 'dept', l: 'الإدارة', req: 1, sg: 'opx_dept', ph: 'اكتب أو اختر — الجديد يُسجَّل تلقائياً'},
+    {k: 'item', l: 'بند الصرف', req: 1, sg: 'opx_item', ph: 'اكتب أو اختر — الجديد يُسجَّل تلقائياً'},
+    {k: 'center', l: 'مركز التكلفة', sg: 'opx_center', ph: 'اكتب أو اختر'},
+    {k: 'vendor', l: 'المورد / المستفيد', sg: 'opx_vendor'}, {k: 'invoiceNo', l: 'مرجع الفاتورة'}, {k: 'dueDate', l: 'تاريخ الاستحقاق', t: 'date'},
     {k: 'amount', l: 'المبلغ', t: 'num', req: 1}, {k: 'status', l: 'حالة الاعتماد', t: 'sel', opts: () => Object.keys(OPX_ST).map(k => ({v: k, l: OPX_ST[k]}))},
     {k: 'desc', l: 'البيان', t: 'area'}, {k: 'attach', l: 'المرفق (فاتورة / مستند)', t: 'img'},
     {k: '_h', t: 'html', html: () => '<input type="hidden" name="pays"><input type="hidden" name="approvedBy"><input type="hidden" name="approvedAt">'}],
   cols: [{h: 'رقم المصروف', f: r => `<b>${esc(r.no)}</b>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'البند', f: r => esc(r.item)}, {h: 'الإدارة', f: r => esc(r.dept)}, {h: 'المورد', f: r => esc(r.vendor)}, {h: 'المبلغ', f: r => fmtN(r.amount), sum: r => r.amount}, {h: 'الاعتماد', f: opxStTag}, {h: 'السداد', f: opxPayTag}, {h: 'المدفوع', f: r => fmtN(opxPaid(r)), sum: opxPaid}, {h: 'المتبقي', f: r => fmtN(opxRest(r)), sum: opxRest}, {h: 'المرفق', f: r => thumb(r.attach)}],
   sort: (a, b) => b.date.localeCompare(a.date) || String(b.no).localeCompare(String(a.no)),
+  before: raw => opxEnsureAll(raw),
   defaults: () => ({no: opxNext(), date: today(), status: 'wait'}),
   collect: raw => { const o = Object.fromEntries(Object.entries(raw).filter(([k]) => !k.startsWith('_'))); o.no = raw.no || opxNext(); if (o.status === 'ok' && !o.approvedBy) { o.approvedBy = S.user.username; o.approvedAt = today(); } return o; },
   validate: (r, ed) => { const old = ed ? S.data.opx.find(x => x.id === ed) : null; if (old && +r.amount < opxPaid(old)) return 'المبلغ أقل من المدفوع فعلياً (' + fmtN(opxPaid(old)) + ')'; if (!(+r.amount > 0)) return 'اكتب مبلغاً صحيحاً'; return ''; }
 });
 
 /* ---------- عرض بطاقة المصروف + الاعتماد + السداد ---------- */
-async function opxSave(r, patch) { await API.call('save', {entity: 'opx', record: Object.assign({}, r, patch)}); await loadAll(['opx']); S.view && S.view.refresh && await S.view.refresh(); }
+async function opxSave(r, patch) { const x = await API.call('save', {entity: 'opx', record: Object.assign({}, r, patch)}); if (!upsertLocal('opx', x.record)) await loadAll(['opx']); S.view && S.view.refresh && await S.view.refresh(); }
 Acts.opxview = el => {
   const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return;
   const ps = opxPays(r), t = opxTot([r]);
@@ -2209,12 +2250,12 @@ Acts.opxappr = el => guard(el, async () => {
 Acts.opxpay = el => {
   const r = S.data.opx.find(x => x.id === el.dataset.id); if (!r) return; const rest = opxRest(r);
   document.querySelectorAll('.modal').forEach(x => x.remove());
-  const m = modal(`<h3>💰 تسجيل سداد — ${esc(r.no)} (${esc(r.item)})</h3><p class="muted">المتبقي: <b>${fmtN(rest)}</b></p><div class="grid">${fieldHTML({k: 'pamt', l: 'المبلغ المسدد', t: 'num'}, rest)}${fieldHTML({k: 'pdate', l: 'تاريخ السداد', t: 'date'}, today())}${fieldHTML({k: 'pmeth', l: 'طريقة السداد', t: 'sel', opts: () => opsetNames('method').map(x => ({v: x, l: x}))}, '')}${fieldHTML({k: 'pref', l: 'مرجع السند / الإيصال'}, '')}</div><div class="actions"><button class="btn c-lime" id="pok">✅ تسجيل</button><button class="btn ghost" id="pcl">إلغاء</button></div>`);
+  const m = modal(`<h3>💰 تسجيل سداد — ${esc(r.no)} (${esc(r.item)})</h3><p class="muted">المتبقي: <b>${fmtN(rest)}</b></p><div class="grid">${fieldHTML({k: 'pamt', l: 'المبلغ المسدد', t: 'num'}, rest)}${fieldHTML({k: 'pdate', l: 'تاريخ السداد', t: 'date'}, today())}${fieldHTML({k: 'pmeth', l: 'طريقة السداد', sg: 'opx_method'}, '')}${fieldHTML({k: 'pref', l: 'مرجع السند / الإيصال'}, '')}</div><div class="actions"><button class="btn c-lime" id="pok">✅ تسجيل</button><button class="btn ghost" id="pcl">إلغاء</button></div>`);
   $('#pcl', m).onclick = () => m.remove();
   $('#pok', m).onclick = e => guard(e.target, async () => {
     const v = readForm(m), amt = +v.pamt || 0; if (amt <= 0) throw new Error('اكتب مبلغاً صحيحاً'); if (amt > rest + 0.005) throw new Error('المبلغ أكبر من المتبقي (' + fmtN(rest) + ')'); if (!validDate(v.pdate)) throw new Error('التاريخ yyyy/mm/dd');
     const ps = opxPays(r).concat([{id: Date.now().toString(36), date: v.pdate, amount: amt, method: v.pmeth || '', ref: v.pref || '', by: S.user.username}]);
-    await opxSave(r, {pays: JSON.stringify(ps)}); m.remove(); toast('تم تسجيل السداد ✔');
+    await opxEnsure('method', v.pmeth); await opxSave(r, {pays: JSON.stringify(ps)}); m.remove(); toast('تم تسجيل السداد ✔');
   });
 };
 Acts.opxprint = el => {
@@ -2230,7 +2271,7 @@ SCREEN_RENDER.opx_reg = async function () {
   const main = $('#main');
   const draw = () => {
     const rs = opxList(), t = opxTot(rs), f = opxF(), sel = (k, label, opts) => `<select data-opf="${k}" title="${label}"><option value="">${label}: الكل</option>${opts.map(o => `<option value="${esc(o.v)}" ${f[k] === o.v ? 'selected' : ''}>${esc(o.l)}</option>`).join('')}</select>`;
-    main.innerHTML = `${pageHead('سجل المصروفات التشغيلية', '📒', 'orange')}${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div>
+    main.innerHTML = `${pageHead('سجل المصروفات التشغيلية', '📒', 'orange')}<div class="bar noprint">${opxAddBtn}</div>${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div>
     <div class="bar noprint">${sel('st', 'الاعتماد', Object.keys(OPX_ST).map(k => ({v: k, l: OPX_ST[k]})))}${sel('pay', 'السداد', [{v: 'unpaid', l: 'غير مدفوع'}, {v: 'part', l: 'مدفوع جزئياً'}, {v: 'paid', l: 'مدفوع كلياً'}, {v: 'late', l: 'متأخر'}])}${sel('dept', 'الإدارة', opsetNames('dept').map(x => ({v: x, l: x})))}${sel('item', 'البند', opsetNames('item').map(x => ({v: x, l: x})))}<input type="text" data-opf="q" placeholder="🔎 بحث برقم المصروف أو المورد…" value="${esc(f.q)}"><button class="btn sm ghost" data-act="opxclr">مسح الفلتر</button>${window.exportButtons}<button class="btn sm c-orange" data-act="go" data-s="opx_data">➕ مصروف جديد</button></div>
     ${tbl(['رقم المصروف', 'التاريخ', 'البند', 'الإدارة', 'المبلغ', 'الاعتماد', 'السداد', 'المدفوع', 'المتبقي', 'عرض'], rs.map(r => [`<b>${esc(r.no)}</b>`, esc(r.date), esc(r.item), esc(r.dept), fmtN(r.amount), opxStTag(r), opxPayTag(r), fmtN(opxPaid(r)), fmtN(opxRest(r)), `<button class="btn sm c-blue" data-act="opxview" data-id="${r.id}">👁</button>`]), ['الإجمالي (' + rs.length + ')', '', '', '', fmtN(t.total), '', '', fmtN(t.paid), fmtN(t.rest), ''])}`;
   };
@@ -2253,7 +2294,7 @@ SCREEN_RENDER.opx_apr = async function () {
       const ps = []; all.forEach(r => opxPays(r).forEach(p => ps.push({r, p}))); ps.sort((a, b) => b.p.date.localeCompare(a.p.date));
       body = tbl(['التاريخ', 'المصروف', 'البند', 'المبلغ', 'الطريقة', 'المرجع', 'بواسطة'], ps.map(({r, p}) => [esc(p.date), esc(r.no), esc(r.item), fmtN(p.amount), esc(p.method), esc(p.ref), esc(p.by)]), ['الإجمالي', '', '', fmtN(sum(ps, x => x.p.amount)), '', '', '']);
     }
-    main.innerHTML = `${pageHead('الاعتماد والسداد', '✅', 'lime')}${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div><div class="bar noprint">${tabs}</div>${body}<div class="panel accent c-cyan"><b>قاعدة العمل:</b> الاعتماد لا يعني السداد. لا يمكن تسجيل دفعة إلا بعد اعتماد المصروف، ولا يمكن أن تزيد الدفعات عن قيمته.</div>`;
+    main.innerHTML = `${pageHead('الاعتماد والسداد', '✅', 'lime')}<div class="bar noprint">${opxAddBtn}</div>${rangeBar()}${opxKpis(t)}<div class="panel">${opxRing(t)}</div><div class="bar noprint">${tabs}</div>${body}<div class="panel accent c-cyan"><b>قاعدة العمل:</b> الاعتماد لا يعني السداد. لا يمكن تسجيل دفعة إلا بعد اعتماد المصروف، ولا يمكن أن تزيد الدفعات عن قيمته.</div>`;
   };
   S.view = {refresh: draw}; draw();
 };
@@ -2262,19 +2303,19 @@ Acts.opxtab2 = el => { S.opxTab = el.dataset.v; S.view.refresh(); };
 /* ---------- القوائم (بنود الصرف / الإدارات / مراكز التكلفة / طرق السداد / المسؤولون) ---------- */
 function opSetEdit(kind, id, after) {
   const K = OPX_KIND[kind], r = id ? S.data.opset.find(x => x.id === id) : null;
-  let code = r ? r.code : ''; if (!code) { let m = 0; S.data.opset.filter(x => x.kind === kind).forEach(x => { const mt = String(x.code || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); }); code = K.p + String(m + 1).padStart(3, '0'); }
-  const m = modal(`<h3>${r ? '✏️ تعديل' : '➕ إضافة'} — ${esc(K.t)}</h3><div class="grid">${fieldHTML({k: 'code', l: 'الرمز'}, code)}${fieldHTML({k: 'name', l: 'الاسم', req: 1}, r ? r.name : '')}${fieldHTML({k: 'extra', l: K.xl}, r ? r.extra : '')}${fieldHTML({k: 'active', l: 'الحالة', t: 'chk', l2: 'نشط'}, r ? !(r.active === false || r.active === 'false' || r.active === '0') : true)}</div><div class="actions"><button class="btn c-lime" id="sok">💾 حفظ</button><button class="btn ghost" id="scl">إلغاء</button></div>`);
+  let ref = r ? r.ref : ''; if (!ref) { let m = 0; S.data.opset.filter(x => x.kind === kind).forEach(x => { const mt = String(x.ref || '').match(/(\d+)$/); if (mt) m = Math.max(m, +mt[1]); }); ref = K.p + String(m + 1).padStart(3, '0'); }
+  const m = modal(`<h3>${r ? '✏️ تعديل' : '➕ إضافة'} — ${esc(K.t)}</h3><div class="grid">${fieldHTML({k: 'ref', l: 'الرمز'}, ref)}${fieldHTML({k: 'name', l: 'الاسم', req: 1}, r ? r.name : '')}${fieldHTML({k: 'extra', l: K.xl}, r ? r.extra : '')}${fieldHTML({k: 'active', l: 'الحالة', t: 'chk', l2: 'نشط'}, r ? !(r.active === false || r.active === 'false' || r.active === '0') : true)}</div><div class="actions"><button class="btn c-lime" id="sok">💾 حفظ</button><button class="btn ghost" id="scl">إلغاء</button></div>`);
   $('#scl', m).onclick = () => m.remove();
   $('#sok', m).onclick = e => guard(e.target, async () => {
     const v = readForm(m); if (!String(v.name || '').trim()) throw new Error('الاسم مطلوب');
-    await API.call('save', {entity: 'opset', record: Object.assign(r ? {id: r.id} : {}, {kind, code: v.code, name: String(v.name).trim(), extra: v.extra || '', active: !!v.active})});
+    await API.call('save', {entity: 'opset', record: Object.assign(r ? {id: r.id} : {}, {kind, ref: v.ref, name: String(v.name).trim(), extra: v.extra || '', active: !!v.active})});
     await loadAll(['opset']); m.remove(); toast('تم الحفظ ✔'); after && after();
   });
 }
 function opSetMgr(kind) {
   const K = OPX_KIND[kind], rows = () => S.data.opset.filter(x => x.kind === kind);
   const m = modal(`<h3>${K.i} إدارة ${esc(K.t)}</h3><div id="sml"></div><div class="actions"><button class="btn c-orange" id="sad">➕ إضافة</button><button class="btn ghost" id="scl">إغلاق</button></div>`);
-  const draw = () => { $('#sml', m).innerHTML = `<table><thead><tr><th>الرمز</th><th>الاسم</th><th>${esc(K.xl)}</th><th>الحالة</th><th></th></tr></thead><tbody>${rows().map(r => `<tr><td>${esc(r.code)}</td><td>${esc(r.name)}</td><td>${esc(r.extra)}</td><td>${r.active === false || r.active === 'false' || r.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>'}</td><td><button class="btn sm c-blue" data-e="${r.id}">✏️</button> <button class="btn sm c-red" data-d="${r.id}">🗑️</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">لا توجد بيانات</td></tr>'}</tbody></table>`; };
+  const draw = () => { $('#sml', m).innerHTML = `<table><thead><tr><th>الرمز</th><th>الاسم</th><th>${esc(K.xl)}</th><th>الحالة</th><th></th></tr></thead><tbody>${rows().map(r => `<tr><td>${esc(r.ref)}</td><td>${esc(r.name)}</td><td>${esc(r.extra)}</td><td>${r.active === false || r.active === 'false' || r.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>'}</td><td><button class="btn sm c-blue" data-e="${r.id}">✏️</button> <button class="btn sm c-red" data-d="${r.id}">🗑️</button></td></tr>`).join('') || '<tr><td colspan="5" class="empty">لا توجد بيانات</td></tr>'}</tbody></table>`; };
   draw();
   m.addEventListener('click', async e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -2295,7 +2336,7 @@ SCREEN_RENDER.opx_items = async function () {
   const draw = () => {
     const items = S.data.opset.filter(x => x.kind === 'item');
     main.innerHTML = `${pageHead('بنود الصرف', '🏷️', 'blue')}<div class="bar noprint"><button class="btn c-orange" data-act="opsetadd" data-v="item">➕ إضافة بند</button></div>
-    ${tbl(['رمز البند', 'اسم البند', 'التصنيف', 'الحالة', 'المعتمد', 'المدفوع', 'المتبقي', 'إجراء'], items.map(x => { const t = opxTot(S.data.opx.filter(r => r.item === x.name)); return [esc(x.code), `<b>${esc(x.name)}</b>`, esc(x.extra), x.active === false || x.active === 'false' || x.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>', fmtN(t.appr), fmtN(t.paid), fmtN(t.rest), `<button class="btn sm c-teal" data-act="opxitemrep" data-v="${esc(x.name)}" title="عرض مصروفات البند">📄</button> <button class="btn sm c-blue" data-act="opsetedit" data-v="item" data-id="${x.id}">✏️</button> <button class="btn sm c-red" data-act="opsetdel" data-id="${x.id}">🗑️</button>`]; }))}
+    ${tbl(['رمز البند', 'اسم البند', 'التصنيف', 'الحالة', 'المعتمد', 'المدفوع', 'المتبقي', 'إجراء'], items.map(x => { const t = opxTot(S.data.opx.filter(r => r.item === x.name)); return [esc(x.ref), `<b>${esc(x.name)}</b>`, esc(x.extra), x.active === false || x.active === 'false' || x.active === '0' ? '<span class="tag c-red">موقوف</span>' : '<span class="tag c-lime">نشط</span>', fmtN(t.appr), fmtN(t.paid), fmtN(t.rest), `<button class="btn sm c-teal" data-act="opxitemrep" data-v="${esc(x.name)}" title="عرض مصروفات البند">📄</button> <button class="btn sm c-blue" data-act="opsetedit" data-v="item" data-id="${x.id}">✏️</button> <button class="btn sm c-red" data-act="opsetdel" data-id="${x.id}">🗑️</button>`]; }))}
     <div class="panel accent c-cyan">إيقاف البند يمنع استخدامه في المصروفات الجديدة ويحافظ على السجلات السابقة. جميع التعديلات تُحفظ في Google Sheets.</div>`;
   };
   S.view = {refresh: draw}; draw();
@@ -2313,8 +2354,8 @@ SCREEN_RENDER.opx_set = async function () {
   S.view = {refresh: draw}; draw();
 };
 Acts.opxpfx = el => guard(el, async () => {
-  const v = (($('[name=pfx]') || {}).value || '').trim() || 'EX-', old = S.data.opset.find(r => r.kind === 'cfg' && r.code === 'prefix');
-  await API.call('save', {entity: 'opset', record: Object.assign(old ? {id: old.id} : {}, {kind: 'cfg', code: 'prefix', name: v, extra: '', active: true})}); await loadAll(['opset']); toast('تم الحفظ ✔'); S.view.refresh();
+  const v = (($('[name=pfx]') || {}).value || '').trim() || 'EX-', old = S.data.opset.find(r => r.kind === 'cfg' && r.ref === 'prefix');
+  await API.call('save', {entity: 'opset', record: Object.assign(old ? {id: old.id} : {}, {kind: 'cfg', ref: 'prefix', name: v, extra: '', active: true})}); await loadAll(['opset']); toast('تم الحفظ ✔'); S.view.refresh();
 });
 
 /* ---------- التقارير ---------- */

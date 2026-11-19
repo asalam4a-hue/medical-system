@@ -93,10 +93,17 @@ function confirmBox(msg) {
 }
 const spin = () => '<div class="spinner"></div>';
 async function guard(btn, fn) {
-  if (btn) btn.disabled = true;
+  if (btn) btn.disabled = true; S.busy = (S.busy || 0) + 1;
   try { return await fn(); }
   catch (e) { if (e.code === 'auth') { logoutLocal(); } toast(e.message || 'حدث خطأ', true); }
-  finally { if (btn) btn.disabled = false; }
+  finally { S.busy = Math.max(0, (S.busy || 1) - 1); if (btn) btn.disabled = false; }
+}
+/* تحديث محلي فوري بعد الحفظ بدل إعادة تحميل القائمة كاملة من الخادم */
+function upsertLocal(ent, rec) {
+  const arr = S.data[ent]; if (!rec || !rec.id || !Array.isArray(arr)) return false;
+  const i = arr.findIndex(x => x.id === rec.id); if (i >= 0) arr[i] = Object.assign({}, arr[i], rec); else arr.push(rec);
+  if (ent === 'visits') { if (+rec.serial) S.ctr.visits = Math.max(S.ctr.visits || 0, +rec.serial); deriveOps(); }
+  return true;
 }
 
 /* ---------- الصور ---------- */
@@ -199,6 +206,14 @@ document.addEventListener('change', e => {
   const form = t.closest('form'), cl = form ? ($('[name=clinic]', form) || {}).value : '', h = $('input[type=hidden]', t.closest('.docpick')), d = docResolve(t.value, cl);
   h.value = d ? d.id : ''; h.dispatchEvent(new Event('change', {bubbles: true}));
 });
+/* طبيب غير مسجل: يُسجَّل تلقائياً في شاشة الأطباء ثم يُربط بالزيارة */
+async function docAutoReg(raw) {
+  for (const k of ['_doc', '_anes']) {
+    const n = String(raw[k + 'n'] || '').trim(); if (!n || raw[k]) continue;
+    let d = docResolve(n, raw.clinic); if (!d) { const r = await API.call('save', {entity: 'doctors', record: {name: n, clinic: k === '_doc' ? (raw.clinic || '') : 'التخدير', percent: 0, fixed: 0, opPercent: 0}}); d = r.record; upsertLocal('doctors', d); toast('تم تسجيل الطبيب «' + n + '» في شاشة الأطباء — أكمل نسبته لاحقاً'); }
+    raw[k] = d.id;
+  }
+}
 const docNameCheck = raw => { for (const k of ['_doc', '_anes']) if (raw[k + 'n'] && !raw[k]) throw new Error('اسم الطبيب غير مسجل في شاشة الأطباء: ' + raw[k + 'n']); };
 const comboCheck = (v, list, label) => { if (v && !list.includes(v)) throw new Error(label + ' غير موجود — اختر من القائمة المقترحة'); };
 
@@ -213,6 +228,7 @@ const SG = {
   vtypes: () => uniq([...S.data.visits.map(v => v.visitType), ...VTYPES]),
   alldocs: () => uniq(S.data.doctors.map(d => d.name)),
   clinicdocs: () => { const f = sgInput && sgInput.closest('form'), cl = f ? ($('[name=clinic]', f) || {}).value : '', ds = S.data.doctors.filter(d => !cl || d.clinic === cl), names = ds.map(d => d.name); return uniq([...S.data.visits.filter(v => !cl || v.clinic === cl).map(v => v.doctor), ...names]).filter(x => names.includes(x)); },
+  opx_dept: () => opsetNames('dept'), opx_item: () => opsetNames('item'), opx_center: () => opsetNames('center'), opx_method: () => opsetNames('method'), opx_vendor: () => uniq(S.data.opx.map(r => r.vendor)),
   custperson: () => uniq(S.data.custody.map(c => c.person)),
   opnames: () => uniq([...S.data.services.filter(x => x.type === 'operation').map(x => x.name), ...S.data.operations.map(o => o.operation)]),
   companies: () => uniq(S.data.companies.map(c => c.name)),
@@ -369,7 +385,7 @@ Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, 
 let syncSig = '';
 const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
 async function syncOnce() {
-  if (!S.user || document.hidden) return;
+  if (!S.user || document.hidden || S.busy) return;
   API.call('ping', {page: curTitle()}).catch(e => { if (e.code === 'auth') logoutLocal(); });
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
@@ -387,7 +403,7 @@ async function syncOnce() {
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(syncOnce, 10000);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
   window.addEventListener('online', () => syncOnce());
 }
