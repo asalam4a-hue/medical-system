@@ -20,7 +20,7 @@ SCREEN_RENDER.admin = async function () {
     <p class="muted">النسخة تشمل كل بيانات البرنامج والمستخدمين والإعدادات (الصور لا تدخل في الملف).</p>
     <div class="actions"><button class="btn c-blue" id="bk">⬇️ تنزيل نسخة احتياطية</button><button class="btn c-orange" id="rs">⬆️ استرجاع من ملف</button><input type="file" id="rsf" accept=".json,application/json" class="hid"></div></div>
   <div class="panel accent c-violet"><h3>👑 النسخة الماستر</h3>
-    <p class="muted">نسخة كاملة محفوظة على الخادم نفسه تستطيع الرجوع إليها بضغطة واحدة. آخر نسخة: <b id="mat">${fmtAt(master.at)}</b></p>
+    <p class="muted">نسخة كاملة محفوظة على الخادم تُحدَّث <b>تلقائياً كل يوم</b> (عند فتح المدير للبرنامج) ويمكنك الرجوع إلى آخر نسخة بضغطة واحدة. آخر نسخة: <b id="mat">${fmtAt(master.at)}</b></p>
     <div class="actions"><button class="btn c-violet" id="ms">📌 حفظ نسخة ماستر الآن</button><button class="btn c-orange" id="mr">↩️ استرجاع النسخة الماستر</button></div></div>
   <div class="panel accent c-red"><h3>🗑️ حذف كل البيانات</h3>
     <p class="muted">يحذف الزيارات والمرضى والعمليات والمصروفات والعهد والسلف والتنفيذات، ويُبقي البيانات الأساسية (الأطباء والخدمات والعاملين وشركات التأمين) والمستخدمين وإعدادات البرنامج والنسخة الماستر. لا يمكن التراجع إلا بالاسترجاع.</p>

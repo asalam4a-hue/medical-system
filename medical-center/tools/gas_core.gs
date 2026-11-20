@@ -4,8 +4,8 @@
  * نفس أوامر api.js: status, register, login, me, logout, list, save, delete, upload, file
  */
 var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs', 'opx', 'opset', 'bookings'];
-var LOOKUP = ['doctors', 'services', 'patients', 'companies'];
-var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], opx: ['opx'], opset: ['opset'], bookings: ['bookings'], custody: ['custody']};
+var LOOKUP = ['doctors', 'services', 'patients', 'companies', 'bookings'];
+var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], opx: ['opx'], opset: ['opset'], bookings: ['bookings', 'visits'], custody: ['custody']};
 var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
@@ -192,6 +192,8 @@ function logAct_(me, act, e, rec) {
   } catch (x) {}
 }
 function pub_(u) { var o = {}; for (var k in u) if (k !== 'hash' && k !== 'salt') o[k] = u[k]; return o; }
+/* مسلسل الزيارات يبدأ من 1 في كل يوم */
+function daySerial_(date) { var m = 0; getAll_('visits', date, date).forEach(function (r) { if (r.date === date) m = Math.max(m, +r.serial || 0); }); return m + 1; }
 function peekCounter_(e, f) {
   var v = PropertiesService.getScriptProperties().getProperty('ctr_' + e), m = 0; getAll_(e).forEach(function (r) { m = Math.max(m, +r[f] || 0); });
   return Math.max(+v || 0, m);
@@ -415,7 +417,7 @@ function doSave_(e, me, src) {
     if (pw) { out.salt = rid_(); out.hash = hashPw_(out.salt, pw); }
   } else {
     var nm2 = String(out.name || out.date || out.category || out.type || '').trim(); if (!nm2) throw new ApiError('بيانات ناقصة');
-    if (AUTO[e]) out[AUTO[e]] = rec ? (rec[AUTO[e]] || 0) : nextCounter_(e, AUTO[e]);
+    if (AUTO[e]) out[AUTO[e]] = (e === 'visits') ? ((rec && rec.date === out.date) ? (rec.serial || 0) : daySerial_(out.date)) : (rec ? (rec[AUTO[e]] || 0) : nextCounter_(e, AUTO[e]));
   }
   var isNew = !rec;
   if (rec) { for (var k in out) rec[k] = out[k]; rec.updatedAt = new Date().toISOString(); }

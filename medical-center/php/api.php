@@ -45,8 +45,8 @@ function jout(array $a): void { echo json_encode($a, JSON_UNESCAPED_UNICODE | JS
 function jerr(string $m, ?string $code = null): void { jout(['error' => $m, 'code' => $code]); }
 
 const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset','bookings'];
-const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody'],'opx'=>['opx'],'opset'=>['opset'],'bookings'=>['bookings']];
+const LOOKUP = ['doctors','services','patients','companies','bookings'];
+const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody'],'opx'=>['opx'],'opset'=>['opset'],'bookings'=>['bookings','visits']];
 const FIELDS = [
   'users'=>'username,nationalId,birthDate,perms,isAdmin,active',
   'staff'=>'code,name,nationalId,idPhoto,photo',
@@ -118,6 +118,8 @@ function putRec(PDO $db, string $e, array $rec): void {
   $st->execute([$id, $e, $dt, json_encode($rec, JSON_UNESCAPED_UNICODE), gmdate('c')]);
 }
 function pub(array $u): array { unset($u['hash']); return $u; }
+/* مسلسل الزيارات يبدأ من 1 في كل يوم */
+function daySerial($db, $date) { $m = 0; foreach (getAll($db, 'visits') as $r) if (($r['date'] ?? '') === $date) $m = max($m, (int)($r['serial'] ?? 0)); return $m + 1; }
 function nextCounter(PDO $db, string $e, string $f): int {
   $st = $db->prepare('SELECT v FROM counters WHERE k=?'); $st->execute([$e]); $v = $st->fetchColumn();
   $v = ($v === false) ? 0 : (int)$v; foreach (getAll($db, $e) as $r) $v = max($v, (int)($r[$f] ?? 0));
@@ -324,7 +326,7 @@ function doSave(PDO $db, string $e, array $me, array $src): array {
     if ($pw !== '') $out['hash'] = password_hash($pw, PASSWORD_DEFAULT);
   } else {
     $nm = trim((string)($out['name'] ?? $out['date'] ?? $out['category'] ?? $out['type'] ?? '')); if ($nm === '') jerr('بيانات ناقصة');
-    if (isset(AUTO[$e])) { if ($rec) $out[AUTO[$e]] = $rec[AUTO[$e]] ?? 0; else $out[AUTO[$e]] = nextCounter($db, $e, AUTO[$e]); }
+    if (isset(AUTO[$e])) { if ($e === 'visits') { $out['serial'] = ($rec && ($rec['date'] ?? '') === ($out['date'] ?? '')) ? ($rec['serial'] ?? 0) : daySerial($db, (string)($out['date'] ?? '')); } elseif ($rec) $out[AUTO[$e]] = $rec[AUTO[$e]] ?? 0; else $out[AUTO[$e]] = nextCounter($db, $e, AUTO[$e]); }
   }
   if ($rec) { $rec = array_merge($rec, $out, ['updatedAt' => gmdate('c')]); }
   else { $rec = array_merge(['id' => rid(), 'createdAt' => gmdate('c')], $out); if ($e === 'visits' || $e === 'expenses' || $e === 'custody') $rec['registeredBy'] = $me['username']; }

@@ -96,7 +96,7 @@ window.API = {diag, call, setToken, setServer, server, getToken: () => token, mo
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
 const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset','bookings'];
-const LOOKUP = ['doctors','services','patients','companies'];
+const LOOKUP = ['doctors','services','patients','companies','bookings'];
 const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody'],opx:['opx'],opset:['opset'],bookings:['bookings']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
@@ -235,8 +235,9 @@ const Local = {
         if (src.password) { out.salt = rid(); out.hash = await sha(out.salt + src.password); }
       } else {
         if (!String(out.name || out.date || out.category || out.type || '').trim()) return fail('بيانات ناقصة');
-        if (e !== 'users' && AUTO[e] && !rec) { db.ctr = db.ctr || {}; out[AUTO[e]] = db.ctr[e] = Math.max(db.ctr[e] || 0, list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) + 1; }
-        if (rec && AUTO[e]) out[AUTO[e]] = rec[AUTO[e]];
+        if (e === 'visits') out.serial = (rec && rec.date === out.date) ? (rec.serial || 0) : list.reduce((m, x) => x.date === out.date ? Math.max(m, +x.serial || 0) : m, 0) + 1;
+        else if (e !== 'users' && AUTO[e] && !rec) { db.ctr = db.ctr || {}; out[AUTO[e]] = db.ctr[e] = Math.max(db.ctr[e] || 0, list.reduce((m, x) => Math.max(m, x[AUTO[e]] || 0), 0)) + 1; }
+        if (rec && AUTO[e] && e !== 'visits') out[AUTO[e]] = rec[AUTO[e]];
       }
       if (rec) Object.assign(rec, out, {updatedAt: new Date().toISOString()});
       else { rec = Object.assign({id: rid(), createdAt: new Date().toISOString()}, out); if (e === 'visits' || e === 'expenses' || e === 'custody') rec.registeredBy = me.username; list.push(rec); }

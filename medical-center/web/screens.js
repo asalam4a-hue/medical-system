@@ -240,7 +240,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
   extraRows: () => { const {from, to} = getRange(); return (S.opsLegacy || []).filter(o => o.date >= from && o.date <= to).map(o => ({id: o.id, _op: true, date: o.date, patient: o.patient, clinic: o.clinic || '', doctor: o.doctor, visitType: 'عمليات جراحية', service: o.operation, value: o.value, category: 'cash', docNo: o.docNo || '', serial: ''})); },
   cols: [{h: 'م', f: r => r.serial}, {h: 'الباركود', f: r => `<span class="bcode" title="السنة+الشهر+اليوم+المسلسل">${esc(visitCode(r))}</span>`}, {h: 'التاريخ', f: r => esc(r.date)}, {h: 'المريض', f: r => L.patient(r.patient)}, {h: 'العيادة', f: r => L.clinic(r.clinic)}, {h: 'الطبيب', f: r => L.doctor(r.doctor)}, {h: 'الزيارة', f: r => esc(r.visitType)}, {h: 'البيان', f: r => esc(r.service)}, {h: 'القيمة', f: r => fmtN(r.value), sum: r => r.value}, {h: 'المدفوع (نقدي)', f: r => r._op ? '' : fmtN(cashOf(r)), sum: r => r._op ? 0 : cashOf(r)}, {h: 'المتبقي', f: r => r._op ? '' : fmtN(partyRem(r)), sum: r => r._op ? 0 : partyRem(r)}, {h: 'تخدير', f: r => +r.anesthesia ? `${esc(r.anesthetist || '')} ${fmtN(r.anesthesia)}` : ''}, {h: 'النوع', f: r => tagCat(r.category)}, {h: 'الشركة', f: r => L.company(r.company)}, {h: 'رقم النموذج', f: r => esc(r.formNo)}, {h: 'صورة النموذج', f: r => thumb(r.formPhoto)}, {h: 'الكارنية', f: r => esc(r.cardNo)}, {h: 'صورة الكارنية', f: r => thumb(r.cardPhoto)}, {h: 'تحمل المريض', f: r => r.category === 'company' ? fmtN(patientShare(r)) : '', sum: patientShare}, {h: 'الخصم', f: r => r.category === 'insurance' ? fmtN(discountAmt(r)) + ' (' + fmtN(r.discount) + '%)' : '', sum: discountAmt}, {h: 'الضريبة', f: r => fmtN(r.tax), sum: r => r.tax}, {h: 'سجّلها', f: r => esc(r.registeredBy)}],
   sort: (a, b) => (b.date + String(1e6 + (b.serial || 0))).localeCompare(a.date + String(1e6 + (a.serial || 0))),
-  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: Math.max(S.ctr.visits || 0, S.data.visits.reduce((m, x) => Math.max(m, x.serial || 0), 0)) + 1, date: d, _day: dayName(d), visitType: S.surgOnly ? 'عمليات جراحية' : 'كشف', clinic: S.surgOnly ? 'عمليات جراحية' : '', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
+  defaults: () => { const {from, to} = getRange(); const d = from === to && validDate(from) ? from : today(); return {serial: visitDaySerial(d), date: d, _day: dayName(d), visitType: S.surgOnly ? 'عمليات جراحية' : 'كشف', clinic: S.surgOnly ? 'عمليات جراحية' : '', category: 'cash', tax: 0, patientPct: 0, discount: 0}; },
   before: docAutoReg,
   collect: raw => {
     docNameCheck(raw); comboCheck(raw.clinic, [...clinicNames(), ...EXTRA_CLINICS], 'العيادة'); comboCheck(raw.visitType, VTYPES, 'نوع الزيارة');
@@ -274,6 +274,7 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
     if (n === '*') { visitLast(f, ctx); visitAuto(f, '*'); return; }
     if (n === 'date') { setv(f, '_day', dayName(getv(f, 'date'))); visitLast(f, ctx); }
     if (n === 'patient') { const p = S.data.patients.find(x => x.name === getv(f, 'patient')); if (p && p.phone && !ctx.typing) setv(f, 'phone', p.phone); visitLast(f, ctx); }
+    if (n === 'date' && !ctx.editing && validDate(getv(f, 'date'))) setv(f, 'serial', visitDaySerial(getv(f, 'date')));
     if (n === 'phone') visitLast(f, ctx);
     if (n === 'clinic') { const cl = getv(f, 'clinic'), cur = S.data.doctors.find(d => d.id === getv(f, '_doc')), only = S.data.doctors.filter(d => d.clinic === cl); if (cl && [...clinicNames(), ...EXTRA_CLINICS].includes(cl) && !(cur && cur.clinic === cl)) { setv(f, '_doc', only.length === 1 ? only[0].id : ''); docSync(f); } }
     if (['clinic', 'visitType', 'category', 'company', 'service', 'value', 'patientPct', 'discount', 'paid'].includes(n) && !ctx.typing) visitAuto(f, n);
@@ -283,6 +284,8 @@ const _visitsCrud = crud({k: 'visits', ent: 'visits', tools: () => '<button type
   }
 });
 
+/* رقم الزيارة التالي في يوم معيّن (يبدأ من 1 كل يوم) */
+const visitDaySerial = d => S.data.visits.reduce((m, x) => x.date === d ? Math.max(m, +x.serial || 0) : m, 0) + 1;
 SCREEN_RENDER.visits = async function () { if (S.screen !== 'operations') S.surgOnly = false; return _visitsCrud(); };
 /* ---------- المستخدمين والصلاحيات ---------- */
 const PERM_ITEMS = [...SCREENS.filter(s => s.k !== 'admin').map(s => ({k: s.k, l: s.t})), {k: 'dashboard', l: 'الشاشة الرئيسية (الإحصائيات)'}, ...REPS.map(r => ({k: r.k, l: 'تقرير: ' + r.t}))];

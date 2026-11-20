@@ -73,7 +73,7 @@ const Acts = {};
 let clockTimer = null;
 
 /* ---------- صلاحيات ---------- */
-const can = p => S.user && (p === 'admin' ? !!S.user.isAdmin : S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*'));
+const can = p => S.user && (p === 'admin' ? !!S.user.isAdmin : S.user.isAdmin || (S.user.perms || []).includes(p) || (S.user.perms || []).includes('*') || (p === 'bookings' && (S.user.perms || []).includes('visits')));
 const anyRep = () => REPS.some(r => can(r.k));
 
 /* ---------- واجهة عامة ---------- */
@@ -385,6 +385,12 @@ Acts.go = el => { el.classList.add('pop'); setTimeout(() => { nav(el.dataset.s, 
 
 let syncSig = '';
 const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
+/* نسخة احتياطية تلقائية: يحفظها البرنامج على الخادم كل يوم تقريباً (يكفي أن يفتحه المدير) ويمكن الرجوع لآخر نسخة من الإعدادات */
+async function autoBackup() {
+  if (!S.user || !S.user.isAdmin || S.busy || S._abBusy) return;
+  const now = Date.now(); if (S._abAt && now - S._abAt < 3600000) return; S._abAt = now; S._abBusy = true;
+  try { const m = await API.call('master_info'), last = m && m.at ? Date.parse(m.at) : 0; if (!last || now - last > 20 * 3600000) { await API.call('master_save'); toast('تم حفظ نسخة احتياطية تلقائية ✔'); } } catch (e) {} finally { S._abBusy = false; }
+}
 async function syncOnce() {
   if (!S.user || document.hidden || S.busy) return;
   API.call('ping', {page: curTitle()}).then(r => staleBanner(!r || !(r.ver >= 6))).catch(e => { if (e.code === 'auth') logoutLocal(); });
@@ -410,7 +416,7 @@ function staleBanner(stale) {
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
 function startSync() {
-  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000); setTimeout(syncOnce, 2500);
+  if (window.__sync) return; window.__sync = setInterval(syncOnce, 30000); setTimeout(syncOnce, 2500); setTimeout(autoBackup, 9000); setInterval(autoBackup, 1800000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) syncOnce(); });
   window.addEventListener('online', () => syncOnce());
 }
