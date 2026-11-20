@@ -95,9 +95,9 @@ async function diag() {
 window.API = {diag, call, setToken, setServer, server, getToken: () => token, mode: MODE};
 
 /* ====================== خادم تجريبي داخل المتصفح ====================== */
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset','bookings'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody'],opx:['opx'],opset:['opset']};
+const WRITE = {staff:['staff'],doctors:['doctors'],services:['services'],operations:['operations'],patients:['patients','visits'],companies:['companies'],visits:['visits','operations'],expenses:['expenses','dues'],execs:['execs'],custody:['custody'],opx:['opx'],opset:['opset'],bookings:['bookings']};
 const FIELDS = {
   users:'username,nationalId,birthDate,perms,isAdmin,active',
   staff:'code,name,nationalId,idPhoto,photo',
@@ -111,9 +111,10 @@ const FIELDS = {
   custody:'date,person,kind,dir,amount,notes,docNo',
   execs:'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
   opx:'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
-  opset:'kind,ref,name,extra,active'
+  opset:'kind,ref,name,extra,active',
+  bookings:'date,kind,patient,phone,clinic,doctor,doctorId,turn,value,bpaid,notes,status'
 };
-const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(','));
+const NUMS = new Set('percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia,turn,bpaid'.split(','));
 const DATES = new Set(['date','hireDate','birthDate','dueDate','execDate']);
 const AUTO = {staff:'code', doctors:'code', visits:'serial'};
 
@@ -167,7 +168,7 @@ const Local = {
     const me = tk && tk.exp > Date.now() && (db.rec.users || []).find(x => x.id === tk.id && x.active);
     if (!me) return fail('انتهت الجلسة، سجل الدخول من جديد', 'auth');
     if (A === 'me') return {user: this.pub(me)};
-    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true, ver: 5}; }
+    if (A === 'ping') { (db.presence || (db.presence = {}))[me.id] = {at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}; this.save(db); return {ok: true, ver: 6}; }
     if (A === 'presence') { if (!me.isAdmin) return fail('للمدير فقط', 'forbidden'); return {list: Object.entries(db.presence || {}).map(([id, v]) => Object.assign({id}, v))}; }
     if (A === 'logout') { delete db.tokens[b.token]; this.save(db); return {ok: true}; }
     if (['settings_save','backup','restore','reset','resetvisits','master_save','master_restore','master_info'].includes(A)) {

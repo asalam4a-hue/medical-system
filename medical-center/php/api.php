@@ -44,9 +44,9 @@ if (!function_exists('mb_substr')) { function mb_substr($s, $a, $l = null) { $c 
 function jout(array $a): void { echo json_encode($a, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); exit; }
 function jerr(string $m, ?string $code = null): void { jout(['error' => $m, 'code' => $code]); }
 
-const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset'];
+const ENT = ['users','staff','doctors','services','operations','patients','companies','visits','expenses','custody','execs','opx','opset','bookings'];
 const LOOKUP = ['doctors','services','patients','companies'];
-const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody'],'opx'=>['opx'],'opset'=>['opset']];
+const WRITE = ['staff'=>['staff'],'doctors'=>['doctors'],'services'=>['services'],'operations'=>['operations'],'patients'=>['patients','visits'],'companies'=>['companies'],'visits'=>['visits'],'expenses'=>['expenses','dues'],'execs'=>['execs'],'custody'=>['custody'],'opx'=>['opx'],'opset'=>['opset'],'bookings'=>['bookings']];
 const FIELDS = [
   'users'=>'username,nationalId,birthDate,perms,isAdmin,active',
   'staff'=>'code,name,nationalId,idPhoto,photo',
@@ -61,8 +61,9 @@ const FIELDS = [
   'execs'=>'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
   'opx'=>'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
   'opset'=>'kind,ref,name,extra,active',
+  'bookings'=>'date,kind,patient,phone,clinic,doctor,doctorId,turn,value,bpaid,notes,status',
 ];
-const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial','anesthesia'];
+const NUMS = ['percent','fixed','opPercent','price','tax','value','doctorPercent','fee','patientPct','discount','amount','code','serial','anesthesia','turn','bpaid'];
 const DATES = ['date','hireDate','birthDate','dueDate','execDate'];
 const AUTO = ['staff'=>'code','doctors'=>'code','visits'=>'serial'];
 const CLEAR = ['patients','operations','visits','expenses','custody','execs','opx'];
@@ -198,7 +199,7 @@ function handle(PDO $db, array $b): void {
   if ($A === 'me') jout(['user' => pub($me)]);
   if ($A === 'logout') { $db->prepare('DELETE FROM tokens WHERE token=?')->execute([$tk]); jout(['ok' => true]); }
 
-  if ($A === 'ping') { $db->prepare('INSERT INTO presence(uid,at,page,client) VALUES(?,?,?,?) ON CONFLICT(uid) DO UPDATE SET at=excluded.at,page=excluded.page,client=excluded.client')->execute([$me['id'], time() * 1000, mb_substr((string)($b['page'] ?? ''), 0, 60), mb_substr((string)($b['client'] ?? ''), 0, 20)]); jout(['ok' => true, 'ver' => 5]); }
+  if ($A === 'ping') { $db->prepare('INSERT INTO presence(uid,at,page,client) VALUES(?,?,?,?) ON CONFLICT(uid) DO UPDATE SET at=excluded.at,page=excluded.page,client=excluded.client')->execute([$me['id'], time() * 1000, mb_substr((string)($b['page'] ?? ''), 0, 60), mb_substr((string)($b['client'] ?? ''), 0, 20)]); jout(['ok' => true, 'ver' => 6]); }
   if (in_array($A, ['presence', 'settings_save', 'backup', 'restore', 'reset', 'resetvisits', 'master_save', 'master_restore', 'master_info', 'sync_sheets', 'bulk_save'], true)) {
     if (empty($me['isAdmin'])) jerr('للمدير فقط', 'forbidden');
     if ($A === 'presence') { $o = []; foreach ($db->query('SELECT uid,at,page,client FROM presence') as $r) $o[] = ['id' => $r['uid'], 'at' => (int)$r['at'], 'page' => $r['page'], 'client' => $r['client']]; jout(['list' => $o]); }

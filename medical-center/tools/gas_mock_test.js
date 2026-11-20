@@ -6,16 +6,18 @@ function mkSheet(){const rows=[];const sh={rows,
  setRightToLeft(){},hideColumns(){},deleteRows(a,n){rows.splice(a-1,n)},
  deleteRow(n){rows.splice(n-1,1)}};return sh}
 const sheets={};const ss={getId:()=>'SS',getSheetByName:n=>sheets[n]||null,insertSheet:n=>sheets[n]=mkSheet()};
-const files={};
+const files={};const fetches=[];
 const ctx={console,JSON,Math,Date,String,Number,Array,isNaN,
  PropertiesService:{getScriptProperties:()=>({getProperty:k=>k in props?props[k]:null,setProperty:(k,v)=>props[k]=v})},
- CacheService:{getScriptCache:()=>({get:k=>cache[k]??null,put:(k,v)=>cache[k]=v,remove:k=>delete cache[k]})},
+ CacheService:{getScriptCache:()=>({get:k=>cache[k]??null,put:(k,v)=>cache[k]=v,putAll:(o)=>Object.assign(cache,o),getAll:ks=>{const o={};ks.forEach(k=>{if(k in cache)o[k]=cache[k]});return o},remove:k=>delete cache[k]})},
+ UrlFetchApp:{fetch:(u)=>{fetches.push(u);const n=u.split('/gas/')[1].split('?')[0];return{getResponseCode:()=>200,getContentText:()=>fs.readFileSync('gas/'+n,'utf8')}}},
  LockService:{getScriptLock:()=>({waitLock(){},releaseLock(){}})},
  SpreadsheetApp:{create:()=>ss,openById:()=>ss},
  Utilities:{DigestAlgorithm:{SHA_256:1},Charset:{UTF_8:1},computeDigest:(a,s)=>[...crypto.createHash('sha256').update(s).digest()].map(b=>b>127?b-256:b),getUuid:()=>crypto.randomUUID(),base64Decode:s=>[...Buffer.from(s,'base64')].map(b=>b>127?b-256:b),base64Encode:b=>Buffer.from(b.map(x=>x&255)).toString('base64'),newBlob:(bytes,mime,name)=>({bytes,getBytes:()=>bytes})},
  DriveApp:{Access:{PRIVATE:1},Permission:{NONE:1},createFolder:()=>({getId:()=>'F',createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFolderById:()=>({createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFileById:id=>({getBlob:()=>files[id]})}};
 vm.createContext(ctx);vm.runInContext(fs.readFileSync('gas/Code.gs','utf8'),ctx);
 const call=o=>JSON.parse(ctx.handle(JSON.stringify(o)));
+
 const assert=(c,m)=>{if(!c){console.log('FAIL',m);process.exitCode=1}else console.log('ok',m)};
 assert(call({action:'status'}).hasUsers===false,'status empty');
 assert(call({action:'register',username:'admin',password:'1234'}).pending===false,'first user admin');
@@ -54,3 +56,6 @@ assert(call({action:'sync_sheets',token:T}).ok,'sync sheets');
 const ml=mv.rows.length;const sv=call({action:'save',entity:'visits',token:T,record:{date:'2025/06/01',patient:'جديد',value:5}});assert(mv.rows.length===ml+1,'mirror append on save');
 call({action:'delete',entity:'visits',token:T,id:sv.record.id});assert(mv.rows.length===ml,'mirror delete');
 console.log('mirror ok');
+
+assert(fetches.length===1,'loader fetched core once then used cache ('+fetches.length+')');
+assert(typeof ctx.doGet==='function'&&typeof ctx.doPost==='function'&&typeof ctx.setup==='function','loader entry points');

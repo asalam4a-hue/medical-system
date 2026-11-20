@@ -29,6 +29,7 @@ const SEED_EXP = ['مصاريف متنوعة','مصاريف تشغيل','مصا�
 
 const SCREENS = [
   {k:'visits', t:'الزيارات', i:'🩺', c:'teal'},
+  {k:'bookings', t:'الحجوزات', i:'📅', c:'teal'},
   {k:'patients', t:'المرضى', i:'🧑‍🤝‍🧑', c:'blue'},
   {k:'doctors', t:'الأطباء', i:'👨‍⚕️', c:'violet'},
   {k:'dues', t:'مستحقات الأطباء', i:'💵', c:'lime'},
@@ -67,7 +68,7 @@ const REPS = [
 const ALL_COLORS = ['teal','orange','pink','violet','blue','gold','red','lime','cyan'];
 const COLHEX = {teal:'#14c8b4',orange:'#ff8a1f',pink:'#ff3d9a',violet:'#8a5cff',blue:'#2f9bff',gold:'#ffc400',red:'#ff4d4d',lime:'#8fd91a',cyan:'#12c6e8'};
 
-const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[],opx:[],opset:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
+const S = {ctr: {}, scope: {}, user: null, data: {users:[],staff:[],doctors:[],services:[],operations:[],patients:[],companies:[],visits:[],expenses:[],custody:[],execs:[],opx:[],opset:[],bookings:[]}, screen: 'home', arg: null, stack: [], rng: {mode:'today', a: today(), b: today()}, view: null};
 const Acts = {};
 let clockTimer = null;
 
@@ -386,7 +387,7 @@ let syncSig = '';
 const curTitle = () => S.screen === 'home' ? 'الرئيسية' : ((SCREENS.concat(REPS)).find(x => x.k === S.screen) || {t: S.screen}).t;
 async function syncOnce() {
   if (!S.user || document.hidden || S.busy) return;
-  API.call('ping', {page: curTitle()}).then(r => staleBanner(!r || !(r.ver >= 5))).catch(e => { if (e.code === 'auth') logoutLocal(); });
+  API.call('ping', {page: curTitle()}).then(r => staleBanner(!r || !(r.ver >= 6))).catch(e => { if (e.code === 'auth') logoutLocal(); });
   if (document.querySelector('.modal')) return;
   const ae = document.activeElement; if (ae && /^(INPUT|SELECT|TEXTAREA)$/.test(ae.tagName) && ae.closest('form')) return;
   try {
@@ -440,7 +441,7 @@ function sideHTML() {
   const sc = k => { const x = SCREENS.find(y => y.k === k); return it(k, x.t, x.i); };
   return `<div class="sbrand" data-act="home">${CLOGO ? `<img src="${CLOGO}" alt="">` : LOGO}<b>${esc(APPNAME)}</b></div>
   <button class="si ${S.screen === 'home' ? 'on' : ''}" data-act="sgo" data-s="home"><span>🏠</span>الرئيسية</button>
-  ${grp('العمل اليومي', ['visits', 'patients', 'operations', 'doctors', 'dues', 'services', 'companies', 'staff', 'expenses', 'execs', 'custody'].map(sc))}
+  ${grp('العمل اليومي', ['visits', 'bookings', 'patients', 'operations', 'doctors', 'dues', 'services', 'companies', 'staff', 'expenses', 'execs', 'custody'].map(sc))}
   ${grp('المصروفات التشغيلية', ['opx_data', 'opx_reg', 'opx_apr', 'opx_items'].map(sc))}
   ${grp('التقارير', [anyRep() ? `<button class="si ${S.screen === 'reports' || /^(rep_|opx_rep)/.test(S.screen) ? 'on' : ''}" data-act="sgo" data-s="reports"><span>📊</span>التقارير</button>` : ''])}
   ${grp('الإعدادات', [sc('opx_set'), sc('users'), sc('admin')])}

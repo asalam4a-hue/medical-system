@@ -3,7 +3,8 @@ root = pathlib.Path(__file__).resolve().parent.parent
 web = root / "web"
 rd = lambda n: (web / n).read_text(encoding="utf-8")
 seed = (root / "tools/seed.json").read_text(encoding="utf-8")
-import base64
+import base64, time
+BUILD_TS = int(time.time())
 def gas_wrap(html):
     # جوجل (HtmlService) يعدّل بعض النصوص داخل الصفحة فيكسر الأكواد؛ نحمّل التطبيق كنص Base64 ونُنفّذه بالمتصفح فلا يلمسه جوجل
     b = base64.b64encode(html.encode("utf-8")).decode("ascii")
@@ -18,10 +19,18 @@ def gas_wrap(html):
 def build(mode, out, extra=""):
     html = rd("index.html")
     css = "<style>\n" + rd("app.css") + "\n</style>"
-    js = "<script>window.API_MODE='%s';window.SEED=%s;%s</script>\n" % (mode, seed, extra)
-    for f in ("api.js", "core.js", "barcode.js", "screens.js", "reports.js", "details.js", "dues.js", "cash.js", "journal.js", "opex.js", "bars.js", "admin.js", "ocr.js", "export.js"):
-        js += "<script>\n" + rd(f).replace("</script", "<\\/script") + "\n</script>\n"
-    html = html.replace("<!--CSS-->", css).replace("<!--SCRIPTS-->", js)
+    head = "window.API_MODE='%s';window.BUILD_TS=%d;window.SEED=%s;%s" % (mode, BUILD_TS, seed, extra)
+    files = ("api.js", "core.js", "barcode.js", "screens.js", "reports.js", "details.js", "dues.js", "cash.js", "journal.js", "opex.js", "booking.js", "bars.js", "admin.js", "ocr.js", "export.js")
+    if mode == "php":
+        # قشرة ثابتة + حزمة التطبيق (JSON) تُحدَّث تلقائياً من GitHub
+        items = [{"k": "css", "c": rd("app.css")}, {"k": "js", "c": head}] + [{"k": "js", "c": rd(f)} for f in files]
+        payload = json.dumps({"build": BUILD_TS, "items": items}, ensure_ascii=False).replace("<", "\\u003c")
+        html = html.replace("<!--CSS-->", "").replace("<!--SCRIPTS-->", "<script>window.__P=/*P1*/" + payload + "/*P2*/;</script>\n<script>\n" + rd("boot.js") + "\n</script>\n")
+    else:
+        js = "<script>" + head + "</script>\n"
+        for f in files:
+            js += "<script>\n" + rd(f).replace("</script", "<\\/script") + "\n</script>\n"
+        html = html.replace("<!--CSS-->", css).replace("<!--SCRIPTS-->", js)
     if mode == "gas": html = gas_wrap(html)
     p = root / out; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(html, encoding="utf-8")
     print(out, len(html) // 1024, "KB")
@@ -30,10 +39,18 @@ build("php", "php/index.html", "window.API_URL=%s;" % json.dumps(GAS_URL))
 build("gas", "gas/Index.html")
 build("local", "demo/index.html")
 import shutil; (root / "android/app/src/main/assets").mkdir(parents=True, exist_ok=True); shutil.copy(root / "php/index.html", root / "android/app/src/main/assets/index.html")
-(root / "gas/Code.gs").write_text((root / "tools/gas_core.gs").read_text(encoding="utf-8").rstrip("\n") + "\n\n/* ---------- البيانات الأساسية الأولية (تُضاف عند تسجيل أول مدير) ---------- */\nvar SEED = " + seed + ";\n", encoding="utf-8")
+core = (root / "tools/gas_core.gs").read_text(encoding="utf-8").rstrip("\n") + "\n\n/* ---------- البيانات الأساسية الأولية (تُضاف عند تسجيل أول مدير) ---------- */\nvar SEED = " + seed + ";\n"
+import re as _re
+core = _re.sub(r"function (doGet|doPost|handle|setup|syncSheets)\(", lambda m: "function core_" + m.group(1) + "(", core)
+core = core.replace("handle(e.postData", "core_handle(e.postData")
+core = core.replace("function core_syncSheets() { return mirrorAll_(); }", "function syncSheets_() { return mirrorAll_(); }")
+(root / "gas/core.js").write_text(core, encoding="utf-8")                       # كود الخادم (يُحمَّل من GitHub)
+(root / "gas/Code.gs").write_text((root / "tools/gas_loader.gs").read_text(encoding="utf-8"), encoding="utf-8")  # المحمّل (يُلصق مرة واحدة)
+import time as _t
+(root / "version.json").write_text(json.dumps({"build": BUILD_TS, "gas_ver": 6}), encoding="utf-8")
 import os
 if (root / "gas/Seed.gs").exists(): os.remove(root / "gas/Seed.gs")
 (root / "gas/appsscript.json").write_text(json.dumps({
   "timeZone": "Africa/Cairo", "exceptionLogging": "STACKDRIVER", "runtimeVersion": "V8",
-  "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
+  "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/script.external_request"],
   "webapp": {"executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS"}}, indent=2), encoding="utf-8")

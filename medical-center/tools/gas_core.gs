@@ -3,9 +3,9 @@
  * قاعدة البيانات: Google Sheets (ورقة لكل شاشة) — الصور: Google Drive (مجلد خاص)
  * نفس أوامر api.js: status, register, login, me, logout, list, save, delete, upload, file
  */
-var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs', 'opx', 'opset'];
+var ENT = ['users', 'staff', 'doctors', 'services', 'operations', 'patients', 'companies', 'visits', 'expenses', 'custody', 'execs', 'opx', 'opset', 'bookings'];
 var LOOKUP = ['doctors', 'services', 'patients', 'companies'];
-var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], opx: ['opx'], opset: ['opset'], custody: ['custody']};
+var WRITE = {staff: ['staff'], doctors: ['doctors'], services: ['services'], operations: ['operations'], patients: ['patients', 'visits'], companies: ['companies'], visits: ['visits', 'operations'], expenses: ['expenses', 'dues'], execs: ['execs'], opx: ['opx'], opset: ['opset'], bookings: ['bookings'], custody: ['custody']};
 var FIELDS = {
   users: 'username,nationalId,birthDate,perms,isAdmin,active',
   staff: 'code,name,nationalId,idPhoto,photo',
@@ -19,9 +19,10 @@ var FIELDS = {
   custody: 'date,person,kind,dir,amount,notes,docNo',
   execs: 'date,patient,cardNo,approvalNo,company,approvalProc,required,done,execDate,clinic,doctor',
   opx: 'date,no,dept,item,center,vendor,invoiceNo,dueDate,amount,desc,status,approvedBy,approvedAt,pays,attach',
-  opset: 'kind,ref,name,extra,active'
+  opset: 'kind,ref,name,extra,active',
+  bookings: 'date,kind,patient,phone,clinic,doctor,doctorId,turn,value,bpaid,notes,status'
 };
-var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia'.split(',');
+var NUMS = 'percent,fixed,opPercent,price,tax,value,doctorPercent,fee,patientPct,discount,amount,code,serial,anesthesia,turn,bpaid'.split(',');
 var DATES = ['date', 'hireDate', 'birthDate', 'dueDate', 'execDate'];
 var AUTO = {staff: 'code', doctors: 'code', visits: 'serial'};
 var TOKEN_TTL = 21600; // 6 ساعات (أقصى مدة للـ CacheService)
@@ -93,7 +94,7 @@ function findRow_(sh, id) {
 }
 
 /* ---------- أوراق مقروءة بأسماء الشاشات (تتحدث تلقائياً مع كل إدخال/تعديل/حذف) ---------- */
-var SHEETN = {staff: 'الموظفون', doctors: 'الأطباء', services: 'الخدمات', operations: 'العمليات', patients: 'المرضى', companies: 'الشركات', visits: 'الزيارات', expenses: 'المصروفات', custody: 'العهد والسلف', execs: 'تنفيذ الشركات', opx: 'المصروفات التشغيلية', opset: 'قوائم المصروفات', users: 'المستخدمون'};
+var SHEETN = {staff: 'الموظفون', doctors: 'الأطباء', services: 'الخدمات', operations: 'العمليات', patients: 'المرضى', companies: 'الشركات', visits: 'الزيارات', expenses: 'المصروفات', custody: 'العهد والسلف', execs: 'تنفيذ الشركات', opx: 'المصروفات التشغيلية', opset: 'قوائم المصروفات', bookings: 'الحجوزات', users: 'المستخدمون'};
 var LABELS = {code: 'الكود', name: 'الاسم', nationalId: 'الرقم القومي', idPhoto: 'صورة البطاقة', photo: 'الصورة', clinic: 'العيادة', phone: 'الهاتف', syndicatePhoto: 'صورة النقابة', hireDate: 'تاريخ التعيين', percent: 'النسبة %', fixed: 'ثابت', opPercent: 'نسبة العمليات %', type: 'النوع', price: 'القيمة', tax: 'الضريبة', abbr: 'الاختصار', date: 'التاريخ', patient: 'المريض', operation: 'العملية', doctor: 'الطبيب', doctorId: 'كود الطبيب', value: 'القيمة', doctorPercent: 'نسبة الطبيب %', notes: 'ملاحظات', anesthetist: 'طبيب التخدير', anesthetistId: 'كود التخدير', anesthesia: 'أجر التخدير', deductAnes: 'خصم التخدير', fee: 'قيمة الكشف', contact: 'جهة الاتصال', serial: 'م', visitType: 'الزيارة', service: 'البيان', category: 'النوع', company: 'الشركة', formNo: 'رقم النموذج', formPhoto: 'صورة النموذج', cardNo: 'رقم الكارنية', cardPhoto: 'صورة الكارنية', patientPct: 'تحمل المريض %', discount: 'الخصم %', payMethod: 'طريقة الدفع', payRef: 'مرجع', payPhone: 'هاتف الدفع', birthDate: 'تاريخ الميلاد', paid: 'المدفوع', amount: 'المبلغ', dueDate: 'تاريخ الاستحقاق', docNo: 'رقم المستند', person: 'الشخص', kind: 'النوع', dir: 'الاتجاه', approvalNo: 'رقم الموافقة', approvalProc: 'الإجراء', required: 'المطلوب', done: 'تم', execDate: 'تاريخ التنفيذ', username: 'المستخدم', isAdmin: 'مدير', active: 'فعّال', perms: 'الصلاحيات', lastLogin: 'آخر دخول', registeredBy: 'سجّله', createdAt: 'وقت الإنشاء'};
 var CATL = {cash: 'نقدي', company: 'شركة', insurance: 'تأمين', committee: 'لجنة'};
 var MIRROR_OFF = false;
@@ -253,7 +254,7 @@ function route_(b) {
   if (!me) throw new ApiError('انتهت الجلسة، سجل الدخول من جديد', 'auth');
   me.perms = me.perms || [];
   if (A === 'me') return {user: pub_(me)};
-  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true, ver: 5}; }
+  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true, ver: 6}; }
   if (A === 'presence') {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     var pl = []; getAll_('users').forEach(function (u) { var v = cache.get('p_' + u.id); if (v) { try { var o = JSON.parse(v); o.id = u.id; pl.push(o); } catch (x) {} } });
