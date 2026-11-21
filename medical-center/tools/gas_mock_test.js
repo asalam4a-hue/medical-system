@@ -60,3 +60,5 @@ console.log('mirror ok');
 
 assert(fetches.length===1,'loader fetched core once then used cache ('+fetches.length+')');
 assert(typeof ctx.doGet==='function'&&typeof ctx.doPost==='function'&&typeof ctx.setup==='function','loader entry points');
+{const pr=call({action:'ping',token:T,page:'x'});assert(pr.ver===6,'ping ver at top level: '+JSON.stringify(pr));}
+{const la=call({action:'listall',token:T,entities:['doctors','visits','bookings','nope']});assert(la.all&&la.all.doctors&&Array.isArray(la.all.visits.items)&&!la.all.nope,'listall');}

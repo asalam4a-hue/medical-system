@@ -199,6 +199,7 @@ const Local = {
       this.save(db); return {added, skipped};
     }
     if (['list','save','delete'].includes(A) && !ENT.includes(e)) return fail('كيان غير معروف');
+    if (A === 'listall') { const all = {}; for (const en of (Array.isArray(b.entities) ? b.entities : [])) { if (!ENT.includes(en)) continue; const r = await this.handle(Object.assign({}, b, {entity: en, action: 'list'})); all[en] = r && r.items ? r : {items: [], err: (r && r.error) || ''}; } return {all}; }
     if (A === 'list') {
       const readable = me.isAdmin || (e !== 'users' && (e === 'staff' ? has(me, 'staff') : (LOOKUP.includes(e) || has(me, e) || has(me, 'dashboard') || has(me, 'dues') || me.perms.some(p => p.startsWith('rep_')))));
       if (!readable) return fail('غير مصرح', 'forbidden');

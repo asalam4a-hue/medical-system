@@ -407,11 +407,22 @@ async function syncOnce() {
     }
   } catch (e) { if (e.code === 'auth') logoutLocal(); }
 }
+/* تشخيص: يعرض رابط الخادم وما يردّ به وسبب التنبيه بالضبط */
+async function diagConn() {
+  let url = ''; try { url = window.API_URL || localStorage.getItem('mc_server') || 'api.php'; } catch (e) {}
+  let r = null, err = '';
+  try { r = await API.call('ping', {page: 'diag'}); } catch (e) { err = e.message || String(e); }
+  const need = 6, ver = r && r.ver, ld = r && r.loader;
+  const why = err ? 'تعذّر الاتصال: ' + err : !(ver >= 1) ? 'الخادم لا يردّ برقم إصدار: هذا Code.gs قديم. الصق Code.gs الجديد (المحمّل) ثم Deploy ← Manage deployments ← القلم ← New version.' : ver < need ? 'إصدار الخادم ' + ver + ' والمطلوب ' + need + ': الخادم ينفّذ كوداً قديماً' + (ld ? ' (المحمّل يعمل لكن كود GitHub المخزّن قديم، انتظر 3 دقائق أو أعد الدخول)' : ' — الصق Code.gs المحمّل واجعل النشر New version') + '.' : 'الخادم محدّث ✔';
+  const m = modal(`<h3>🔍 تشخيص الاتصال</h3><div style="line-height:2;direction:rtl"><div>رابط الخادم: <code style="word-break:break-all">${esc(url)}</code></div><div>إصدار الخادم: <b>${esc(ver == null ? '—' : ver)}</b> (المطلوب ${need})</div><div>المحمّل التلقائي: <b>${ld ? 'يعمل — المصدر: ' + esc(ld) : 'غير مثبّت'}</b></div><div>النتيجة: <b>${esc(why)}</b></div></div><div class="actions"><button class="btn ghost" id="dgx">إغلاق</button></div>`);
+  $('#dgx', m).onclick = () => m.remove();
+}
 /* الخادم المنشور أقدم من البرنامج: حقول جديدة (المدفوع/المتبقي/الإعدادات) تُهمَل ويظهر «أمر غير معروف» */
 function staleBanner(stale) {
   let b = document.getElementById('stale'); if (!stale) { b && b.remove(); return; } if (b) return;
   b = document.createElement('div'); b.id = 'stale'; b.className = 'noprint'; b.style.cssText = 'position:sticky;top:0;z-index:99;background:#c0392b;color:#fff;padding:8px 12px;text-align:center;font-weight:bold';
-  b.textContent = '⚠️ خادم Google المرتبط بهذا البرنامج قديم: المدفوع والمتبقي وبنود الإعدادات لن تُحفظ صحيحة. الصق Code.gs الجديد في Apps Script ثم Deploy ← Manage deployments ← New version. إذا أنشأت Deployment جديداً برابط جديد فاضغط الزر لإدخاله.  '; const bt = document.createElement('button'); bt.textContent = '🔗 تغيير رابط الخادم'; bt.style.cssText = 'margin-inline-start:8px;padding:3px 10px;border-radius:6px;border:0;font-weight:bold;cursor:pointer'; bt.onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_url_user') || window.API_URL || ''; } catch (e) { return window.API_URL || ''; } })(); const u = (prompt('الصق رابط النشر الجديد (ينتهي بـ /exec):', cur) || '').trim(); if (!u) return; if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u)) return alert('الرابط غير صحيح: يجب أن يبدأ بـ https://script.google.com/macros/s/ وينتهي بـ /exec'); try { localStorage.setItem('mc_url_user', u); } catch (e) {} location.reload(); }; b.appendChild(bt); document.body.prepend(b);
+  b.textContent = '⚠️ خادم Google المرتبط بهذا البرنامج قديم: المدفوع والمتبقي وبنود الإعدادات لن تُحفظ صحيحة. الصق Code.gs الجديد في Apps Script ثم Deploy ← Manage deployments ← New version. إذا أنشأت Deployment جديداً برابط جديد فاضغط الزر لإدخاله.  '; const bt = document.createElement('button'); bt.textContent = '🔗 تغيير رابط الخادم'; bt.style.cssText = 'margin-inline-start:8px;padding:3px 10px;border-radius:6px;border:0;font-weight:bold;cursor:pointer'; bt.onclick = () => { const cur = (() => { try { return localStorage.getItem('mc_url_user') || window.API_URL || ''; } catch (e) { return window.API_URL || ''; } })(); const u = (prompt('الصق رابط النشر الجديد (ينتهي بـ /exec):', cur) || '').trim(); if (!u) return; if (!/^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(u)) return alert('الرابط غير صحيح: يجب أن يبدأ بـ https://script.google.com/macros/s/ وينتهي بـ /exec'); try { localStorage.setItem('mc_url_user', u); } catch (e) {} location.reload(); }; b.appendChild(bt);
+  const dg = document.createElement('button'); dg.textContent = '🔍 تشخيص الاتصال'; dg.style.cssText = bt.style.cssText; dg.onclick = () => diagConn(); b.appendChild(dg); document.body.prepend(b);
 }
 window.__syncNow = () => syncOnce();
 document.addEventListener('input', e => { if (e.target && e.target.closest && e.target.closest('#main form')) S.dirty = true; }, true);
@@ -422,7 +433,18 @@ function startSync() {
 }
 async function loadAll(ents) {
   if (!ents) loadSettings();
-  await Promise.all((ents || Object.keys(S.data)).map(async e => {
+  const names = ents || Object.keys(S.data);
+  /* طلب واحد لكل القوائم (أسرع بكثير على جوجل شيت)؛ وإن لم يدعمه الخادم نرجع للطلب لكل قائمة */
+  if (names.length > 2 && S.noListAll !== true) {
+    try {
+      const r = await API.call('listall', {entities: names});
+      if (r && r.all) {
+        names.forEach(e => { const rr = r.all[e]; if (!rr) return; if (e === 'operations') S.opsLegacy = rr.items || []; else S.data[e] = rr.items || []; if (rr.ctr != null) S.ctr[e] = rr.ctr; });
+        deriveOps(); return;
+      }
+    } catch (err) { if (err.code === 'auth') throw err; S.noListAll = true; }
+  }
+  await Promise.all(names.map(async e => {
     try { const rr = await API.call('list', {entity: e}); if (e === 'operations') S.opsLegacy = rr.items; else S.data[e] = rr.items; if (rr.ctr != null) S.ctr[e] = rr.ctr; } catch (err) { if (err.code === 'auth') throw err; S.data[e] = []; }
   }));
   deriveOps();

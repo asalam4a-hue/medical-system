@@ -243,16 +243,22 @@ function handle(PDO $db, array $b): void {
   $e = (string)($b['entity'] ?? '');
   if (in_array($A, ['list', 'save', 'delete'], true) && !in_array($e, ENT, true)) jerr('كيان غير معروف');
 
-  if ($A === 'list') {
+  if ($A === 'list' || $A === 'listall') {
     $reps = false; foreach ($me['perms'] as $p) if (strpos($p, 'rep_') === 0) $reps = true;
-    $ok = !empty($me['isAdmin']) || ($e !== 'users' && ($e === 'staff' ? has($me, 'staff') : (in_array($e, LOOKUP, true) || has($me, $e) || has($me, 'dashboard') || has($me, 'dues') || $reps)));
-    if (!$ok) jerr('غير مصرح', 'forbidden');
-    $from = !empty($b['from']) ? (string)$b['from'] : null; $to = !empty($b['to']) ? (string)$b['to'] : null;
-    $items = getAll($db, $e, $from, $to);
-    if ($e === 'users') $items = array_map('pub', $items);
-    $out = ['items' => $items];
-    if (isset(AUTO[$e])) { $st = $db->prepare('SELECT v FROM counters WHERE k=?'); $st->execute([$e]); $c = (int)$st->fetchColumn(); foreach (getAll($db, $e) as $r) $c = max($c, (int)($r[AUTO[$e]] ?? 0)); $out['ctr'] = $c; }
-    jout($out);
+    $one = function ($en, $from, $to) use ($db, $me, $reps) {
+      $ok = !empty($me['isAdmin']) || ($en !== 'users' && ($en === 'staff' ? has($me, 'staff') : (in_array($en, LOOKUP, true) || has($me, $en) || has($me, 'dashboard') || has($me, 'dues') || $reps)));
+      if (!$ok) return ['err' => 'غير مصرح'];
+      $items = getAll($db, $en, $from, $to);
+      if ($en === 'users') $items = array_map('pub', $items);
+      $out = ['items' => $items];
+      if (isset(AUTO[$en]) && $en !== 'visits') { $st = $db->prepare('SELECT v FROM counters WHERE k=?'); $st->execute([$en]); $c = (int)$st->fetchColumn(); foreach (getAll($db, $en) as $r) $c = max($c, (int)($r[AUTO[$en]] ?? 0)); $out['ctr'] = $c; }
+      elseif (isset(AUTO[$en])) { $c = 0; foreach ($items as $r) $c = max($c, (int)($r['serial'] ?? 0)); $out['ctr'] = $c; }
+      return $out;
+    };
+    if ($A === 'list') { $r = $one($e, !empty($b['from']) ? (string)$b['from'] : null, !empty($b['to']) ? (string)$b['to'] : null); if (isset($r['err'])) jerr($r['err'], 'forbidden'); jout($r); }
+    /* قراءة عدة قوائم بطلب واحد */
+    $all = []; foreach (array_slice(is_array($b['entities'] ?? null) ? $b['entities'] : [], 0, 40) as $en) { if (!in_array($en, ENT, true)) continue; $r = $one((string)$en, null, null); $all[$en] = isset($r['err']) ? ['items' => [], 'err' => $r['err']] : $r; }
+    jout(['all' => (object)$all]);
   }
 
   if ($A === 'save' || $A === 'delete') {

@@ -256,7 +256,7 @@ function route_(b) {
   if (!me) throw new ApiError('انتهت الجلسة، سجل الدخول من جديد', 'auth');
   me.perms = me.perms || [];
   if (A === 'me') return {user: pub_(me)};
-  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true, ver: 6}; }
+  if (A === 'ping') { cache.put('p_' + me.id, JSON.stringify({at: Date.now(), page: String(b.page || '').slice(0, 60), client: String(b.client || '').slice(0, 20)}), 900); return {ok: true, ver: 6, loader: typeof SRC_USED_ !== 'undefined' ? (SRC_USED_ || 'loader') : ''}; }
   if (A === 'presence') {
     if (!me.isAdmin) throw new ApiError('للمدير فقط', 'forbidden');
     var pl = []; getAll_('users').forEach(function (u) { var v = cache.get('p_' + u.id); if (v) { try { var o = JSON.parse(v); o.id = u.id; pl.push(o); } catch (x) {} } });
@@ -301,12 +301,18 @@ function route_(b) {
   var e = String(b.entity || '');
   if (['list', 'save', 'delete', 'bulk_save'].indexOf(A) >= 0 && ENT.indexOf(e) < 0) throw new ApiError('كيان غير معروف');
 
-  if (A === 'list') {
+  if (A === 'list' || A === 'listall') {
     var reps = me.perms.some(function (x) { return x.indexOf('rep_') === 0; });
-    var ok = !!me.isAdmin || (e !== 'users' && (e === 'staff' ? has_(me, 'staff') : (LOOKUP.indexOf(e) >= 0 || has_(me, e) || has_(me, 'dashboard') || has_(me, 'dues') || reps)));
-    if (!ok) throw new ApiError('غير مصرح', 'forbidden');
-    var items = getAll_(e, b.from || null, b.to || null);
-    return {items: e === 'users' ? items.map(pub_) : items, ctr: AUTO[e] ? peekCounter_(e, AUTO[e]) : undefined};
+    var one = function (en, from, to) {
+      var ok = !!me.isAdmin || (en !== 'users' && (en === 'staff' ? has_(me, 'staff') : (LOOKUP.indexOf(en) >= 0 || has_(me, en) || has_(me, 'dashboard') || has_(me, 'dues') || reps)));
+      if (!ok) throw new ApiError('غير مصرح', 'forbidden');
+      var items = getAll_(en, from || null, to || null);
+      return {items: en === 'users' ? items.map(pub_) : items, ctr: AUTO[en] ? peekCounter_(en, AUTO[en]) : undefined};
+    };
+    if (A === 'list') return one(e, b.from, b.to);
+    /* قراءة عدة قوائم بطلب واحد (أسرع بكثير من طلب لكل قائمة) */
+    var all = {}; (Array.isArray(b.entities) ? b.entities : []).slice(0, 40).forEach(function (en) { if (ENT.indexOf(en) < 0) return; try { all[en] = one(en); } catch (x) { all[en] = {items: [], err: String(x.message || x)}; } });
+    return {all: all};
   }
 
   if (A === 'bulk_save') {
