@@ -573,7 +573,8 @@ Acts.lnk = el => {
 document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (!el) return; const f = Acts[el.dataset.act]; if (f) { e.preventDefault(); f(el, e); } });
 
 window.addEventListener('DOMContentLoaded', async () => {
-  try { if (window.AndroidBridge) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); } } catch (e) { API.setToken(null); S.user = null; }
+  let resume = null; try { resume = JSON.parse(sessionStorage.getItem('mc_resume') || 'null'); sessionStorage.removeItem('mc_resume'); if (resume && Date.now() - resume.t > 120000) resume = null; } catch (e) {}   /* عودة بعد تحديث تلقائي: نفس الشاشة دون إعادة دخول */
+  try { if (window.AndroidBridge && !resume) API.setToken(null); if (API.getToken()) { S.user = (await API.call('me')).user; await loadAll(); if (resume && resume.screen) { S.screen = resume.screen; S.arg = resume.arg || null; } } } catch (e) { API.setToken(null); S.user = null; }
   render(); startSync(); setTimeout(() => window.autoSeedCheck && autoSeedCheck(), 1500);
 });
 

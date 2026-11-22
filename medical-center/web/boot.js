@@ -33,6 +33,20 @@
     ];
     return list.reduce(function (p, it) { return p.catch(function () { return one(it[0], it[1]).then(function (x) { if (!x || x.length < 20) throw new Error('empty'); return x; }); }); }, Promise.reject(new Error('start')));
   }
+  /* تطبيق التحديث في الخلفية: ينتظر حتى لا يكون المستخدم يكتب أو يحفظ، ثم يعيد التشغيل ويرجع لنفس الشاشة دون تسجيل خروج */
+  var applying = false;
+  function applyWhenIdle() {
+    if (applying) return; applying = true;
+    var tick = function () {
+      var idle = true; try { idle = !(S.dirty || S.busy) && (!S.user || !document.querySelector('.modal')); } catch (e) {}
+      if (idle && !document.hidden) {
+        try { sessionStorage.setItem('mc_resume', JSON.stringify({t: Date.now(), screen: S.screen, arg: S.arg})); } catch (e) {}
+        try { if (window.toast) toast('✔ تم تحديث البرنامج'); } catch (e) {}
+        setTimeout(function () { location.reload(); }, 400);
+      } else setTimeout(tick, 8000);
+    };
+    setTimeout(tick, 500);
+  }
   var busy = false;
   window.__checkUpdate = function () {
     if (busy) return; busy = true;
@@ -41,7 +55,7 @@
       return get('php/index.html').then(function (h) {
         var a = h.indexOf('/*P1*/'), b = h.indexOf('/*P2*/'); if (a < 0 || b < a) { busy = false; return; }
         var np = JSON.parse(h.slice(a + 6, b));
-        if (np && np.build >= j.build && np.items && np.items.length) { localStorage.setItem(K, JSON.stringify(np)); if (window.toast) toast('تم تحديث البرنامج تلقائياً — سيُعاد التشغيل'); setTimeout(function () { location.reload(); }, 1200); }
+        if (np && np.build >= j.build && np.items && np.items.length) { localStorage.setItem(K, JSON.stringify(np)); applyWhenIdle(); }
         else busy = false;
       });
     }).catch(function () { busy = false; });

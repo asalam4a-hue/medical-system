@@ -26,6 +26,25 @@ jobs:
           cd /tmp/out && git init -q && git checkout -q -b apk && git add -A
           git -c user.name=ci -c user.email=ci@example.com commit -qm "build output"
           git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" apk
+      - name: Publish site (all program files) to branch "gh-pages"
+        run: |
+          S=/tmp/site; M=$PWD/medical-center; mkdir -p $S/gas $S/php
+          cp $M/php/index.html $S/index.html; cp $M/php/index.html $M/php/api.php $M/php/seed.json $S/php/
+          cp $M/version.json $M/server.json $S/; cp $M/gas/* $S/gas/; cp $M/demo/index.html $S/demo.html
+          cp /tmp/out/Hospital.apk $S/Hospital.apk 2>/dev/null || true
+          (cd $M/php && zip -q $S/php-upload.zip index.html api.php seed.json)
+          (cd $PWD && zip -qr $S/medical-center.zip medical-center -x 'medical-center/android/.gradle/*' 'medical-center/android/app/build/*' 'medical-center/android/build/*')
+          cat > $S/files.html <<'EOT'
+          <!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ملفات البرنامج</title>
+          <body style="font-family:'Times New Roman',serif;max-width:640px;margin:24px auto;padding:0 16px;line-height:2.2">
+          <h2>📦 ملفات برنامج إدارة المركز الطبي (آخر نسخة تلقائياً)</h2>
+          <ul><li><a href="./">🌐 تشغيل البرنامج (نسخة الويب)</a></li><li><a href="Hospital.apk">📱 تطبيق الأندرويد (APK)</a></li>
+          <li><a href="php-upload.zip">🗂️ ملفات الاستضافة PHP</a></li><li><a href="gas/Code.gs">Code.gs (Google)</a> — <a href="gas/appsscript.json">appsscript.json</a> — <a href="gas/Index.html">Index.html</a> — <a href="gas/core.js">core.js</a></li>
+          <li><a href="medical-center.zip">🧩 كل ملفات المصدر (zip)</a></li><li><a href="demo.html">🧪 نسخة تجريبية</a></li><li><a href="version.json">version.json</a></li></ul></body></html>
+          EOT
+          touch $S/.nojekyll; cd $S && git init -q && git checkout -q -b gh-pages && git add -A
+          git -c user.name=ci -c user.email=ci@example.com commit -qm "site build"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages
       - name: Fail if build failed
         if: steps.build.outcome != 'success'
         run: exit 1
