@@ -408,6 +408,7 @@ async function syncOnce() {
   } catch (e) { if (e.code === 'auth') logoutLocal(); }
 }
 /* تشخيص: يعرض رابط الخادم وما يردّ به وسبب التنبيه بالضبط */
+Acts.diag = () => diagConn();
 async function diagConn() {
   let url = ''; try { url = window.API_URL || localStorage.getItem('mc_server') || 'api.php'; } catch (e) {}
   let r = null, err = '';
@@ -420,7 +421,7 @@ async function diagConn() {
 /* الخادم المنشور أقدم من البرنامج: حقول جديدة (المدفوع/المتبقي/الإعدادات) تُهمَل ويظهر «أمر غير معروف» */
 function staleBanner(stale) {
   let b = document.getElementById('stale'); if (!stale) { b && b.remove(); return; } if (b) return;
-  try { if (localStorage.getItem('mc_stale_off') === '1') return; } catch (e) {}   /* أُغلق نهائياً على هذا الجهاز */
+  return;   /* التنبيه التلقائي معطّل نهائياً؛ التشخيص متاح من الإعدادات ← الإدارة */
   b = document.createElement('div'); b.id = 'stale'; b.className = 'noprint'; b.style.cssText = 'position:sticky;top:0;z-index:99;background:#c0392b;color:#fff;padding:5px 10px;text-align:center;font-size:13px;font-weight:bold;display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap';
   const t = document.createElement('span'); t.textContent = '⚠️ خادم Google قديم'; b.appendChild(t);
   const mk = (txt, fn) => { const x = document.createElement('button'); x.textContent = txt; x.style.cssText = 'padding:2px 8px;border-radius:6px;border:0;font-weight:bold;cursor:pointer;font-size:12px'; x.onclick = fn; b.appendChild(x); };
