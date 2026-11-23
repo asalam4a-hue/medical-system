@@ -45,12 +45,12 @@ core = _re.sub(r"function (doGet|doPost|handle|setup|syncSheets)\(", lambda m: "
 core = core.replace("handle(e.postData", "core_handle(e.postData")
 core = core.replace("function core_syncSheets() { return mirrorAll_(); }", "function syncSheets_() { return mirrorAll_(); }")
 (root / "gas/core.js").write_text(core, encoding="utf-8")                       # كود الخادم (يُحمَّل من GitHub)
-(root / "gas/Code.gs").write_text((root / "tools/gas_loader.gs").read_text(encoding="utf-8"), encoding="utf-8")  # المحمّل (يُلصق مرة واحدة)
+(root / "gas/Code.gs").write_text((root / "tools/gas_core.gs").read_text(encoding="utf-8").rstrip("\n") + "\n\n/* ---------- البيانات الأساسية الأولية ---------- */\nvar SEED = " + seed + ";\n", encoding="utf-8")  # خادم كامل مستقل (بدون GitHub)
 import time as _t
 (root / "version.json").write_text(json.dumps({"build": BUILD_TS, "gas_ver": 6}), encoding="utf-8")
 import os
 if (root / "gas/Seed.gs").exists(): os.remove(root / "gas/Seed.gs")
 (root / "gas/appsscript.json").write_text(json.dumps({
   "timeZone": "Africa/Cairo", "exceptionLogging": "STACKDRIVER", "runtimeVersion": "V8",
-  "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/script.external_request"],
+  "oauthScopes": ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
   "webapp": {"executeAs": "USER_DEPLOYING", "access": "ANYONE_ANONYMOUS"}}, indent=2), encoding="utf-8")

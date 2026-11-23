@@ -3,7 +3,7 @@ const props={},cache={};
 function mkSheet(){const rows=[];const sh={rows,
  appendRow(r){rows.push(r.slice())},getLastRow(){return rows.length},setFrozenRows(){},
  getRange(r,c,nr=1,nc=1){return{setNumberFormat(){},getValues(){return rows.slice(r-1,r-1+nr).map(x=>{const o=[];for(let i=0;i<nc;i++)o.push(x[c-1+i]===undefined?'':x[c-1+i]);return o})},setValues(v){v.forEach((row,i)=>{while(rows.length<r+i)rows.push([]);row.forEach((x,j)=>{rows[r-1+i][c-1+j]=x})});return this},setFontWeight(){return this},setBackground(){return this},setHorizontalAlignment(){return this}}},
- setRightToLeft(){},hideColumns(){},deleteRows(a,n){rows.splice(a-1,n)},
+ setRightToLeft(){},hideColumns(){},deleteRows(a,n){if(a-1+n>=Math.max(rows.length,sh.max))throw new Error('لا يمكن حذف جميع الصفوف غير المجمدة');rows.splice(a-1,n)},getMaxRows(){return Math.max(rows.length,sh.max)},insertRowsAfter(r,n){sh.max=Math.max(rows.length,sh.max)+n},max:0,
  deleteRow(n){rows.splice(n-1,1)}};return sh}
 const sheets={};const ss={getId:()=>'SS',getSheetByName:n=>sheets[n]||null,insertSheet:n=>sheets[n]=mkSheet()};
 const files={};const fetches=[];
@@ -15,7 +15,7 @@ const ctx={console,JSON,Math,Date,String,Number,Array,isNaN,
  SpreadsheetApp:{create:()=>ss,openById:()=>ss},
  Utilities:{DigestAlgorithm:{SHA_256:1},Charset:{UTF_8:1},computeDigest:(a,s)=>[...crypto.createHash('sha256').update(s).digest()].map(b=>b>127?b-256:b),getUuid:()=>crypto.randomUUID(),base64Decode:s=>[...Buffer.from(s,'base64')].map(b=>b>127?b-256:b),base64Encode:b=>Buffer.from(b.map(x=>x&255)).toString('base64'),newBlob:(bytes,mime,name)=>({bytes,getBytes:()=>bytes})},
  DriveApp:{Access:{PRIVATE:1},Permission:{NONE:1},createFolder:()=>({getId:()=>'F',createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFolderById:()=>({createFile:blob=>{const id='D'+Object.keys(files).length;files[id]=blob;return{getId:()=>id,setSharing(){}}}}),getFileById:id=>({getBlob:()=>files[id]})}};
-vm.createContext(ctx);vm.runInContext(fs.readFileSync('gas/Code.gs','utf8'),ctx);
+vm.createContext(ctx);vm.runInContext(fs.readFileSync('tools/gas_loader.gs','utf8'),ctx);
 const call=o=>JSON.parse(ctx.handle(JSON.stringify(o)));
 
 const assert=(c,m)=>{if(!c){console.log('FAIL',m);process.exitCode=1}else console.log('ok',m)};

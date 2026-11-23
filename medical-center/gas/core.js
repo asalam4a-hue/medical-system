@@ -126,9 +126,15 @@ function mirrorPut_(e, rec) {
   } catch (x) { console.error('mirror ' + e + ': ' + x); }
 }
 function mirrorDel_(e, id) { if (MIRROR_OFF || !SHEETN[e]) return; try { var sh = mirrorSheet_(e), row = findRow_(sh, id); if (row > 0) sh.deleteRow(row); } catch (x) {} }
+/* حذف كل الصفوف تحت العنوان دون خطأ «لا يمكن حذف جميع الصفوف غير المجمدة» */
+function dropRows_(sh) {
+  var n = sh.getLastRow(); if (n < 2) return;
+  if (sh.getMaxRows() <= n) sh.insertRowsAfter(n, 1);
+  sh.deleteRows(2, n - 1);
+}
 function mirrorRebuild_(e) {
   if (!SHEETN[e]) return 0;
-  var sh = mirrorSheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1);
+  var sh = mirrorSheet_(e); dropRows_(sh);
   var items = getAll_(e).sort(function (a, b) { return String(a.date || a.createdAt || '').localeCompare(String(b.date || b.createdAt || '')); });
   if (!items.length) return 0;
   var rows = items.map(function (r) { return mirrorRow_(e, r); });
@@ -372,7 +378,7 @@ function masterInfo_() {
   var at = PropertiesService.getScriptProperties().getProperty('MASTER_AT') || '', sh = ss_().getSheetByName('master');
   return {at: sh && sh.getLastRow() > 0 ? at : ''};
 }
-function wipe_(e) { var sh = sheet_(e), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); if (SHEETN[e]) { var m = ss_().getSheetByName(SHEETN[e]); if (m && m.getLastRow() > 1) m.deleteRows(2, m.getLastRow() - 1); } }
+function wipe_(e) { var sh = sheet_(e); dropRows_(sh); if (SHEETN[e]) { var m = ss_().getSheetByName(SHEETN[e]); if (m) dropRows_(m); } }
 function restoreSnapshot_(bk) {
   if (!bk || bk.app !== 'medical-center' || !bk.data) throw new ApiError('ملف النسخة الاحتياطية غير صالح');
   var us = bk.data.users || [];
