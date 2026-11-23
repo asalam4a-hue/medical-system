@@ -26,6 +26,13 @@ SCREEN_RENDER.bookings = crud({k: 'bookings', ent: 'bookings', t: 'الحجوز�
     {h: 'إجراء', f: r => r.status === 'done' || r.status === 'cancel' ? '' : `<button type="button" class="btn sm c-orange" data-act="bkcame" data-id="${r.id}">✔ حضر</button> <button type="button" class="btn sm c-lime" data-act="bkvisit" data-id="${r.id}">🩺 تحويل لزيارة</button>`}],
   sort: (a, b) => a.date.localeCompare(b.date) || (+a.turn || 0) - (+b.turn || 0),
   before: docAutoReg,
+  onChange: (n, f, ctx) => {
+    if (n === '*' && !(ctx && ctx.reset)) return;
+    if (!['kind', 'clinic', '*'].includes(n)) return;
+    const kind = getv(f, 'kind'), c = clinicOf(getv(f, 'clinic'));
+    if (kind === 'عيادة') { if (c && c.price != null && !(n === '*' && ctx && ctx.editing)) setv(f, 'value', c.price); }
+    else if (n === 'kind' && !(ctx && ctx.editing && getv(f, 'value') !== '')) setv(f, 'value', '');
+  },
   defaults: () => ({kind: 'عيادة', date: today(), status: 'booked', turn: bkTurn(today(), '', '')}),
   fill: r => Object.assign({}, r, {_doc: r.doctorId || (S.data.doctors.find(d => d.name === r.doctor) || {}).id || ''}),
   collect: raw => {
